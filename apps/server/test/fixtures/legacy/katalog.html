@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Yangi Hayot</title></head>
+<body>
+<div id="app"></div>
+<script>
+  // Old Mini App: all data hard-coded in this file.
+  const PROJECTS = [
+    {
+      id: 'jozibali',
+      name: 'Jozibali Maskan',
+      city: 'tashkent',
+      status: 'sale',
+      address: { ru: 'Ташкент, Юнусабад', uz: 'Toshkent, Yunusobod' },
+      apartments: [
+        { block: 'A', rooms: 2, area: 54.3, price: 455500000, status: 'free' },
+        { block: 'A', rooms: 3, area: 72, price: null, status: 'reserved' },
+        { block: 'B', rooms: 1, area: 38.5, pricePerM2: 9000000, status: 'sold' },
+      ],
+    },
+    {
+      id: 'sayhun',
+      name: "Sayhun",
+      city: 'tashkent',
+      status: 'sale',
+      address: { ru: 'Ташкент', uz: 'Toshkent' },
+      apartments: [
+        { rooms: 1, area: 36, plan: 'img/sayhun/1-36.jpg', status: 'free' },
+        { rooms: 2, area: 52, plan: 'img/sayhun/2-52.jpg', status: 'free' },
+        { rooms: 2, area: 58.5, plan: 'img/sayhun/2-58.jpg', name: { ru: 'Угловая', uz: 'Burchak' }, status: 'free' },
+        { rooms: 3, area: 74, plan: 'img/sayhun/3-74.jpg', status: 'reserved' },
+        { rooms: 3, area: 81, plan: 'img/sayhun/3-81.jpg', status: 'sold' },
+        { rooms: 4, area: 98, plan: 'img/sayhun/4-98.jpg', price: 1200000000, status: 'free' },
+      ],
+    },
+    { id: 'gulzor', name: 'Gulzor', city: 'navoiy', status: 'done', apartments: [] },
+  ];
+  render(PROJECTS);
+</script>
+</body>
+</html>
