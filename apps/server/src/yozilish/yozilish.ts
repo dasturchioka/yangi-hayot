@@ -5,6 +5,7 @@ import type { Messenger } from '../adapters/messenger/messenger';
 import { ArizaKontekstError, CRM_RETRY_EVERY_MS, CRM_RETRY_FOR_MS, type Arizalar } from '../ariza/ariza';
 import { formatSom } from '../ariza/note';
 import { addDays, tashkentInstant, toTashkent, type Clock } from '../clock';
+import { yozilishHodisasi } from '../hodisa/hodisa';
 import { getSetting } from '../settings/settings';
 import { slotBormi } from './slotlar';
 
@@ -277,6 +278,7 @@ export function createYozilishlar(deps: YozilishDeps): Yozilishlar {
       const existing = await db.query<{ id: number }>('SELECT id FROM yozilish WHERE ariza_id = $1', [ariza.id]);
       return { id: existing.rows[0]!.id, duplicate: true };
     }
+    await yozilishHodisasi(db, row.id); // analytics (#15)
     const r = (await load('y.id = $1', [row.id]))[0]!;
     await toGroup([`📅 Ko'rishga yozilish #${r.id}`, `Vaqt: ${vaqtMatni(at)}`, ...tafsilot(r)].join('\n'));
     return { id: row.id, duplicate: false };

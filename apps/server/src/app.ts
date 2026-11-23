@@ -8,11 +8,14 @@ import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
+import { hisobotJob } from './hisobot/jadval';
+import { davomatHodisasi } from './hodisa/hodisa';
 import { Jobs } from './jobs/jobs';
 import { createKalkulyator } from './kalkulyator/kalkulyator';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminKatalogRoutes } from './routes/admin-katalog';
+import { adminHisobotRoutes } from './routes/admin-hisobot';
 import { adminKvizRoutes } from './routes/admin-kviz';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { adminTaklifRoutes } from './routes/admin-taklif';
@@ -76,6 +79,8 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log });
   jobs.register('yozilish-crm', () => yozilishlar.syncCrm()); // after ariza-crm-retry: a move waits for its Ariza
   app.decorate('yozilishlar', yozilishlar);
+  yozilishlar.onDavomat((e) => davomatHodisasi(deps.db, e)); // funnel «keldi» (#15/#20)
+  jobs.register('hisobot', hisobotJob(deps)); // 19:30 daily, Monday weekly (#15)
   const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
@@ -153,6 +158,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await adminRassilkaRoutes(scope, deps);
       await adminKalkulyatorRoutes(scope, deps);
       await adminTaklifRoutes(scope, taklif);
+      await adminHisobotRoutes(scope, deps);
     },
     { prefix: '/admin/api' },
   );

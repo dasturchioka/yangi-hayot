@@ -46,6 +46,11 @@ export interface Settings {
   kvizByudjet: ByudjetOraligi[] | null;
   /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
   kalkulyator: KalkulyatorSozlamalari;
+  /**
+   * Where the 19:30 daily and the Monday weekly report go (#15, TZ 4-b.):
+   * Telegram chat ids (the head of sales, a group). Empty = the managers group.
+   */
+  hisobot: { qabulQiluvchilar: string[] };
 }
 
 const DEFAULTS: Settings = {
@@ -67,6 +72,7 @@ const DEFAULTS: Settings = {
   },
   kvizByudjet: null,
   kalkulyator: DEFAULT_KALKULYATOR,
+  hisobot: { qabulQiluvchilar: [] },
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
