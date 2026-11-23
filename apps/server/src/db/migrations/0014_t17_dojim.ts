@@ -6,9 +6,9 @@ import type { Migration } from './index';
  * when due, or skipped with a reason. Planning and sending are apart so the
  * «7 kunda ≤ 1» rule, «Yubormang» and a later Ariza are checked at send time.
  *
- * - `korish` rows: at most one waiting per Mijoz; every view/calculation moves
- *   it (planirovka, hodisa_at, due_at = +24 h). This is also the only record of
- *   «Planirovkani ko'rdi» so far (#15's analytics may replace the producer).
+ * - `korish` rows: planned by the job from #15's `hodisa` (planirovka_korildi)
+ *   and `kalkulyator_hisob`, 24 h after the Mijoz's latest activity; at most
+ *   one waiting per Mijoz.
  * - `holat`: kutilmoqda → yuborildi (claimed before sending: at most once)
  *   | otkazildi (`sabab`: toxtatildi, bloklagan, limit, ariza, ...).
  * - `mijoz.dojim_toxtatildi_at`: «Yubormang» pressed; nothing is sent after it.
