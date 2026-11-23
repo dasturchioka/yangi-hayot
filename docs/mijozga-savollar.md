@@ -171,6 +171,19 @@ Kvizga «To'lov usuli» (to'liq / muddatli / ipoteka) savolini qo'shamiz — UF-
 
 Javob kerak: **8-kungacha**.
 
+### S14. Filtr va kviz: amalga oshirishdagi tanlovlar (#10)
+#10 tiketini qurishda TZ va UI kit javob bermagan joylar. Hammasi defaultga ko'ra qilingan; javob kelsa, o'zgartiriladi.
+
+1. Kvizdagi byudjet savoliga «Hali aniq emas» varianti qo'shildi (S13 ro'yxatida yo'q).
+2. Byudjet oraliqlari avtomatik — har shahar uchun alohida; Administrator kiritgan oraliqlar esa ikkala shaharga bir xil qo'llanadi.
+3. Shaharga qiziqish (rassilka auditoriyasi) faqat kviz tugaganda yoziladi; natijalarni shahar bo'yicha filtrlash hisoblanmaydi.
+4. Natija qatorida sevimlilar (♡) tugmasi yo'q: qatorning o'zi havola. Sevimlilarga Planirovka ekranidan qo'shiladi.
+5. «Arzonroq avval» saralash tugmasi yo'q: natijalar doim arzonidan boshlab chiqadi.
+
+> **Default:** 1–5 bandlar yuqorida yozilganidek qoladi.
+
+Javob kerak: **15-kungacha**.
+
 ---
 
 ## 4. TZ javob beradigan joylar (savol berilmaydi)
