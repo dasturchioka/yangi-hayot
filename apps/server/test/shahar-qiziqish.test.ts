@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { signInitData, tmaAuth } from './support/init-data';
 import { blok, seedLoyiha } from './support/katalog';
-import { createTestApp, TEST_ADMIN_TOKEN, type TestApp } from './support/test-app';
+import { adminLogin } from './support/admin';
+import { createTestApp, type TestApp } from './support/test-app';
 
 // Shaharga qiziqish from the catalog: a Mijoz who opened a city's Loyihalar
 // lands in that city's Rassilka audience (quiz and Ariza add theirs later).
@@ -27,7 +28,7 @@ async function audiences() {
   const res = await t.app.inject({
     method: 'GET',
     url: '/admin/api/rassilka/audiences',
-    headers: { authorization: `Bearer ${TEST_ADMIN_TOKEN}` },
+    headers: await adminLogin(t, 'administrator'),
   });
   return res.json();
 }

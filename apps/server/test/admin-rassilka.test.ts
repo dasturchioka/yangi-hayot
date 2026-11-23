@@ -2,12 +2,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { recordShaharQiziqish } from '../src/mijoz/shahar-qiziqish';
 import { drainRassilkaQueue } from '../src/rassilka/worker';
 import { botEvent } from './support/bot';
-import { createTestApp, TEST_ADMIN_TOKEN, type TestApp } from './support/test-app';
+import { adminLogin } from './support/admin';
+import { createTestApp, type TestApp } from './support/test-app';
 
 let t: TestApp;
+let admin: { cookie: string };
 let nextId = 720000000;
 beforeEach(async () => {
   t = await createTestApp();
+  admin = await adminLogin(t, 'administrator');
 });
 afterEach(async () => {
   await t.close();
@@ -20,11 +23,11 @@ async function newMijoz(lang: 'ru' | 'uz') {
   return String(user.id);
 }
 
-function api(method: 'GET' | 'POST', url: string, payload?: object, token = TEST_ADMIN_TOKEN) {
+function api(method: 'GET' | 'POST', url: string, payload?: object, headers: Record<string, string> = admin) {
   return t.app.inject({
     method,
     url: `/admin/api${url}`,
-    headers: token ? { authorization: `Bearer ${token}` } : {},
+    headers,
     ...(payload ? { payload } : {}),
   });
 }
@@ -34,9 +37,12 @@ async function drain() {
 }
 
 describe('admin-panel Rassilka API', () => {
-  it('requires the admin token', async () => {
-    expect((await api('GET', '/rassilka', undefined, '')).statusCode).toBe(401);
-    expect((await api('GET', '/rassilka', undefined, 'wrong')).statusCode).toBe(401);
+  it('requires a logged-in Administrator', async () => {
+    expect((await api('GET', '/rassilka', undefined, {})).statusCode).toBe(401);
+    expect((await api('GET', '/rassilka', undefined, { cookie: 'yh_admin=forged' })).statusCode).toBe(401);
+    const menejer = await adminLogin(t, 'menejer');
+    expect((await api('GET', '/rassilka', undefined, menejer)).statusCode).toBe(403);
+    expect((await api('POST', '/rassilka', { audience: 'all', content: { text: 'Salom' } }, menejer)).statusCode).toBe(403);
   });
 
   it('shows audience sizes', async () => {

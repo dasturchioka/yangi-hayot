@@ -217,7 +217,8 @@ function Preview({ content }: { content: Content }) {
 
 function describe(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 401) return "Admin token noto'g'ri yoki kiritilmagan.";
+    if (e.status === 401) return 'Sessiya tugadi, qayta kiring.';
+    if (e.status === 403) return 'Rassilka faqat Administrator uchun.';
     if (e.status === 400) return "Ma'lumotlar noto'g'ri: matn, havola yoki izoh uzunligini tekshiring.";
     if (e.status === 409) return 'Bu rassilka allaqachon boshlangan yoki bekor qilingan.';
     return `Server xatosi (${e.status}).`;

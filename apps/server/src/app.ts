@@ -3,13 +3,15 @@ import type pg from 'pg';
 import type { Crm } from './adapters/crm/crm';
 import type { Messenger } from './adapters/messenger/messenger';
 import type { Clock } from './clock';
-import { requireAdmin } from './auth/admin-auth';
+import { onlyRol, requireAdmin } from './auth/admin-auth';
 import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
 import { Jobs } from './jobs/jobs';
 import { createKatalog } from './katalog/katalog';
+import { adminAuthRoutes } from './routes/admin-auth';
+import { adminKatalogRoutes } from './routes/admin-katalog';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
@@ -25,11 +27,10 @@ export interface AppDeps {
   /**
    * botApiSecret: shared secret apps/bot sends on /internal/bot/*.
    * aiApiKey: Bearer key of the AI-menejer for /ai/*; unset → /ai/* rejects everything.
-   * adminApiToken: temporary admin-panel token until #5 (login, roles); unset → /admin/api/* rejects everything.
    * miniAppLink: direct Mini App link (`https://t.me/<bot>/<app>`) «Ulashish» links are built on;
    *   unset → POST /api/ulashish answers 503.
    */
-  config: { botToken: string; botApiSecret: string; aiApiKey?: string; adminApiToken?: string; miniAppLink?: string };
+  config: { botToken: string; botApiSecret: string; aiApiKey?: string; miniAppLink?: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -48,7 +49,7 @@ declare module 'fastify' {
 export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const app = Fastify({
     logger: opts.logger
-      ? { redact: ['req.headers.authorization'] } // initData and the bot secret must not reach the logs
+      ? { redact: ['req.headers.authorization', 'req.headers.cookie'] } // initData, the bot secret and admin sessions must not reach the logs
       : false,
   });
 
@@ -65,6 +66,8 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.get('/health', async () => ({ ok: true }));
   app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish }), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
+  app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
+  app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
@@ -96,7 +99,8 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   );
   app.register(
     async (scope) => {
-      scope.addHook('preHandler', requireAdmin(deps.config.adminApiToken));
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
       await adminRassilkaRoutes(scope, deps);
     },
     { prefix: '/admin/api' },

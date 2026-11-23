@@ -19,9 +19,6 @@ export const TEST_AI_API_KEY = 'test-ai-api-key-0123456789';
 /** Direct Mini App link share links are built on. */
 export const TEST_MINIAPP_LINK = 'https://t.me/YangiHayotTestBot/app';
 
-/** Temporary admin-panel token (until #5) the test app accepts on /admin/api. */
-export const TEST_ADMIN_TOKEN = 'test-admin-token-0123456789abcdef';
-
 export interface TestApp {
   app: FastifyInstance;
   clock: FakeClock;
@@ -62,7 +59,6 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
         botToken: TEST_BOT_TOKEN,
         botApiSecret: TEST_BOT_API_SECRET,
         aiApiKey: TEST_AI_API_KEY,
-        adminApiToken: TEST_ADMIN_TOKEN,
         miniAppLink: TEST_MINIAPP_LINK,
       },
       db,
