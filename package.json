@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev:server": "pnpm --filter @yh/server dev",
+    "dev:bot": "pnpm --filter @yh/bot dev",
     "dev:miniapp": "pnpm --filter @yh/miniapp dev",
     "dev:admin": "pnpm --filter @yh/admin dev",
     "test": "pnpm -r --if-present test",

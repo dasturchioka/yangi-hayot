@@ -3,6 +3,8 @@
  * Types and constants only: no runtime dependencies.
  */
 
+export * from './bot';
+
 export const LANGS = ['ru', 'uz'] as const;
 export type Lang = (typeof LANGS)[number];
 
@@ -14,8 +16,17 @@ export interface MijozDto {
   lang: Lang;
 }
 
+/** Where the Mijoz came from: `src_<nomi>` tag name or «Telegram (to'g'ridan-to'g'ri)». */
+export interface ManbaDto {
+  /** First visit; never changes. */
+  first: string;
+  /** Latest tagged visit. */
+  last: string;
+}
+
 export interface MeResponse {
   mijoz: MijozDto;
+  manba: ManbaDto;
 }
 
 export interface ApiError {

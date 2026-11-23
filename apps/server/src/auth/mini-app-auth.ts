@@ -6,6 +6,8 @@ declare module 'fastify' {
   interface FastifyRequest {
     /** Set by `requireMiniAppUser` on Mini App routes. */
     telegramUser: TelegramUser;
+    /** initData `start_param` (Mini App opened with `startapp=`), if any. */
+    startParam: string | undefined;
   }
 }
 
@@ -16,6 +18,7 @@ declare module 'fastify' {
  */
 export function requireMiniAppUser(app: FastifyInstance, deps: { botToken: string; clock: Clock }) {
   app.decorateRequest('telegramUser', null as unknown as TelegramUser);
+  app.decorateRequest('startParam', undefined);
   app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
     const header = req.headers.authorization ?? '';
     const [scheme, initData] = [header.slice(0, 4), header.slice(4)];
@@ -28,5 +31,6 @@ export function requireMiniAppUser(app: FastifyInstance, deps: { botToken: strin
       return reply.code(401).send({ error: 'unauthorized' });
     }
     req.telegramUser = result.user;
+    req.startParam = result.startParam;
   });
 }

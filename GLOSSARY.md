@@ -42,6 +42,10 @@ _Avoid_: Dan narx, minimal narx, start narx
 Botga kirgan odam (bitta Telegram akkaunti).
 _Avoid_: Lid, foydalanuvchi, xaridor
 
+**Manba**:
+Mijoz qaysi reklama yoki kanaldan kelgani: `?start=src_<nomi>` belgisidagi nom, belgisiz — «Telegram (to'g'ridan-to'g'ri)». Har Mijozda birinchi (o'zgarmaydi) va oxirgi Manba.
+_Avoid_: Istochnik, source (tizim matnlarida), UTM
+
 **Ariza**:
 Mijozning bitta murojaati: forma, kviz, ko'rishga yozilish, kalkulyator hisobi, AI suhbati yoki «Menejer kerak».
 _Avoid_: Lid, zayavka, so'rov
