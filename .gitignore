@@ -1,0 +1,12 @@
+# Katta media (GitHub 100 MB limiti) — lokalda qoladi, alohida saqlanadi
+*.MP4
+*.mp4
+*.DNG
+*.dng
+
+# Lokal muhit
+.env
+.env.*
+node_modules/
+.DS_Store
+.scratch/
