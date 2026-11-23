@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { importLegacyBot } from '../src/kochirish/bot-import';
 import { setSetting } from '../src/settings/settings';
 import { botEvent } from './support/bot';
 import { blok, seedLoyiha } from './support/katalog';
-import { signInitData, tmaAuth } from './support/init-data';
+import { signInitData, tmaAuth, type TelegramTestUser } from './support/init-data';
 import { createTestApp, type TestApp } from './support/test-app';
 
 const aziz = { id: 700000001, first_name: 'Aziz', last_name: 'Karimov', username: 'aziz_k', language_code: 'uz' };
@@ -15,11 +16,11 @@ afterEach(async () => {
   await t.close();
 });
 
-function auth(user = aziz, startParam?: string) {
+function auth(user: TelegramTestUser = aziz, startParam?: string) {
   return tmaAuth(signInitData(user, { authDate: t.clock.now(), startParam }));
 }
 
-function postAriza(payload: Record<string, unknown>, user = aziz, startParam?: string) {
+function postAriza(payload: Record<string, unknown>, user: TelegramTestUser = aziz, startParam?: string) {
   return t.app.inject({ method: 'POST', url: '/api/arizalar', headers: auth(user, startParam), payload });
 }
 
@@ -184,7 +185,7 @@ describe('task deadline: 15 minutes of working time', () => {
 const GROUP = '-1001234567890';
 const ADMIN = '800000001';
 
-async function myArizalar(user = aziz) {
+async function myArizalar(user: TelegramTestUser = aziz) {
   const res = await t.app.inject({ method: 'GET', url: '/api/arizalar', headers: auth(user) });
   expect(res.statusCode).toBe(200);
   return res.json();
@@ -383,5 +384,68 @@ describe('Ariza module (other entry points)', () => {
     expect(t.crm.contacts).toEqual([expect.objectContaining({ telegramId: '700000001', phone: undefined })]);
     expect(t.crm.tasks).toEqual([expect.objectContaining({ kind: 'contact' })]);
     expect(t.crm.bitimlar[0]!.tags[0]).toBe('bot_human');
+  });
+});
+
+describe('«Ulashish» → Ariza (#16)', () => {
+  it('an Ariza from a shared link goes to amoCRM with Manba «mijoz ulashdi» and who shared it', async () => {
+    const { bloklar } = await seedLoyiha(t.db, { bloklar: [blok('A', [{ xonalar: 2, maydon: 54 }])] });
+    const planirovkaId = bloklar[0]!.planirovkalar[0]!.id;
+    const dilnoza = { id: 700000002, first_name: 'Dilnoza', language_code: 'uz' };
+
+    const share = await t.app.inject({ method: 'POST', url: '/api/ulashish', headers: auth(), payload: { planirovkaId } });
+    const startParam = new URL(share.json().url).searchParams.get('startapp')!;
+    await t.app.inject({ method: 'GET', url: '/api/me', headers: auth(dilnoza, startParam) });
+    const res = await postAriza({ name: 'Dilnoza', phone: '931112233', planirovkaId }, dilnoza, startParam);
+
+    expect(res.statusCode).toBe(201);
+    const bitim = t.crm.bitimlar[0]!;
+    expect(bitim.tags).toContain('mijoz ulashdi');
+    expect(bitim.manba).toBe('mijoz ulashdi');
+    expect(bitim.notes[0]).toContain('oxirgi — mijoz ulashdi');
+    expect(bitim.notes[0]).toContain(`Ulashgan: Aziz Karimov · @aziz_k · ID 700000001 (Planirovka #${planirovkaId})`);
+  });
+});
+
+describe('old bot data (#8)', () => {
+  const leads = [
+    {
+      id: 'L-1',
+      user_id: 700000001,
+      name: 'Aziz Karimov',
+      phone: '+998901234567',
+      type: 'form',
+      source: 'src_tg_ads',
+      amo_lead_id: 7770001,
+      amo_contact_id: 5550001,
+      created_at: '2026-10-01T09:30:00+05:00',
+    },
+  ];
+  const importOld = () =>
+    importLegacyBot(t.db, { leadsJsonl: leads.map((l) => JSON.stringify(l)).join('\n') }, t.clock.now());
+
+  it('old Arizalar show up among the Mijoz Arizalar and are never sent to amoCRM again', async () => {
+    await importOld();
+    await t.runJobs();
+    await t.runJobs(); // idempotent
+
+    const mine = await myArizalar();
+    expect(mine.arizalar).toEqual([expect.objectContaining({ tur: 'form', createdAt: '2026-10-01T04:30:00.000Z' })]);
+    expect(mine.kontakt.phone).toBe('+998901234567');
+    expect(t.crm.calls).toEqual([]);
+  });
+
+  it('a new Ariza joins the amoCRM contact and open Bitim the old bot made', async () => {
+    await importOld();
+    // amoCRM already has them; the contact has neither phone nor Telegram ID filled in
+    t.crm.contacts.push({ id: '5550001', name: 'Aziz' });
+    t.crm.bitimlar.push({ id: '7770001', contactId: '5550001', name: 'Aziz', open: true, tags: [], notes: [] });
+
+    await t.app.arizalar.create({ tur: 'human', telegramId: '700000001', name: 'Aziz' });
+
+    expect(t.crm.contacts).toHaveLength(1);
+    expect(t.crm.bitimlar).toHaveLength(1);
+    expect(t.crm.bitimlar[0]!.notes[0]).toContain('Telefon: +998901234567');
+    expect(t.crm.tasks).toEqual([expect.objectContaining({ bitimId: '7770001' })]);
   });
 });

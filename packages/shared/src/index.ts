@@ -1,9 +1,11 @@
 /**
  * Types shared by the server and the frontends (Mini App, admin-panel).
- * Types and constants only: no runtime dependencies.
+ * Types, constants and tiny pure helpers only: no runtime dependencies.
  */
 
 export * from './bot';
+export * from './start';
+import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
 export type Lang = (typeof LANGS)[number];
@@ -27,6 +29,8 @@ export interface ManbaDto {
 export interface MeResponse {
   mijoz: MijozDto;
   manba: ManbaDto;
+  /** Screen named by this launch's signed start parameter (e.g. a shared Planirovka), or null. */
+  start: StartDto | null;
 }
 
 export interface ApiError {
@@ -160,4 +164,45 @@ export interface ArizaDto {
 export interface ArizalarResponse {
   kontakt: { name: string; phone: string | null };
   arizalar: ArizaDto[];
+}
+
+// ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
+
+/** GET /api/sevimlilar: newest first; only Planirovkalar still in the katalog. */
+export interface SevimlilarResponse {
+  planirovkalar: PlanirovkaDto[];
+}
+
+/** At most this many Planirovkalar side by side in taqqoslash. */
+export const TAQQOSLASH_MAX = 3;
+
+/** One column of taqqoslash (no qavat: ADR 0001). */
+export interface TaqqoslashDto {
+  id: number;
+  loyihaNomi: string;
+  blokNomi: string;
+  nomi: string | null;
+  xonalar: number;
+  maydon: number;
+  /** UZS; null → «Narx so'rov bo'yicha». */
+  boshlangichNarx: number | null;
+  /** Boshlang'ich narx / maydon, whole so'm; null without a price. */
+  kvMetrNarxi: number | null;
+  /** Monthly muddatli to'lov, UZS. null until the kalkulyator settings (#12) exist. */
+  oylikTolov: number | null;
+  holat: PlanirovkaHolati;
+}
+
+/** GET /api/taqqoslash?ids=1,2,3: in the order asked; ids no longer in the katalog are left out. */
+export interface TaqqoslashResponse {
+  planirovkalar: TaqqoslashDto[];
+}
+
+/** POST /api/ulashish {planirovkaId}: a Mini App link to send into a Telegram chat. */
+export interface UlashishRequest {
+  planirovkaId: number;
+}
+export interface UlashishResponse {
+  /** `<MINIAPP_LINK>?startapp=pl<id>_u<n>`; opens that Planirovka in the Mini App. */
+  url: string;
 }

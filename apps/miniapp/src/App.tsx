@@ -5,10 +5,9 @@ import { I18nProvider, useT } from './i18n';
 import { ArizaScreen } from './ariza/ArizaScreen';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
 import { navigate, useRoute, type Route } from './router';
-import { getInitData, getStartApp, guessLang, setBackButton } from './telegram';
-
-// Opened from the bot's «Ariza qoldirish» button (startapp=ariza): start on the form.
-if (getStartApp() === 'ariza' && !window.location.hash) navigate({ name: 'ariza' });
+import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
+import { openStartScreen } from './start';
+import { getInitData, guessLang, setBackButton } from './telegram';
 
 export function App() {
   const inTelegram = Boolean(getInitData());
@@ -18,7 +17,14 @@ export function App() {
   // and already load the catalog in parallel.
   useEffect(() => {
     if (!inTelegram) return;
-    api.me().then(({ mijoz }) => setMijoz(mijoz), () => {});
+    openStartScreen(null); // instant: from the start parameter itself
+    api.me().then(
+      ({ mijoz, start }) => {
+        setMijoz(mijoz);
+        openStartScreen(start); // the server's reading wins if the first one missed
+      },
+      () => {},
+    );
   }, [inTelegram]);
 
   return (
@@ -59,5 +65,9 @@ function Screen({ route }: { route: Route }) {
       return <PlanirovkaScreen key={route.id} id={route.id} />;
     case 'ariza':
       return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
+    case 'sevimlilar':
+      return <SevimlilarScreen />;
+    case 'taqqoslash':
+      return <TaqqoslashScreen key={route.ids.join(',')} ids={route.ids} />;
   }
 }

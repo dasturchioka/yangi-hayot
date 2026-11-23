@@ -11,6 +11,7 @@ import { loadConfig } from './config';
 import { migrate } from './db/migrate';
 import { startRassilkaWorker } from './rassilka/worker';
 import { seedSettings } from './settings/settings';
+import { createBackups, pgDumper, startBackupSchedule } from './zaxira/zaxira';
 
 const config = loadConfig(process.env);
 const db = new pg.Pool({ connectionString: config.databaseUrl });
@@ -46,9 +47,26 @@ const rassilkaWorker = startRassilkaWorker(
   { onError: (e) => app.log.error(e, 'rassilka worker') },
 );
 
+let stopBackups = () => {};
+if (config.backup.dir) {
+  const backups = createBackups({
+    dir: config.backup.dir,
+    dumper: pgDumper({ databaseUrl: config.databaseUrl, binDir: config.backup.pgBinDir }),
+    clock: systemClock,
+    at: config.backup.at,
+  });
+  stopBackups = startBackupSchedule(backups, {
+    onBackup: (file) => app.log.info({ file }, 'database backup written'),
+    onError: (err) => app.log.error({ err }, 'database backup failed'),
+  });
+} else {
+  app.log.warn('BACKUP_DIR is not set: no daily database backup');
+}
+
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, async () => {
     stopJobs();
+    stopBackups();
     await rassilkaWorker.stop();
     await app.close();
     await db.end();

@@ -7,6 +7,7 @@ import { requireAdmin } from './auth/admin-auth';
 import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
+import { foldLegacyArizalar } from './ariza/legacy';
 import { Jobs } from './jobs/jobs';
 import { createKatalog } from './katalog/katalog';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
@@ -15,6 +16,9 @@ import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { miniAppRoutes } from './routes/mini-app';
+import { sevimlilarRoutes } from './routes/sevimlilar';
+import { createSevimlilar } from './sevimlilar/sevimlilar';
+import { createUlashish } from './ulashish/ulashish';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
 export interface AppDeps {
@@ -22,8 +26,10 @@ export interface AppDeps {
    * botApiSecret: shared secret apps/bot sends on /internal/bot/*.
    * aiApiKey: Bearer key of the AI-menejer for /ai/*; unset → /ai/* rejects everything.
    * adminApiToken: temporary admin-panel token until #5 (login, roles); unset → /admin/api/* rejects everything.
+   * miniAppLink: direct Mini App link (`https://t.me/<bot>/<app>`) «Ulashish» links are built on;
+   *   unset → POST /api/ulashish answers 503.
    */
-  config: { botToken: string; botApiSecret: string; aiApiKey?: string; adminApiToken?: string };
+  config: { botToken: string; botApiSecret: string; aiApiKey?: string; adminApiToken?: string; miniAppLink?: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -49,12 +55,15 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const katalog = createKatalog({ db: deps.db, clock: deps.clock });
   const jobs = new Jobs((name, err) => app.log.error({ err, job: name }, 'job failed'));
   const arizalar = createArizalar({ ...deps, log: app.log });
+  jobs.register('ariza-legacy', async () => void (await foldLegacyArizalar(deps.db)));
   jobs.register('ariza-crm-retry', () => arizalar.retryDue());
   app.decorate('jobs', jobs);
   app.decorate('arizalar', arizalar);
+  const sevimlilar = createSevimlilar({ db: deps.db, katalog });
+  const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
   app.get('/health', async () => ({ ok: true }));
-  app.register((scope) => miniAppRoutes(scope, deps), { prefix: '/api' });
+  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish }), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
   app.register(
     async (scope) => {
@@ -70,6 +79,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await arizaRoutes(scope, { db: deps.db, clock: deps.clock, arizalar });
     },
     { prefix: '/api/arizalar' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await sevimlilarRoutes(scope, { db: deps.db, clock: deps.clock, sevimlilar });
+    },
+    { prefix: '/api' },
   );
   app.register(
     async (scope) => {

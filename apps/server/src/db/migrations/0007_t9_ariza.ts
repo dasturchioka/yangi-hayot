@@ -6,6 +6,9 @@ import type { Migration } from './index';
  * The contact / Bitim / task IDs stay here: booking reschedule/cancel and
  * reports rely on them (8-bo'lim, 5-qoida).
  *
+ * Old-bot Arizalar (`legacy_ariza`, #8) are copied in by the job
+ * `ariza-legacy` (see ariza/legacy.ts), marked as already sent.
+ *
  * Also: the Mijoz's phone (form prefill), the Loyiha mas'ul in amoCRM, and the
  * amoCRM OAuth tokens (only when OAuth is used instead of a long-lived token).
  */
@@ -47,7 +50,9 @@ export const m0007_t9_ariza: Migration = {
       crm_task_id         text,
       crm_sent_at         timestamptz,
       -- managers group was told about the CRM failure
-      group_notified      boolean NOT NULL DEFAULT false
+      group_notified      boolean NOT NULL DEFAULT false,
+      -- Ariza carried over from the old bot (#8); never sent to the CRM again
+      legacy_ariza_id     integer UNIQUE REFERENCES legacy_ariza(id) ON DELETE SET NULL
     );
     CREATE INDEX ariza_mijoz ON ariza (mijoz_id, created_at);
     CREATE INDEX ariza_crm_due ON ariza (crm_next_attempt_at) WHERE crm_status = 'pending';

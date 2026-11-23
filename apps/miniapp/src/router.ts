@@ -6,6 +6,8 @@ export type Route =
   | { name: 'loyiha'; id: number }
   | { name: 'planirovkalar'; loyihaId: number }
   | { name: 'planirovka'; id: number }
+  | { name: 'sevimlilar' }
+  | { name: 'taqqoslash'; ids: number[] }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
   | { name: 'ariza'; loyihaId?: number; planirovkaId?: number };
 
@@ -23,6 +25,11 @@ export function parseRoute(hash: string): Route {
     return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
   }
   if (parts[0] === 'planirovka' && id > 0) return { name: 'planirovka', id };
+  if (parts[0] === 'sevimlilar') return { name: 'sevimlilar' };
+  if (parts[0] === 'taqqoslash') {
+    const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
+    if (ids.length > 0) return { name: 'taqqoslash', ids };
+  }
   return { name: 'loyihalar' };
 }
 
@@ -43,6 +50,10 @@ export function href(route: Route): string {
       const qs = q.toString();
       return qs ? `#/ariza?${qs}` : '#/ariza';
     }
+    case 'sevimlilar':
+      return '#/sevimlilar';
+    case 'taqqoslash':
+      return `#/taqqoslash/${route.ids.join(',')}`;
   }
 }
 

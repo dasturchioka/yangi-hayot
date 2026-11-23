@@ -30,15 +30,6 @@ export function getInitData(): string {
   return import.meta.env.VITE_DEV_INIT_DATA || webApp()?.initData || '';
 }
 
-/**
- * Screen the Mini App was opened for: `startapp=` of a web_app button (bot
- * buttons put it in the URL) or of a t.me link (initData start_param).
- */
-export function getStartApp(): string {
-  const fromUrl = new URLSearchParams(window.location.search).get('startapp');
-  return fromUrl ?? webApp()?.initDataUnsafe.start_param ?? '';
-}
-
 /** Language to show before the server answers. */
 export function guessLang(): Lang {
   return webApp()?.initDataUnsafe.user?.language_code?.startsWith('uz') ? 'uz' : 'ru';
@@ -75,4 +66,24 @@ export function setBackButton(onBack: (() => void) | null): () => void {
   bb.show();
   bb.onClick(onBack);
   return () => bb.offClick(onBack);
+}
+
+/**
+ * The launch's `startapp` parameter. Direct links (`t.me/<bot>/<app>?startapp=`)
+ * put it in initData (signed, also seen by the server); the bot's web_app
+ * buttons (#7) pass it as `?startapp=` in the page URL instead.
+ */
+export function getStartParam(): string {
+  const fromInitData = webApp()?.initDataUnsafe.start_param;
+  if (fromInitData) return fromInitData;
+  const q = new URLSearchParams(window.location.search);
+  return q.get('startapp') ?? q.get('tgWebAppStartParam') ?? '';
+}
+
+/** Opens Telegram's «send to chat» picker with this link and text. */
+export function shareToChat(url: string, text: string): void {
+  const share = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  const w = webApp();
+  if (w?.openTelegramLink) w.openTelegramLink(share);
+  else window.open(share, '_blank', 'noopener');
 }

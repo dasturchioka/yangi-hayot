@@ -4,7 +4,9 @@ import type { Crm } from '../adapters/crm/crm';
 import { CrmAuthError } from '../adapters/crm/crm';
 import type { Messenger } from '../adapters/messenger/messenger';
 import type { Clock } from '../clock';
+import { SHARED_MANBA } from '../mijoz/manba';
 import { getSetting, setSetting } from '../settings/settings';
+import { knownCrmContact, knownPhone } from './legacy';
 import { arizaNote, type ArizaKontekst } from './note';
 import { ARIZA_TURI, TASK_TEXT } from './turlar';
 import { addWorkingMinutes } from './working-hours';
@@ -119,8 +121,9 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       const m = mijoz.rows[0];
       if (!m) throw new Error(`Ariza for unknown Mijoz ${input.telegramId}`);
       const kontekst = await loadKontekst(db, input.loyihaId ?? null, input.planirovkaId ?? null);
-      const izoh = input.izoh ?? [];
-      const phone = input.phone ?? null;
+      const manba = input.manba ?? m.last_source;
+      const izoh = [...(manba === SHARED_MANBA ? await sharerLines(db, input.telegramId) : []), ...(input.izoh ?? [])];
+      const phone = input.phone ?? (await knownPhone(db, input.telegramId));
 
       const repeat = await db.query<{ id: number }>(
         `SELECT id FROM ariza
@@ -158,7 +161,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           phone,
           m.lang,
           m.first_source,
-          input.manba ?? m.last_source,
+          manba,
           kontekst?.loyiha.id ?? null,
           kontekst?.planirovka?.id ?? null,
           kontekst ? JSON.stringify(kontekst) : null,
@@ -185,13 +188,13 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
     try {
       let contactId = row.crm_contact_id;
       if (!contactId) {
-        const found =
-          (row.phone ? await crm.findContact({ phone: row.phone }) : null) ??
-          (await crm.findContact({ telegramId: row.mijoz_id }));
-        contactId = (
-          found ??
-          (await crm.createContact({ name: row.name, phone: row.phone ?? undefined, telegramId: row.mijoz_id }))
-        ).id;
+        // 8-bo'lim, 1-qoida: by phone, then by Telegram ID — first the contact the
+        // bot database already links to this Mijoz (incl. the old bot), then the CRM's own field.
+        contactId =
+          (row.phone ? (await crm.findContact({ phone: row.phone }))?.id : undefined) ??
+          (await knownCrmContact(db, row.mijoz_id)) ??
+          (await crm.findContact({ telegramId: row.mijoz_id }))?.id ??
+          (await crm.createContact({ name: row.name, phone: row.phone ?? undefined, telegramId: row.mijoz_id })).id;
         await db.query('UPDATE ariza SET crm_contact_id = $2 WHERE id = $1', [id, contactId]);
       }
 
@@ -342,6 +345,20 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
   }
 
   return { create, ofMijoz, crmIds, retryDue };
+}
+
+/** «mijoz ulashdi»: who shared the link that brought this Mijoz (#16), for the note. */
+async function sharerLines(db: pg.Pool, telegramId: string): Promise<string[]> {
+  const { rows } = await db.query<{ name: string; username: string | null; sharer: string; planirovka_id: number }>(
+    `SELECT s.name, s.username, s.telegram_id::text AS sharer, u.planirovka_id
+       FROM mijoz m JOIN ulashish u ON u.id = m.last_ulashish_id JOIN mijoz s ON s.telegram_id = u.mijoz_id
+      WHERE m.telegram_id = $1`,
+    [telegramId],
+  );
+  const r = rows[0];
+  if (!r) return [];
+  const who = [r.name, r.username ? `@${r.username}` : null, `ID ${r.sharer}`].filter(Boolean).join(' · ');
+  return [`Ulashgan: ${who} (Planirovka #${r.planirovka_id})`];
 }
 
 function bitimName(row: Row): string {

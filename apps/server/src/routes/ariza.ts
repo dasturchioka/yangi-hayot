@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Arizalar } from '../ariza/ariza';
 import { ArizaKontekstError, ArizaRateLimitError } from '../ariza/ariza';
+import { knownPhone } from '../ariza/legacy';
 import { normalizePhone } from '../ariza/phone';
 import type { Clock } from '../clock';
 import { manbaFromStartParam } from '../mijoz/manba';
@@ -50,11 +51,8 @@ export async function arizaRoutes(app: FastifyInstance, deps: { db: pg.Pool; clo
 
   app.get('/', async (req): Promise<ArizalarResponse> => {
     const mijoz = await ensureMijoz(deps.db, req.telegramUser, deps.clock.now());
-    const { rows } = await deps.db.query<{ phone: string | null }>('SELECT phone FROM mijoz WHERE telegram_id = $1', [
-      mijoz.telegramId,
-    ]);
     return {
-      kontakt: { name: mijoz.name, phone: rows[0]?.phone ?? null },
+      kontakt: { name: mijoz.name, phone: await knownPhone(deps.db, mijoz.telegramId) },
       arizalar: await deps.arizalar.ofMijoz(mijoz.telegramId),
     };
   });
