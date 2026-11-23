@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.claude
+assets
+*.pdf
+*.MP4
+*.mp4
+**/.env
+deploy/*.env
+deploy/backups
