@@ -9,6 +9,7 @@ import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
 import { Jobs } from './jobs/jobs';
+import { createKalkulyator } from './kalkulyator/kalkulyator';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminKatalogRoutes } from './routes/admin-katalog';
@@ -18,6 +19,7 @@ import { adminTaklifRoutes } from './routes/admin-taklif';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
+import { adminKalkulyatorRoutes, kalkulyatorRoutes } from './routes/kalkulyator';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { kvizRoutes } from './routes/kviz';
 import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
@@ -66,6 +68,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   jobs.register('ariza-crm-retry', () => arizalar.retryDue());
   app.decorate('jobs', jobs);
   app.decorate('arizalar', arizalar);
+  const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
@@ -132,6 +135,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       requireAdmin(scope, deps);
       scope.addHook('preHandler', onlyRol('administrator'));
       await adminRassilkaRoutes(scope, deps);
+      await adminKalkulyatorRoutes(scope, deps);
       await adminTaklifRoutes(scope, taklif);
     },
     { prefix: '/admin/api' },
@@ -143,6 +147,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await adminKvizRoutes(scope, deps, katalog);
     },
     { prefix: '/admin/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await kalkulyatorRoutes(scope, { ...deps, kalkulyator });
+    },
+    { prefix: '/api' },
   );
 
   return app;

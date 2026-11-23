@@ -9,6 +9,9 @@ import type {
   PlanirovkaFiltr,
   PlanirovkalarResponse,
   Shahar,
+  KalkulyatorArizaRequest,
+  KalkulyatorHisobRequest,
+  KalkulyatorResponse,
   Lang,
   LoyihaResponse,
   LoyihalarResponse,
@@ -90,6 +93,12 @@ export const api = {
   kviz: (body: KvizRequest) => apiSend<KvizResponse>('POST', '/kviz', body),
   /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
   kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
+  /** Muddatli to'lov terms and banks: changed by admins, so cached like the katalog. */
+  kalkulyator: () => cachedGet<KalkulyatorResponse>('/kalkulyator'),
+  /** «Hisobladi» (dojim #17, Daraja #18). Fire and forget. */
+  kalkulyatorHisob: (body: KalkulyatorHisobRequest) => apiSend('POST', '/kalkulyator/hisob', body),
+  /** «Hisobni menejerga yuborish»: 400 = bad phone or input outside the settings, 429 = too many Arizalar. */
+  kalkulyatorAriza: (body: KalkulyatorArizaRequest) => apiSend<ArizaCreatedResponse>('POST', '/kalkulyator/ariza', body),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
   /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
   taklif: () => apiGet<TaklifResponse>('/taklif'),

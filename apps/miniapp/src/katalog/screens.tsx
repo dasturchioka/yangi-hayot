@@ -313,7 +313,10 @@ export function PlanirovkaScreen({ id }: { id: number }) {
           {p.holat === 'band' && <p className="note note-band">{t('holat.bandHint')}</p>}
           <VideoButton video={p.video} />
           {p.holat !== 'sotilgan' && (
-            <div className="sticky-actions">
+            <div className="sticky-actions actions-split">
+              <a className="button-secondary" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
+                {t('kalk.hisoblash')}
+              </a>
               <ArizaButton planirovkaId={p.id} />
             </div>
           )}

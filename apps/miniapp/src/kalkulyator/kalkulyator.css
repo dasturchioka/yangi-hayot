@@ -1,0 +1,347 @@
+/* ---- To'lov kalkulyatori (#12): UI kit p.10 «Ipoteka kalkulyatori» ---- */
+
+.kalk {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kalk-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.kalk-label {
+  padding: 0;
+  font: var(--yh-caption);
+  font-weight: 600;
+  color: var(--yh-ink-2);
+}
+
+.kalk-value {
+  font: var(--yh-caption);
+  font-weight: 700;
+  color: var(--yh-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Number field with a unit on the right: filled surface, focus → green outline on white (like .input) */
+.kalk-input {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+  height: var(--yh-button-h);
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.kalk-input:focus-within {
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+}
+.kalk-input:has(input[aria-invalid='true']) {
+  border-color: var(--yh-status-error-fg);
+  background: var(--yh-bg);
+}
+.kalk-input input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--yh-ink);
+  caret-color: var(--yh-primary);
+  font: var(--yh-title);
+  /* 16px+: iOS does not zoom on focus */
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.kalk-input input::placeholder {
+  color: var(--yh-muted);
+  opacity: 0.7;
+  font-weight: 400;
+}
+.kalk-input-lg {
+  height: 64px;
+}
+.kalk-input-lg input {
+  font: var(--yh-h2);
+  letter-spacing: -0.01em;
+}
+.kalk-input-sm {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+}
+.kalk-input-sm input {
+  font-weight: 600;
+}
+.kalk-suffix {
+  flex: none;
+  font: var(--yh-body);
+  color: var(--yh-muted);
+}
+
+/* Range: green fill up to the thumb, white thumb with a green ring (kit) */
+.kalk-range {
+  --fill: 0%;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.kalk-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--yh-radius-pill);
+  background: linear-gradient(to right, var(--yh-primary) var(--fill), var(--yh-line) var(--fill));
+}
+.kalk-range::-moz-range-track {
+  height: 6px;
+  border-radius: var(--yh-radius-pill);
+  background: linear-gradient(to right, var(--yh-primary) var(--fill), var(--yh-line) var(--fill));
+}
+.kalk-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -11px;
+  border: 3px solid var(--yh-primary);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  box-shadow: 0 2px 6px rgba(11, 61, 42, 0.18);
+  transition: transform 160ms var(--yh-ease-out);
+}
+.kalk-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--yh-primary);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  box-shadow: 0 2px 6px rgba(11, 61, 42, 0.18);
+}
+.kalk-range:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+.kalk-range:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 4px;
+  border-radius: var(--yh-radius-pill);
+}
+.kalk-range:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Muddat chips: outlined pills that fill green when chosen (kit) */
+.kalk-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  gap: var(--yh-space-8);
+}
+.kalk-chip {
+  height: 48px;
+  padding: 0 8px;
+  border: 1.5px solid var(--yh-line);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--yh-ease-out),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.kalk-chip.active {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.kalk-chip:active {
+  transform: scale(0.96);
+}
+.kalk .chip,
+.kalk .segmented button {
+  transition:
+    transform 160ms var(--yh-ease-out),
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.kalk .chip:active {
+  transform: scale(0.96);
+}
+.kalk-chip:focus-visible,
+.kalk .chip:focus-visible,
+.kalk .segmented button:focus-visible,
+.kalk-link:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+/* Few banks: wrap instead of a sideways scroll, so the chosen one is never cut off */
+.chips.kalk-wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+.segmented-sm button {
+  height: 36px;
+  font: var(--yh-caption);
+  font-weight: 600;
+}
+
+/* Result: the dark «barg» card of the kit — the one place the screen raises its voice */
+.kalk-natija {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+  padding: 22px 22px 20px;
+  border-radius: var(--yh-radius-card) var(--yh-radius-card) var(--yh-radius-card) 6px;
+  background: var(--yh-ink);
+  color: var(--yh-on-primary);
+  box-shadow: 0 10px 28px rgba(11, 61, 42, 0.18);
+}
+.kalk-natija p {
+  margin: 0;
+}
+.kalk-natija-label {
+  font: var(--yh-caption);
+  color: #b9d6c6;
+}
+.kalk-natija-big {
+  font: 700 32px/38px var(--yh-font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.kalk-natija-sub {
+  font: var(--yh-caption);
+  color: #d6e8de;
+  font-variant-numeric: tabular-nums;
+}
+.kalk-natija-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px var(--yh-space-12);
+  margin: 14px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.kalk-natija-grid div {
+  min-width: 0;
+}
+.kalk-natija-grid dt {
+  font: var(--yh-caption);
+  color: #b9d6c6;
+}
+.kalk-natija-grid dd {
+  margin: 2px 0 0;
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.kalk-natija-empty {
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  box-shadow: none;
+}
+.kalk-natija-empty .kalk-natija-label,
+.kalk-natija-empty .caption {
+  color: var(--yh-muted);
+}
+.kalk-natija-empty .kalk-natija-big {
+  color: var(--yh-muted);
+}
+
+.kalk-oferta {
+  margin-top: calc(-1 * var(--yh-space-8));
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Send step: the hisob being sent, with a way back to change it */
+.kalk-xulosa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+}
+.kalk-xulosa .caption {
+  color: var(--yh-ink-2);
+}
+.kalk-xulosa .title {
+  font-variant-numeric: tabular-nums;
+}
+.kalk-link {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--yh-primary);
+  font: var(--yh-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Groups that appear when the mode changes (bank, sxema, own stavka) and the send step:
+   a short settle from 6px below instead of popping in. Occasional, so it may move. */
+.kalk-enter {
+  transition:
+    opacity 220ms var(--yh-ease-out),
+    transform 220ms var(--yh-ease-out);
+}
+@starting-style {
+  .kalk-enter {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kalk-enter {
+    transition: opacity 160ms ease;
+  }
+  @starting-style {
+    .kalk-enter {
+      transform: none;
+    }
+  }
+  .kalk-chip,
+  .kalk .chip,
+  .kalk-range::-webkit-slider-thumb {
+    transition: none;
+  }
+}

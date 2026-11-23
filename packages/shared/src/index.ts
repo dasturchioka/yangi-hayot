@@ -5,6 +5,7 @@
 
 export * from './bot';
 export * from './start';
+export * from './kalkulyator';
 export * from './kontent';
 import type { StartDto } from './start';
 
@@ -363,7 +364,7 @@ export interface TaqqoslashDto {
   boshlangichNarx: number | null;
   /** Boshlang'ich narx / maydon, whole so'm; null without a price. */
   kvMetrNarxi: number | null;
-  /** Monthly muddatli to'lov, UZS. null until the kalkulyator settings (#12) exist. */
+  /** Typical monthly payment (namunaviyOylik: muddatli to'lov, else first bank annuitet), UZS; null without a price. */
   oylikTolov: number | null;
   holat: PlanirovkaHolati;
 }

@@ -11,14 +11,15 @@ let opened = false;
  * reading from /api/me.
  *
  * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka; the bot's
- * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form.
+ * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form; `kalkulyator` (#12) → the calculator.
  * TODO(#11): 'booking' once its screen exists.
  */
 export function openStartScreen(fromServer: StartDto | null): void {
   if (opened) return;
-  if (getStartParam() === 'ariza') {
+  const param = getStartParam();
+  if (param === 'ariza' || param === 'kalkulyator') {
     opened = true;
-    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: 'ariza' });
+    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: param });
     return;
   }
   const link = parseUlashishParam(getStartParam());

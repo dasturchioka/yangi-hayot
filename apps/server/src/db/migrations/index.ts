@@ -7,6 +7,7 @@ import { m0006_t16_sevimli } from './0006_t16_sevimli';
 import { m0007_t5_admin } from './0007_t5_admin';
 import { m0008_t9_ariza } from './0008_t9_ariza';
 import { m0009_t19_taklif } from './0009_t19_taklif';
+import { m0010_t12_kalkulyator } from './0010_t12_kalkulyator';
 
 export interface Migration {
   /** Unique, sortable: `NNNN_short_name`. */
@@ -25,4 +26,5 @@ export const migrations: Migration[] = [
   m0007_t5_admin,
   m0008_t9_ariza,
   m0009_t19_taklif,
+  m0010_t12_kalkulyator,
 ];

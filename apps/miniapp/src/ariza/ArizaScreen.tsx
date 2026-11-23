@@ -146,7 +146,8 @@ export function ArizaScreen({ loyihaId, planirovkaId }: { loyihaId?: number; pla
   );
 }
 
-function Sent() {
+/** «Ariza qabul qilindi» (kit pattern); other Ariza entry points (kalkulyator) reuse it with their own text. */
+export function Sent({ text }: { text?: string }) {
   const t = useT();
   return (
     <div className="ariza-done" role="status">
@@ -158,7 +159,7 @@ function Sent() {
         </span>
       </div>
       <h1 className="h2">{t('ariza.sent.title')}</h1>
-      <p className="body-text muted">{t('ariza.sent.text')}</p>
+      <p className="body-text muted">{text ?? t('ariza.sent.text')}</p>
       <div className="sticky-actions">
         <a className="button-primary" href={href({ name: 'loyihalar' })}>
           {t('ariza.sent.back')}
@@ -175,7 +176,7 @@ interface KontekstView {
 }
 
 /** What the Ariza is about: a card like the booking screen's (from the katalog cache). */
-function Kontekst({ loyihaId, planirovkaId }: { loyihaId?: number; planirovkaId?: number }) {
+export function Kontekst({ loyihaId, planirovkaId }: { loyihaId?: number; planirovkaId?: number }) {
   const t = useT();
   const lang = useLang();
   const [view, setView] = useState<KontekstView | null>(null);

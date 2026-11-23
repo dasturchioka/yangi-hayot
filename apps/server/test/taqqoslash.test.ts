@@ -52,7 +52,7 @@ describe('GET /api/taqqoslash', () => {
         maydon: 75.5,
         boshlangichNarx: 600_000_000,
         kvMetrNarxi: 7_947_020,
-        oylikTolov: null,
+        oylikTolov: 17_500_000, // default muddatli: 30%, 24 oy, ustama 0 → 420 000 000 / 24
         holat: 'band',
       },
       {
@@ -64,7 +64,7 @@ describe('GET /api/taqqoslash', () => {
         maydon: 50,
         boshlangichNarx: 400_000_000,
         kvMetrNarxi: 8_000_000,
-        oylikTolov: null,
+        oylikTolov: 11_666_667, // 280 000 000 / 24
         holat: 'sotuvda',
       },
       {
