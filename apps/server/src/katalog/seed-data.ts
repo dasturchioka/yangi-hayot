@@ -181,12 +181,25 @@ const navoiy = (
   tartib,
   manzil: m('Navoiy shahri', 'г. Навои'),
   fotolar: fotolar.map((f) => `/media/loyiha/navoiy/${f}.webp`),
-  ...(demo ? { qavatlarSoni: demo.qavatlar, qisqaTavsif: demo.qisqa, bloklar: demo.bloklar } : {}),
+  ...(demo
+    ? {
+        qavatlarSoni: demo.qavatlar,
+        qisqaTavsif: demo.qisqa,
+        tavsif: m(
+          `Navoiy shahridagi ${demo.qavatlar} qavatli turar-joy majmuasi. Xonadonlar ta'mir bilan topshiriladi.`,
+          `Жилой комплекс в Навои, ${demo.qavatlar} этажей. Квартиры сдаются с ремонтом.`,
+        ),
+        bloklar: demo.bloklar,
+      }
+    : {}),
 });
 
 /** Drops the DEMO Bloklar of Loyihalar whose real Planirovkalar come from the old bot (import:legacy). */
-const withoutDemoBloklar = (l: LoyihaInput): LoyihaInput =>
-  l.slug === 'jozibali-maskan' ? l : { ...l, bloklar: [], qavatlarSoni: l.slug === 'sayhun' ? null : l.qavatlarSoni };
+const withoutDemoBloklar = (l: LoyihaInput): LoyihaInput => {
+  if (l.slug === 'jozibali-maskan') return l;
+  if (l.shahar === 'navoiy') return { ...l, bloklar: [], qavatlarSoni: null, qisqaTavsif: null, tavsif: null };
+  return { ...l, bloklar: [], qavatlarSoni: null };
+};
 
 const TAYYOR = m("Ta'mir bilan topshiriladi", 'Сдаётся с ремонтом');
 
