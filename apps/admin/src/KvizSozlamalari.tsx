@@ -77,8 +77,8 @@ export function KvizSozlamalariScreen() {
   return (
     <div className="stack wide">
       <header>
-        <h1 className="h2">Matnlar va sozlamalar</h1>
-        <p className="muted">«Xonadon tanlash» kvizi: «Byudjetingiz qancha?» savoliga javob variantlari</p>
+        <h2 className="title">«Xonadon tanlash» kvizi: byudjet oraliqlari</h2>
+        <p className="muted small">«Byudjetingiz qancha?» savoliga javob variantlari</p>
       </header>
       {error && <p className="error">{error}</p>}
       {data && (

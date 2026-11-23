@@ -4,11 +4,13 @@ import { api } from './api';
 import { I18nProvider, useT } from './i18n';
 import { ArizaScreen } from './ariza/ArizaScreen';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
+import { BizHaqimizdaScreen, SotibOlishScreen } from './kontent/screens';
 import { navigate, useRoute, type Route } from './router';
 import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
 import { KvizScreen } from './kviz/KvizScreen';
 import { TanlashScreen } from './tanlash/TanlashScreen';
 import { openStartScreen } from './start';
+import { TaklifScreen } from './taklif/TaklifScreen';
 import { getInitData, guessLang, setBackButton } from './telegram';
 
 export function App() {
@@ -75,5 +77,11 @@ function Screen({ route }: { route: Route }) {
       return <TanlashScreen route={route} />;
     case 'kviz':
       return <KvizScreen qadam={route.qadam} />;
+    case 'sotibOlish':
+      return <SotibOlishScreen />;
+    case 'bizHaqimizda':
+      return <BizHaqimizdaScreen />;
+    case 'taklif':
+      return <TaklifScreen />;
   }
 }

@@ -1,4 +1,5 @@
 import type {
+  KontentResponse,
   ArizaCreatedResponse,
   ArizaFormRequest,
   ArizalarResponse,
@@ -14,6 +15,7 @@ import type {
   MeResponse,
   PlanirovkaResponse,
   SevimlilarResponse,
+  TaklifResponse,
   TaqqoslashResponse,
   UlashishResponse,
 } from '@yh/shared';
@@ -86,5 +88,9 @@ export const api = {
   filtr: (shahar?: Shahar) => cachedGet<FiltrVariantlariResponse>(`/katalog/filtr${shahar ? `?shahar=${shahar}` : ''}`),
   /** Last kviz step: 400 = bad answers/phone, 429 = too many Arizalar. */
   kviz: (body: KvizRequest) => apiSend<KvizResponse>('POST', '/kviz', body),
+  /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
+  kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
+  /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
+  taklif: () => apiGet<TaklifResponse>('/taklif'),
 };

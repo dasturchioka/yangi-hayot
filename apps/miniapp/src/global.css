@@ -822,3 +822,283 @@ a {
   color: var(--yh-status-free-fg);
   font-weight: 600;
 }
+
+/* ---- «Do'stingni taklif qil» (#19, kit screen 18) ---- */
+.taklif {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--yh-space-20);
+}
+
+.taklif-title {
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Dark ink card with the «barg» leaf in the corner, as in the kit */
+.taklif-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 24px var(--yh-space-20);
+  padding-right: 104px;
+  border-radius: 28px 28px 28px 8px;
+  background: var(--yh-ink);
+  color: var(--yh-on-primary);
+}
+
+.taklif-hero-leaf {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 0 0 0 40px;
+  background: var(--yh-primary);
+}
+
+.taklif-hero-leaf > span {
+  width: 48px;
+  height: 40px;
+  border-radius: 16px 6px 16px 6px;
+  background: var(--yh-brand);
+  transform-origin: 30% 70%;
+  animation: leaf-in 520ms 120ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.taklif-hero-title {
+  margin: 0;
+  font: var(--yh-h2);
+  text-wrap: balance;
+}
+
+.taklif-hero-note {
+  margin: var(--yh-space-8) 0 0;
+  font: var(--yh-caption);
+  /* tinted from the card, not grey */
+  color: rgb(255 255 255 / 0.78);
+}
+
+.taklif-label {
+  margin: 0 0 var(--yh-space-8);
+  font: var(--yh-title);
+  color: var(--yh-ink-2);
+}
+
+.taklif-link {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+  min-height: 56px;
+  padding: 6px 6px 6px 16px;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+}
+
+.taklif-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* «Nusxa» → «Nusxalandi»: both labels share one grid cell, so the width never jumps */
+.taklif-copy {
+  flex: none;
+  display: grid;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--yh-bg);
+  color: var(--yh-primary);
+  font: var(--yh-title);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(11 61 42 / 0.06);
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 200ms ease,
+    color 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.taklif-copy:active {
+  transform: scale(0.96);
+}
+
+.taklif-copy > span {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yh-space-4);
+  transition:
+    opacity 200ms ease,
+    filter 200ms ease,
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.taklif-copy-done,
+.taklif-copy[data-copied='true'] .taklif-copy-label {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.92);
+}
+
+.taklif-copy[data-copied='true'] {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+
+.taklif-copy[data-copied='true'] .taklif-copy-done {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+.taklif-copy:focus-visible,
+.taklif-send:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+.taklif-soni {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: var(--yh-space-12);
+  padding: var(--yh-space-20);
+  border-radius: 20px;
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+
+.taklif-soni b {
+  font: 700 34px/1 var(--yh-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.taklif-soni > span {
+  font: var(--yh-title);
+}
+
+.taklif-soni .caption {
+  grid-column: 1 / -1;
+  margin: var(--yh-space-8) 0 0;
+  color: var(--yh-ink-2);
+}
+
+.taklif-how .h3 {
+  margin: 0 0 var(--yh-space-12);
+}
+
+.taklif-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taklif-steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.taklif-step-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px 4px 10px 4px;
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.taklif-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+
+.taklif-skeleton span {
+  height: 18px;
+  width: 40%;
+  border-radius: 8px;
+  background: var(--yh-surface);
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+.taklif-skeleton span:nth-child(2) {
+  width: 100%;
+  height: 60px;
+  border-radius: var(--yh-radius-control);
+}
+
+.taklif-skeleton span:nth-child(3) {
+  width: 100%;
+  height: 74px;
+  border-radius: 20px;
+}
+
+.taklif-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+
+/* Entry: one short cascade on open (a rare screen), never blocking taps */
+.taklif > * {
+  animation: rise 360ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.taklif > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.taklif > :nth-child(3),
+.taklif > :nth-child(4) {
+  animation-delay: 80ms;
+}
+.taklif > :nth-child(5) {
+  animation-delay: 120ms;
+}
+.taklif > .sticky-actions {
+  animation: none;
+}
+
+@keyframes leaf-in {
+  from {
+    opacity: 0;
+    transform: rotate(-18deg) scale(0.8);
+  }
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taklif > * {
+    animation: fade 200ms ease both;
+  }
+  .taklif-hero-leaf > span,
+  .taklif-skeleton span {
+    animation: none;
+  }
+  .taklif-copy > span {
+    transform: none !important;
+  }
+}

@@ -3,16 +3,19 @@ import { useEffect, useState } from 'react';
 import { adminApi, onUnauthorized } from './api';
 import { ROL_LABEL } from './format';
 import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
+import { ImportScreen } from './Import';
 import { JurnalScreen } from './Jurnal';
 import { KvizSozlamalariScreen } from './KvizSozlamalari';
 import { LoginScreen } from './Login';
 import { LoyihalarScreen } from './Loyihalar';
+import { MatnlarScreen } from './Matnlar';
 import { RassilkaScreen } from './Rassilka';
+import { TakliflarScreen } from './Takliflar';
 import { XonadonlarScreen } from './Xonadonlar';
 
 /**
  * Admin-panel shell: login, then sections by rol. Administrator sees
- * everything; Menejer — Xonadonlar (moving counts), Yozilishlar and the Jurnal.
+ * everything; Menejer — Xonadonlar (moving counts), Import (#6), Yozilishlar and the Jurnal.
  * The server enforces the same rules; hiding here is only convenience.
  */
 interface Section {
@@ -23,12 +26,23 @@ interface Section {
 
 const SECTIONS: Section[] = [
   { name: 'Xonadonlar', rollar: ['administrator', 'menejer'], render: (a) => <XonadonlarScreen admin={a} /> },
+  { name: 'Import', rollar: ['administrator', 'menejer'], render: () => <ImportScreen /> },
   { name: 'Loyihalar', rollar: ['administrator'], render: () => <LoyihalarScreen /> },
   { name: 'Yozilishlar', rollar: ['administrator', 'menejer'] },
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
+  { name: 'Takliflar', rollar: ['administrator'], render: () => <TakliflarScreen /> },
   { name: 'Analitika', rollar: ['administrator'] },
-  { name: 'Matnlar va sozlamalar', rollar: ['administrator'], render: () => <KvizSozlamalariScreen /> },
+  {
+    name: 'Matnlar va sozlamalar',
+    rollar: ['administrator'],
+    render: () => (
+      <>
+        <MatnlarScreen />
+        <KvizSozlamalariScreen />
+      </>
+    ),
+  },
   { name: 'Foydalanuvchilar', rollar: ['administrator'], render: (a) => <FoydalanuvchilarScreen me={a} /> },
 ];
 

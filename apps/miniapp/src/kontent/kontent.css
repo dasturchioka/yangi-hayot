@@ -1,0 +1,348 @@
+/* ---- Kontent: «Qanday sotib olish», «Biz haqimizda», aloqa (#13) ---- */
+.balance {
+  text-wrap: balance;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.kontent-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+  margin-top: var(--yh-space-20);
+}
+.kontent-section > .h3 {
+  margin: 0;
+}
+
+/* Home entry rows */
+.kontent-links {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+.kontent-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 64px;
+  padding: var(--yh-space-12) var(--yh-space-20);
+  color: var(--yh-ink);
+}
+.kontent-link + .kontent-link {
+  border-top: 1px solid var(--yh-line);
+}
+.kontent-link > span {
+  display: flex;
+  flex-direction: column;
+}
+.kontent-link svg {
+  flex: none;
+  color: var(--yh-primary);
+}
+
+/* Stages: numbered because the order is the content */
+.steps {
+  list-style: none;
+  margin: var(--yh-space-8) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: var(--yh-space-12);
+  padding-bottom: var(--yh-space-20);
+}
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 38px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--yh-line);
+}
+.step-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+}
+/* The last stage (keys / kadastr) is the goal: brand accent, ink text (never white on brand). */
+.step:last-child .step-n {
+  background: var(--yh-brand);
+  color: var(--yh-ink);
+}
+.step p {
+  margin: 0;
+}
+.step .title {
+  padding-top: 5px;
+}
+.step .caption {
+  margin-top: 2px;
+}
+
+/* Documents */
+.doc-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--yh-space-4) var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+.doc-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-12) 0;
+  color: var(--yh-ink-2);
+}
+.doc-list li + li {
+  border-top: 1px solid var(--yh-line);
+}
+.doc-list svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--yh-primary);
+}
+
+/* FAQ accordion */
+.faq {
+  border: 1px solid var(--yh-line);
+  border-radius: var(--yh-radius-card);
+  overflow: hidden;
+}
+.faq-item + .faq-item {
+  border-top: 1px solid var(--yh-line);
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 56px;
+  padding: var(--yh-space-12) var(--yh-space-20);
+  list-style: none;
+  cursor: pointer;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary svg {
+  flex: none;
+  color: var(--yh-muted);
+  transition: transform 200ms var(--yh-ease-out);
+}
+.faq-item[open] summary svg {
+  transform: rotate(180deg);
+}
+.faq-item p {
+  padding: 0 var(--yh-space-20) var(--yh-space-20);
+  margin-top: calc(-1 * var(--yh-space-4));
+  white-space: pre-line;
+}
+.faq-item[open] p {
+  animation: yh-reveal 200ms var(--yh-ease-out);
+}
+
+/* Bottom CTAs */
+.cta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.cta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--yh-space-8);
+}
+.cta-row .button-secondary {
+  padding: 0 var(--yh-space-8);
+  font: 600 14px/18px var(--yh-font);
+  text-align: center;
+}
+
+/* «Biz haqimizda» */
+.about-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 188px;
+  border-radius: var(--yh-radius-card);
+  overflow: hidden;
+  background: var(--yh-ink);
+}
+.about-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.about-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(11, 61, 42, 0.88));
+}
+.about-hero-plain::after {
+  display: none;
+}
+.about-hero h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: var(--yh-space-20);
+  color: var(--yh-on-primary);
+}
+.about-stats {
+  display: grid;
+  gap: var(--yh-space-8);
+}
+.about-stats .stat b {
+  font: var(--yh-h2);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.about-text {
+  white-space: pre-line;
+}
+.portfolio {
+  display: flex;
+  gap: var(--yh-space-12);
+  margin: 0 calc(-1 * var(--yh-space-20));
+  padding: 0 var(--yh-space-20) var(--yh-space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--yh-space-20);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.portfolio::-webkit-scrollbar {
+  display: none;
+}
+.portfolio-card {
+  flex: none;
+  width: 156px;
+  scroll-snap-align: start;
+}
+.portfolio-card p {
+  margin: 0;
+}
+.portfolio-card .title {
+  margin-top: var(--yh-space-8);
+}
+.portfolio-photo {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--yh-radius-leaf);
+  overflow: hidden;
+  background: var(--yh-surface);
+}
+.portfolio-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Contacts */
+.contact-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--yh-space-4) var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+.contact-list li + li {
+  border-top: 1px solid var(--yh-line);
+}
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--yh-space-12) 0;
+  border: 0;
+  background: none;
+  color: var(--yh-ink);
+  font: inherit;
+  text-align: left;
+}
+.contact-row > svg {
+  flex: none;
+  color: var(--yh-primary);
+}
+.contact-row > span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+.link-button {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--yh-space-4);
+  border: 0;
+  background: none;
+  color: var(--yh-primary);
+  font: var(--yh-title);
+  cursor: pointer;
+}
+.button-call svg {
+  margin-right: var(--yh-space-8);
+}
+
+/* Press feedback and focus */
+.kontent-link,
+a.contact-row,
+button.contact-row,
+.faq-item summary {
+  transition: transform 160ms var(--yh-ease-out);
+}
+.kontent-link:active,
+a.contact-row:active,
+button.contact-row:active,
+.faq-item summary:active {
+  transform: scale(0.98);
+}
+.kontent-link:focus-visible,
+.contact-row:focus-visible,
+.faq-item summary:focus-visible,
+.link-button:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+@keyframes yh-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-item[open] p {
+    animation: none;
+  }
+  .faq-item summary svg,
+  .kontent-link,
+  .contact-row,
+  .faq-item summary {
+    transition: none;
+  }
+}

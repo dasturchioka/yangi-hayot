@@ -6,6 +6,7 @@ import { href } from '../router';
 import { openExternal } from '../telegram';
 import { useLoad } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
+import { KontentLinks } from '../kontent/screens';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { KvizKirish } from '../kviz/KvizScreen';
 import { TanlashQidiruv } from '../tanlash/TanlashScreen';
@@ -55,6 +56,7 @@ export function LoyihalarScreen() {
           );
         }}
       </Loaded>
+      <KontentLinks />
     </>
   );
 }

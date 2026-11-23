@@ -27,7 +27,7 @@ const crm: Crm = amoCrm ?? new RecordingCrm();
 
 const app = buildApp(
   {
-    config,
+    config: { ...config, crmBaseUrl: amoCrm ? process.env.AMO_BASE_URL : undefined },
     db,
     clock: systemClock,
     crm,

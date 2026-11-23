@@ -5,6 +5,7 @@
 
 export * from './bot';
 export * from './start';
+export * from './kontent';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -290,6 +291,56 @@ export interface JurnalDto {
   keyin: Record<string, unknown>;
 }
 
+// ---- Planirovkalar import from Excel / CSV (#6) ----
+
+/** One problem in the file. qator: spreadsheet row number (1 = header); null = the whole file. */
+export interface ImportXato {
+  qator: number | null;
+  /** Column label from the shablon (e.g. "maydon"), when the problem is in one cell. */
+  ustun?: string;
+  xabar: string;
+}
+
+/** What the import will do with one row of the file. */
+export interface ImportQator {
+  qator: number;
+  blok: string;
+  xonalar: number;
+  maydon: number;
+  nomi: string | null;
+  boshlangichNarx: number | null;
+  bosh: number;
+  bron: number;
+  sotilgan: number;
+  amal: 'yangi' | 'yangilanadi' | 'ozgarishsiz';
+  /** For 'yangilanadi': changed fields (boshlangichNarx, bosh, bron, sotilgan, nomi, chizma, video). */
+  ozgarishlar?: string[];
+}
+
+export interface ImportReja {
+  yangi: number;
+  yangilanadi: number;
+  ozgarishsiz: number;
+  /** Bloklar the import will create. */
+  yangiBloklar: string[];
+  /** Planirovkalar of the Loyiha that are not in the file; the import leaves them as they are. */
+  fayldaYoq: number;
+  qatorlar: ImportQator[];
+}
+
+/** POST …/import/tekshir. Import is possible only when xatolar is empty. */
+export interface ImportTekshirResponse {
+  xatolar: ImportXato[];
+  reja: ImportReja | null;
+}
+
+export interface ImportNatija {
+  yaratildi: number;
+  yangilandi: number;
+  ozgarishsiz: number;
+  yangiBloklar: string[];
+}
+
 // ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
 
 /** GET /api/sevimlilar: newest first; only Planirovkalar still in the katalog. */
@@ -416,4 +467,57 @@ export interface KvizRequest extends KvizJavoblari {
 export interface KvizResponse {
   id: number;
   filtr: PlanirovkaFiltr;
+}
+
+// ---- «Do'stingni taklif qil» (#19, UF-6) ----
+
+/** GET /api/taklif: the Mijoz's personal link and how many Mijozlar came by it. */
+export interface TaklifResponse {
+  /** `https://t.me/<bot>?start=taklif_<kod>`: opens the bot for the friend. */
+  url: string;
+  /** Mijozlar who first came to the bot by this link. */
+  soni: number;
+}
+
+/** A Mijoz as the admin-panel shows them in the taklif lists. */
+export interface TaklifMijozDto {
+  telegramId: string;
+  name: string;
+  username: string | null;
+  phone: string | null;
+}
+
+/** GET /admin/api/takliflar row: a Mijoz who invited at least one other. */
+export interface TaklifchiDto extends TaklifMijozDto {
+  soni: number;
+  /** When the latest invited Mijoz came (ISO). */
+  oxirgiAt: string;
+}
+
+export interface TaklifchilarResponse {
+  taklifchilar: TaklifchiDto[];
+}
+
+/** An amoCRM Bitim of an invited Mijoz, as known from their Arizalar. */
+export interface TaklifBitimDto {
+  id: string;
+  /** Link into amoCRM when AMO_BASE_URL is set. */
+  url: string | null;
+  arizalarSoni: number;
+  oxirgiArizaAt: string;
+}
+
+export interface TaklifQilinganDto extends TaklifMijozDto {
+  /** When they first came to the bot (ISO). */
+  kelganAt: string;
+  arizalarSoni: number;
+  /** Arizalar not yet in amoCRM (queued for retry). */
+  kutilayotganArizalar: number;
+  bitimlar: TaklifBitimDto[];
+}
+
+/** GET /admin/api/takliflar/:telegramId */
+export interface TaklifQilinganlarResponse {
+  taklifchi: TaklifMijozDto;
+  taklifQilinganlar: TaklifQilinganDto[];
 }
