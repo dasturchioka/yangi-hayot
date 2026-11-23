@@ -152,7 +152,7 @@ const planirovkaTavsif = (loyiha: string, blok: string, p: AdminPlanirovkaInput)
 
 // ---- transactions ----
 
-async function tx<T>(db: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
+export async function tx<T>(db: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const c = await db.connect();
   try {
     await c.query('BEGIN');
@@ -314,27 +314,35 @@ export async function createBlok(
   loyihaId: number,
   input: { nomi: string; tartib?: number },
 ): Promise<AdminBlokDto> {
-  return tx(db, async (c) => {
-    const lnomi = await loyihaNomi(c, loyihaId);
-    const tartib =
-      input.tartib ??
-      (await c.query<{ n: number }>('SELECT count(*)::int AS n FROM blok WHERE loyiha_id = $1', [loyihaId])).rows[0]!.n;
-    const { rows } = await c.query<BlokRow>(
-      'INSERT INTO blok (loyiha_id, nomi, tartib) VALUES ($1, $2, $3) RETURNING *',
-      [loyihaId, input.nomi, tartib],
-    );
-    const b = rows[0]!;
-    await yozJurnal(c, by, {
-      obyekt: 'blok',
-      obyektId: b.id,
-      loyihaId,
-      amal: 'yaratildi',
-      tavsif: `${lnomi} · ${b.nomi} blok`,
-      oldin: null,
-      keyin: { nomi: b.nomi },
-    });
-    return { id: b.id, loyihaId, nomi: b.nomi, tartib: b.tartib, planirovkalar: [] };
+  return tx(db, (c) => createBlokIn(c, by, loyihaId, input));
+}
+
+/** `createBlok` inside the caller's transaction (import). */
+export async function createBlokIn(
+  c: pg.PoolClient,
+  by: Muallif,
+  loyihaId: number,
+  input: { nomi: string; tartib?: number },
+): Promise<AdminBlokDto> {
+  const lnomi = await loyihaNomi(c, loyihaId);
+  const tartib =
+    input.tartib ??
+    (await c.query<{ n: number }>('SELECT count(*)::int AS n FROM blok WHERE loyiha_id = $1', [loyihaId])).rows[0]!.n;
+  const { rows } = await c.query<BlokRow>(
+    'INSERT INTO blok (loyiha_id, nomi, tartib) VALUES ($1, $2, $3) RETURNING *',
+    [loyihaId, input.nomi, tartib],
+  );
+  const b = rows[0]!;
+  await yozJurnal(c, by, {
+    obyekt: 'blok',
+    obyektId: b.id,
+    loyihaId,
+    amal: 'yaratildi',
+    tavsif: `${lnomi} · ${b.nomi} blok`,
+    oldin: null,
+    keyin: { nomi: b.nomi },
   });
+  return { id: b.id, loyihaId, nomi: b.nomi, tartib: b.tartib, planirovkalar: [] };
 }
 
 export async function updateBlok(
@@ -387,42 +395,50 @@ export async function createPlanirovka(
   blokId: number,
   input: PlanirovkaCreateInput,
 ): Promise<AdminPlanirovkaDto> {
-  return tx(db, async (c) => {
-    const where = await blokOf(c, blokId);
-    const tartib =
-      input.tartib ??
-      (await c.query<{ n: number }>('SELECT count(*)::int AS n FROM planirovka WHERE blok_id = $1', [blokId])).rows[0]!.n;
-    const { rows } = await c.query<PlanirovkaRow>(
-      `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, boshlangich_narx,
-                               bosh, bron, sotilgan, tartib, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) RETURNING *`,
-      [
-        blokId,
-        input.xonalar,
-        input.maydon,
-        input.nomi ? JSON.stringify(input.nomi) : null,
-        input.chizma ?? null,
-        input.video ?? null,
-        input.boshlangichNarx ?? null,
-        input.bosh,
-        input.bron ?? 0,
-        input.sotilgan ?? 0,
-        tartib,
-        by.at,
-      ],
-    );
-    const p = planirovkaDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
-    await yozJurnal(c, by, {
-      obyekt: 'planirovka',
-      obyektId: p.id,
-      loyihaId: where.loyihaId,
-      amal: 'yaratildi',
-      tavsif: planirovkaTavsif(where.loyihaNomi, where.blokNomi, p),
-      oldin: null,
-      keyin: planirovkaFields(p),
-    });
-    return p;
+  return tx(db, (c) => createPlanirovkaIn(c, by, blokId, input));
+}
+
+/** `createPlanirovka` inside the caller's transaction (import). */
+export async function createPlanirovkaIn(
+  c: pg.PoolClient,
+  by: Muallif,
+  blokId: number,
+  input: PlanirovkaCreateInput,
+): Promise<AdminPlanirovkaDto> {
+  const where = await blokOf(c, blokId);
+  const tartib =
+    input.tartib ??
+    (await c.query<{ n: number }>('SELECT count(*)::int AS n FROM planirovka WHERE blok_id = $1', [blokId])).rows[0]!.n;
+  const { rows } = await c.query<PlanirovkaRow>(
+    `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, boshlangich_narx,
+                             bosh, bron, sotilgan, tartib, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) RETURNING *`,
+    [
+      blokId,
+      input.xonalar,
+      input.maydon,
+      input.nomi ? JSON.stringify(input.nomi) : null,
+      input.chizma ?? null,
+      input.video ?? null,
+      input.boshlangichNarx ?? null,
+      input.bosh,
+      input.bron ?? 0,
+      input.sotilgan ?? 0,
+      tartib,
+      by.at,
+    ],
+  );
+  const p = planirovkaDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
+  await yozJurnal(c, by, {
+    obyekt: 'planirovka',
+    obyektId: p.id,
+    loyihaId: where.loyihaId,
+    amal: 'yaratildi',
+    tavsif: planirovkaTavsif(where.loyihaNomi, where.blokNomi, p),
+    oldin: null,
+    keyin: planirovkaFields(p),
   });
+  return p;
 }
 
 /**
@@ -456,54 +472,77 @@ export async function kochirish(
   });
 }
 
+type PlanirovkaChange = Partial<AdminPlanirovkaInput & { bosh: number; bron: number; sotilgan: number }>;
+
+/**
+ * Sets a Planirovka's fields and counts as given (import: the file is the
+ * whole truth), inside the caller's transaction. No-op when nothing differs.
+ */
+export async function setPlanirovkaIn(
+  c: pg.PoolClient,
+  by: Muallif,
+  id: number,
+  fields: PlanirovkaChange,
+): Promise<AdminPlanirovkaDto> {
+  return changePlanirovkaIn(c, by, id, 'tahrirlandi', () => fields);
+}
+
 async function changePlanirovka(
   db: pg.Pool,
   by: Muallif,
   id: number,
   amal: 'tahrirlandi' | 'kochirildi',
-  change: (p: AdminPlanirovkaDto) => Partial<AdminPlanirovkaInput & { bosh: number; bron: number; sotilgan: number }>,
+  change: (p: AdminPlanirovkaDto) => PlanirovkaChange,
 ): Promise<AdminPlanirovkaDto> {
-  return tx(db, async (c) => {
-    const row = (await c.query<PlanirovkaRow>('SELECT * FROM planirovka WHERE id = $1 FOR UPDATE', [id])).rows[0];
-    if (!row) throw notFound();
-    const before = planirovkaDto(row);
-    const merged = { ...before, ...change(before) };
-    const after: AdminPlanirovkaDto = {
-      ...merged,
-      jami: merged.bosh + merged.bron + merged.sotilgan,
-      holat: planirovkaHolati(merged),
-      oxirgiOzgarish: { nomi: by.admin.nomi, at: by.at.toISOString() },
-    };
-    const d = farq(planirovkaFields(before), planirovkaFields(after));
-    if (!d) return before;
-    await c.query(
-      `UPDATE planirovka SET xonalar = $1, maydon = $2, nomi = $3, chizma_url = $4, video_url = $5,
-              boshlangich_narx = $6, bosh = $7, bron = $8, sotilgan = $9, tartib = $10, updated_at = $11
-        WHERE id = $12`,
-      [
-        after.xonalar,
-        after.maydon,
-        after.nomi ? JSON.stringify(after.nomi) : null,
-        after.chizma,
-        after.video,
-        after.boshlangichNarx,
-        after.bosh,
-        after.bron,
-        after.sotilgan,
-        after.tartib,
-        by.at,
-        id,
-      ],
-    );
-    const where = await blokOf(c, row.blok_id);
-    await yozJurnal(c, by, {
-      obyekt: 'planirovka',
-      obyektId: id,
-      loyihaId: where.loyihaId,
-      amal,
-      tavsif: planirovkaTavsif(where.loyihaNomi, where.blokNomi, after),
-      ...d,
-    });
-    return after;
+  return tx(db, (c) => changePlanirovkaIn(c, by, id, amal, change));
+}
+
+async function changePlanirovkaIn(
+  c: pg.PoolClient,
+  by: Muallif,
+  id: number,
+  amal: 'tahrirlandi' | 'kochirildi',
+  change: (p: AdminPlanirovkaDto) => PlanirovkaChange,
+): Promise<AdminPlanirovkaDto> {
+  const row = (await c.query<PlanirovkaRow>('SELECT * FROM planirovka WHERE id = $1 FOR UPDATE', [id])).rows[0];
+  if (!row) throw notFound();
+  const before = planirovkaDto(row);
+  const merged = { ...before, ...change(before) };
+  const after: AdminPlanirovkaDto = {
+    ...merged,
+    jami: merged.bosh + merged.bron + merged.sotilgan,
+    holat: planirovkaHolati(merged),
+    oxirgiOzgarish: { nomi: by.admin.nomi, at: by.at.toISOString() },
+  };
+  const d = farq(planirovkaFields(before), planirovkaFields(after));
+  if (!d) return before;
+  await c.query(
+    `UPDATE planirovka SET xonalar = $1, maydon = $2, nomi = $3, chizma_url = $4, video_url = $5,
+            boshlangich_narx = $6, bosh = $7, bron = $8, sotilgan = $9, tartib = $10, updated_at = $11
+      WHERE id = $12`,
+    [
+      after.xonalar,
+      after.maydon,
+      after.nomi ? JSON.stringify(after.nomi) : null,
+      after.chizma,
+      after.video,
+      after.boshlangichNarx,
+      after.bosh,
+      after.bron,
+      after.sotilgan,
+      after.tartib,
+      by.at,
+      id,
+    ],
+  );
+  const where = await blokOf(c, row.blok_id);
+  await yozJurnal(c, by, {
+    obyekt: 'planirovka',
+    obyektId: id,
+    loyihaId: where.loyihaId,
+    amal,
+    tavsif: planirovkaTavsif(where.loyihaNomi, where.blokNomi, after),
+    ...d,
   });
+  return after;
 }

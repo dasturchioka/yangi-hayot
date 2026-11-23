@@ -14,6 +14,7 @@ import {
   updateLoyiha,
   updatePlanirovka,
 } from '../admin/katalog-admin';
+import { importQil, ImportXatolari, shablon, tekshir } from '../admin/planirovka-import';
 import { onlyRol, requireAdmin } from '../auth/admin-auth';
 import type { AppDeps } from '../app';
 import { parseVideo, type Katalog } from '../katalog/katalog';
@@ -85,6 +86,9 @@ const UpdatePlanirovka = PlanirovkaFields.partial().extend({ jami: Count.optiona
 const Kochirish = z
   .object({ dan: z.enum(XONADON_HOLATLARI), ga: z.enum(XONADON_HOLATLARI), soni: z.number().int().min(1).max(100_000) })
   .refine((m) => m.dan !== m.ga);
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const IMPORT_MAX_BYTES = 5 * 1024 * 1024;
 
 const IdParams = z.object({ id: z.coerce.number().int().positive() });
 const JurnalQuery = z.object({
@@ -187,6 +191,46 @@ export async function adminKatalogRoutes(app: FastifyInstance, deps: AppDeps, ka
     const body = Kochirish.safeParse(req.body);
     if (!p.success || !body.success) return bad(reply);
     return write(reply, async () => ({ planirovka: await kochirish(deps.db, by(req), p.data.id, body.data) }));
+  });
+
+  // ---- Excel / CSV import (#6): both roles (TZ story 63) ----
+
+  /** The file comes as the raw request body; its format is told by its bytes. */
+  app.addContentTypeParser(
+    ['application/octet-stream', 'text/csv', XLSX_MIME, 'application/vnd.ms-excel'],
+    { parseAs: 'buffer', bodyLimit: IMPORT_MAX_BYTES },
+    (_req, body, done) => done(null, body),
+  );
+  const fileOf = (body: unknown) => (Buffer.isBuffer(body) && body.length > 0 ? body : null);
+
+  app.get('/katalog/loyihalar/:id/import/shablon.xlsx', async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    const out = p.success ? await shablon(deps.db, p.data.id) : null;
+    if (!out) return reply.code(404).send({ error: 'not_found' });
+    return reply
+      .header('content-type', XLSX_MIME)
+      .header('content-disposition', `attachment; filename="${out.nomi}"`)
+      .send(out.fayl);
+  });
+
+  app.post('/katalog/loyihalar/:id/import/tekshir', async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    const file = fileOf(req.body);
+    if (!p.success || !file) return bad(reply);
+    const out = await tekshir(deps.db, p.data.id, file);
+    return out ?? reply.code(404).send({ error: 'not_found' });
+  });
+
+  app.post('/katalog/loyihalar/:id/import', async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    const file = fileOf(req.body);
+    if (!p.success || !file) return bad(reply);
+    try {
+      return await write(reply, async () => ({ natija: await importQil(deps.db, by(req), p.data.id, file) }));
+    } catch (err) {
+      if (err instanceof ImportXatolari) return reply.code(422).send({ error: 'import_xatolar', xatolar: err.xatolar });
+      throw err;
+    }
   });
 
   app.get('/jurnal', async (req, reply): Promise<{ yozuvlar: JurnalDto[] } | void> => {
