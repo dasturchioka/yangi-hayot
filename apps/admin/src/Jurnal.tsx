@@ -7,6 +7,11 @@ const PAGE = 50;
 
 const MAYDON_LABEL: Record<string, string> = {
   boshlangichNarx: "Boshlang'ich narx",
+  qoldaNarx: 'Planirovka narxi',
+  narx: 'Narx',
+  qavat: 'Qavat',
+  raqam: 'Raqam',
+  planirovkaId: 'Planirovka',
   bosh: "Bo'sh",
   bron: 'Bron',
   sotilgan: 'Sotilgan',
@@ -18,6 +23,7 @@ const MAYDON_LABEL: Record<string, string> = {
 const AMAL_LABEL: Record<JurnalDto['amal'], string> = {
   yaratildi: 'Yaratildi',
   tahrirlandi: 'Tahrirlandi',
+  ochirildi: "O'chirildi",
   kochirildi: "Ko'chirildi",
 };
 
@@ -128,8 +134,17 @@ function Changes({ r }: { r: JurnalDto }) {
   );
 }
 
+const QIYMAT_LABEL: Record<string, string> = {
+  bosh: "Bo'sh",
+  bron: 'Bron',
+  sotilgan: 'Sotilgan',
+  sotuvda: 'Sotuvda',
+  topshirilgan: 'Topshirilgan',
+};
+
 function show(v: unknown): string {
   if (v === null || v === undefined) return '—';
+  if (typeof v === 'string' && v in QIYMAT_LABEL) return QIYMAT_LABEL[v]!;
   if (typeof v === 'number') return new Intl.NumberFormat('ru-RU').format(v).replace(/ /g, ' ');
   if (typeof v === 'object' && 'uz' in (v as object)) return String((v as { uz: string }).uz);
   if (typeof v === 'object') return JSON.stringify(v);

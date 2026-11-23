@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { adminApi, onUnauthorized } from './api';
 import { ROL_LABEL } from './format';
 import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
+import { Icon, type IconName } from './icons';
 import { ImportScreen } from './Import';
 import { JurnalScreen } from './Jurnal';
 import { KvizSozlamalariScreen } from './KvizSozlamalari';
@@ -16,17 +17,24 @@ import { YozilishlarScreen } from './Yozilishlar';
 
 /**
  * Admin-panel shell: login, then sections by rol. Administrator sees
- * everything; Menejer — Xonadonlar (moving counts), Import (#6), Yozilishlar and the Jurnal.
+ * everything; Menejer — Xonadonlar (holat), Import (#6), Yozilishlar and the Jurnal.
  * The server enforces the same rules; hiding here is only convenience.
  */
 interface Section {
   name: string;
   rollar: AdminRol[];
-  render?: (admin: AdminDto) => React.ReactNode;
+  /** Sidebar icon (the design pass gives every section one). */
+  icon?: IconName;
+  render?: (admin: AdminDto, go: (section: string) => void) => React.ReactNode;
 }
 
 const SECTIONS: Section[] = [
-  { name: 'Xonadonlar', rollar: ['administrator', 'menejer'], render: (a) => <XonadonlarScreen admin={a} /> },
+  {
+    name: 'Xonadonlar',
+    icon: 'building',
+    rollar: ['administrator', 'menejer'],
+    render: (a, go) => <XonadonlarScreen admin={a} onImport={() => go('Import')} />,
+  },
   { name: 'Import', rollar: ['administrator', 'menejer'], render: () => <ImportScreen /> },
   { name: 'Loyihalar', rollar: ['administrator'], render: () => <LoyihalarScreen /> },
   { name: 'Yozilishlar', rollar: ['administrator', 'menejer'], render: (a) => <YozilishlarScreen admin={a} /> },
@@ -82,6 +90,7 @@ export function App() {
                 title={s.render ? undefined : "Keyingi bosqichda qo'shiladi"}
                 onClick={() => setSection(s.name)}
               >
+                {s.icon && <Icon name={s.icon} size={18} />}
                 {s.name}
               </button>
             </li>
@@ -100,7 +109,7 @@ export function App() {
         </div>
       </nav>
       <main className="content">
-        {current.render ? current.render(admin) : <p className="muted">Bo'lim keyingi bosqichlarda qo'shiladi.</p>}
+        {current.render ? current.render(admin, setSection) : <p className="muted">Bo'lim keyingi bosqichlarda qo'shiladi.</p>}
       </main>
     </div>
   );

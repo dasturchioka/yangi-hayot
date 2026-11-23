@@ -21,7 +21,7 @@ export function onUnauthorized(fn: () => void): () => void {
   return () => unauthorizedListeners.delete(fn);
 }
 
-export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT', path: string, body?: unknown): Promise<T> {
+export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/admin/api${path}`, {
     method,
     credentials: 'same-origin',
@@ -62,8 +62,8 @@ export function errorText(e: unknown): string {
       forbidden: "Bu amal uchun ruxsat yo'q",
       bad_request: "Ma'lumot noto'g'ri to'ldirilgan",
       not_found: 'Topilmadi',
-      not_enough: "Bu holatda buncha xonadon yo'q",
-      jami_too_small: "Jami bron + sotilgandan kam bo'lishi mumkin emas",
+      xonadon_taken: "Bu Blokda shu qavat va raqamli xonadon allaqachon bor",
+      planirovka_boshqa_blokda: 'Planirovka boshqa Blokka tegishli',
       slug_taken: 'Bunday Loyiha allaqachon bor',
       blok_taken: 'Bu Loyihada bunday Blok allaqachon bor',
       login_taken: 'Bu login band',

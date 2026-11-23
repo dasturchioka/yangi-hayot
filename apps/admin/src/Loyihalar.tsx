@@ -419,11 +419,7 @@ function PlanirovkaForm({
   const [nomi, setNomi] = useState<LokalDto>(p?.nomi ?? emptyLokal);
   const [chizma, setChizma] = useState(p?.chizma ?? '');
   const [video, setVideo] = useState(p?.video ?? '');
-  const [narx, setNarx] = useState(p?.boshlangichNarx?.toString() ?? '');
-  const [bosh, setBosh] = useState('0');
-  const [bron, setBron] = useState('0');
-  const [sotilgan, setSotilgan] = useState('0');
-  const [jami, setJami] = useState(String(p?.jami ?? 0));
+  const [narx, setNarx] = useState(p?.qoldaNarx?.toString() ?? '');
   const [error, setError] = useState('');
 
   async function submit(e: FormEvent) {
@@ -437,17 +433,11 @@ function PlanirovkaForm({
       nomi: lokalOrNull(nomi),
       chizma: chizma.trim() || null,
       video: video.trim() || null,
-      boshlangichNarx: n === null ? null : Math.round(n),
+      qoldaNarx: n === null ? null : Math.round(n),
     };
     try {
-      if (p) await adminApi('PATCH', `/katalog/planirovkalar/${p.id}`, { ...fields, jami: Number(jami) });
-      else
-        await adminApi('POST', `/katalog/bloklar/${blokId}/planirovkalar`, {
-          ...fields,
-          bosh: Number(bosh),
-          bron: Number(bron),
-          sotilgan: Number(sotilgan),
-        });
+      if (p) await adminApi('PATCH', `/katalog/planirovkalar/${p.id}`, fields);
+      else await adminApi('POST', `/katalog/bloklar/${blokId}/planirovkalar`, fields);
       onDone();
     } catch (err) {
       setError(errorText(err));
@@ -466,7 +456,7 @@ function PlanirovkaForm({
           <input className="short" inputMode="decimal" value={maydon} onChange={(e) => setMaydon(e.target.value)} required />
         </label>
         <label className="field grow">
-          <span>Boshlang'ich narx, so'm (bo'sh = so'rov bo'yicha)</span>
+          <span>Planirovka narxi, so'm — Xonadonlarda narx bo'lmasa ko'rinadi</span>
           <input inputMode="numeric" value={narx} onChange={(e) => setNarx(e.target.value)} />
         </label>
       </div>
@@ -481,27 +471,9 @@ function PlanirovkaForm({
           <input value={video} onChange={(e) => setVideo(e.target.value)} />
         </label>
       </div>
-      {p ? (
-        <label className="field">
-          <span>Jami (bo'sh soni farqqa o'zgaradi)</span>
-          <input className="short" type="number" min={0} value={jami} onChange={(e) => setJami(e.target.value)} />
-        </label>
-      ) : (
-        <div className="row">
-          {(
-            [
-              ["Bo'sh", bosh, setBosh],
-              ['Bron', bron, setBron],
-              ['Sotilgan', sotilgan, setSotilgan],
-            ] as const
-          ).map(([label, v, set]) => (
-            <label key={label} className="field">
-              <span>{label}</span>
-              <input className="short" type="number" min={0} value={v} onChange={(e) => set(e.target.value)} />
-            </label>
-          ))}
-        </div>
-      )}
+      <p className="muted small">
+        Bo'sh / bron / sotilgan soni Xonadonlardan hisoblanadi: ularni «Xonadonlar» bo'limida qo'shing va o'zgartiring.
+      </p>
       {error && <p className="error">{error}</p>}
       <div className="row">
         <button className="primary">{p ? 'Saqlash' : "Qo'shish"}</button>
