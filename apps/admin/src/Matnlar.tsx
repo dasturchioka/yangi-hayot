@@ -11,6 +11,7 @@ import { adminApi, errorText } from './api';
 import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
 import { SkoringForm } from './Skoring';
+import { ArrowDownIcon, ArrowUpIcon, XIcon } from './icons';
 import './matnlar.css';
 import { YozilishSozlamalariForm } from './Yozilishlar';
 
@@ -255,7 +256,7 @@ export function ListEditor<T>({
           <div className="list-body">{children(item, (v) => set(i, v))}</div>
           <div className="list-actions">
             <button type="button" className="icon" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Yuqoriga">
-              <Icon d="M12 19V5M6 11l6-6 6 6" />
+              <ArrowUpIcon />
             </button>
             <button
               type="button"
@@ -264,7 +265,7 @@ export function ListEditor<T>({
               onClick={() => move(i, 1)}
               aria-label="Pastga"
             >
-              <Icon d="M12 5v14M6 13l6 6 6-6" />
+              <ArrowDownIcon />
             </button>
             <button
               type="button"
@@ -273,7 +274,7 @@ export function ListEditor<T>({
               onClick={() => onChange(items.filter((_, j) => j !== i))}
               aria-label="O'chirish"
             >
-              <Icon d="M6 6l12 12M18 6 6 18" />
+              <XIcon />
             </button>
           </div>
         </div>
@@ -287,14 +288,6 @@ export function ListEditor<T>({
         </span>
       </div>
     </div>
-  );
-}
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
   );
 }
 

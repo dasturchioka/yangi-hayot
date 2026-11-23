@@ -39,7 +39,7 @@ export function openStartScreen(fromServer: StartDto | null): void {
   const param = getStartParam();
   if (param === 'ariza' || param === 'kalkulyator' || param === 'booking') {
     opened = true;
-    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: param === 'booking' ? 'yozilish' : param });
+    if (parseRoute(window.location.hash).name === 'bosh') navigate({ name: param === 'booking' ? 'yozilish' : param });
     return;
   }
   const dojim = parseDojimParam(param);
@@ -53,6 +53,6 @@ export function openStartScreen(fromServer: StartDto | null): void {
     fromServer ?? (link ? { ekran: 'planirovka', planirovkaId: link.planirovkaId } : null);
   if (!start) return;
   opened = true;
-  if (parseRoute(window.location.hash).name !== 'loyihalar') return;
+  if (parseRoute(window.location.hash).name !== 'bosh') return;
   navigate({ name: 'planirovka', id: start.planirovkaId });
 }

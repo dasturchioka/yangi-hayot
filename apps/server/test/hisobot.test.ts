@@ -270,11 +270,11 @@ describe('weekly summary', () => {
         '🔔 Dojimdan kelgan yozilishlar: 1 (0, +1)',
         '',
         'Voronka (Mijozlar):',
-        '• Botga kirdi: 3 (1)',
-        "• Planirovkalarni ko'rdi: 2 (0)",
-        '• Ariza qoldirdi: 3 (1)',
-        '• Ko\'rishga yozildi: 2 (0)',
-        '• Keldi: 1 (0)',
+        '• Botga kirdi: 3 (1, +2)',
+        "• Planirovka / Xonadon ko'rdi: 2 (0, +2)",
+        '• Ariza qoldirdi: 3 (1, +2)',
+        "• Ko'rishga yozildi: 2 (0, +2)",
+        '• Keldi: 1 (0, +1)',
       ].join('\n'),
     );
   });

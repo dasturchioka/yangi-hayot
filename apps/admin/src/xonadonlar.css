@@ -1,11 +1,5 @@
 /* «Xonadonlar» (#22, ADR 0003) — UI kit «Yashil barg», admin page 2. */
 
-button.nav {
-  display: flex;
-  align-items: center;
-  gap: var(--yh-space-8);
-}
-
 .xon {
   max-width: 1280px;
 }
@@ -45,120 +39,82 @@ button.nav {
   gap: var(--yh-space-12);
 }
 
-/* ---- custom listbox (no native <select>) ---- */
+/* ---- shared Select (@yh/ui/select) dressed for this screen ---- */
 
-.lb-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--yh-space-8);
-  text-align: left;
-}
-
-.lb-field {
+.xon-loyiha .yh-select-trigger,
+.xon-filtr .yh-select-trigger {
+  height: var(--yh-button-h-secondary);
   min-height: var(--yh-button-h-secondary);
+  border-radius: var(--yh-radius-control);
   font: var(--yh-title);
-  padding: 0 var(--yh-space-12) 0 var(--yh-space-20);
-  min-width: 180px;
 }
 
+.xon-filtr .yh-select-value::before {
+  content: 'Status: ';
+}
 
-.lb-cell {
-  min-height: 36px;
+.xon-cell-select {
   width: 100%;
-  font: var(--yh-body);
-  padding: 0 var(--yh-space-8) 0 var(--yh-space-12);
+}
+
+.xon-cell-select .yh-select-trigger {
   border-color: var(--yh-primary);
-  border-radius: 10px;
 }
 
-.lb-value {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* status pill (kit: «Bo'sh ▾») */
+.xon-pill {
+  display: inline-grid;
 }
 
-.lb-chevron {
-  flex: none;
-  transition: transform 200ms var(--yh-ease-out);
+.xon-pill .yh-select-trigger {
+  width: auto;
+  height: 30px;
+  min-height: 30px;
+  min-width: 0;
+  gap: 2px;
+  padding: 0 var(--yh-space-8) 0 var(--yh-space-12);
+  border: none;
+  border-radius: var(--yh-radius-pill);
+  font: var(--yh-label);
+  font-size: 13px;
+  /* the colour change is the confirmation that the status was saved */
+  transition:
+    transform 140ms var(--yh-ease-out),
+    background-color 220ms ease,
+    color 220ms ease;
 }
 
-.lb-button[aria-expanded='true'] .lb-chevron {
-  transform: rotate(180deg);
+.xon-pill .yh-select-trigger:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
-.lb-button[aria-busy='true'] {
+.xon-pill .yh-select-trigger:disabled {
   opacity: 0.6;
   cursor: progress;
 }
 
-.lb-two {
-  display: inline-flex;
-  gap: var(--yh-space-8);
-  align-items: baseline;
+.xon-pill .holat-dot,
+.xon-pill .yh-select-chevron {
+  color: inherit;
 }
 
-.lb-list {
-  position: fixed;
-  z-index: 50;
-  margin: 0;
-  padding: var(--yh-space-4);
-  list-style: none;
-  max-height: 260px;
-  overflow-y: auto;
-  background: var(--yh-bg);
-  border: 1px solid var(--yh-line);
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(11, 61, 42, 0.14);
-  font: var(--yh-body);
-  outline: none;
-  transform-origin: top left;
-  animation: lb-in 160ms var(--yh-ease-out);
+.xon-pill .yh-select-value .holat-dot {
+  display: none;
 }
 
-.lb-list.instant {
-  animation: none;
+.xon-pill.bosh .yh-select-trigger {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
 }
 
-.lb-list.up {
-  transform: translateY(-100%);
-  transform-origin: bottom left;
-  animation-name: lb-in-up;
+.xon-pill.bron .yh-select-trigger {
+  background: var(--yh-status-reserved-bg);
+  color: var(--yh-status-reserved-fg);
 }
 
-@keyframes lb-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97) translateY(-4px);
-  }
-}
-
-@keyframes lb-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(-100%) scale(0.97) translateY(4px);
-  }
-}
-
-.lb-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--yh-space-12);
-  padding: var(--yh-space-8) var(--yh-space-12);
-  border-radius: 10px;
-  color: var(--yh-ink);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.lb-option.active {
-  background: var(--yh-surface);
-}
-
-.lb-option[aria-selected='true'] {
-  color: var(--yh-primary);
-  font-weight: 600;
+.xon-pill.sotilgan .yh-select-trigger {
+  background: var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
 }
 
 /* ---- toolbar ---- */
@@ -320,11 +276,11 @@ button.nav {
 
 /* fixed columns: the inline editor and bulk ticks never shift the grid */
 .c-check { width: 56px; }
-.c-no { width: 116px; }
-.c-qavat { width: 84px; }
+.c-no { width: 88px; }
+.c-qavat { width: 72px; }
 .c-xonalar { width: 92px; }
 .c-maydon { width: 104px; }
-.c-narx { width: 148px; }
+.c-narx { width: 168px; }
 .c-holat { width: 148px; }
 .c-amal { width: 96px; }
 
@@ -393,7 +349,6 @@ button.nav {
 }
 
 .xon-table .cell-input:focus,
-.lb-button:focus-visible,
 .icon-btn:focus-visible,
 .link-btn:focus-visible,
 .mini-row:focus-visible,
@@ -619,8 +574,8 @@ button.nav {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lb-list,
-  .bulk {
+  .bulk,
+  .toast {
     animation: none;
     transition: none;
   }
@@ -633,9 +588,6 @@ button.nav {
     background: var(--yh-surface);
   }
 
-  .lb-field:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--yh-primary) 35%, var(--yh-line));
-  }
 
   .mini-row:hover {
     background: var(--yh-surface);
@@ -736,7 +688,7 @@ button.nav {
 /* touch: 44px targets for the status pill and its options */
 @media (pointer: coarse) {
   .pill,
-  .lb-option {
+  .xon-pill .yh-select-trigger {
     min-height: 44px;
   }
 
@@ -810,7 +762,7 @@ button.nav {
     grid-area: no;
   }
 
-  .xon-table td:has(.pill) {
+  .xon-table td:has(.xon-pill) {
     grid-area: holat;
   }
 
@@ -866,4 +818,10 @@ button.nav {
   .xon-table tr.editing td:first-child {
     display: none;
   }
+}
+
+.lb-two {
+  display: inline-flex;
+  gap: var(--yh-space-8);
+  align-items: baseline;
 }

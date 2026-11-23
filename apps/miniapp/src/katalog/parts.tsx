@@ -1,24 +1,111 @@
 import type { PlanirovkaDto, PlanirovkaHolati, VideoDto } from '@yh/shared';
 import { useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
+import { HeartIcon, PlanIcon as LinePlanIcon, PlayIcon, SearchIcon } from '../icons';
 import { href } from '../router';
-import { openExternal } from '../telegram';
+import { toggleSevimli, useSevimliIds } from '../sevimlilar/store';
+import { openExternal, showAlert } from '../telegram';
 import type { Load } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
 
+/** Kit «Yuklanish (skeleton)»: grey shapes where the content will be. */
+export function Skeleton({ kind = 'list' }: { kind?: 'list' | 'detail' }) {
+  if (kind === 'detail') {
+    return (
+      <div className="skeleton" aria-hidden>
+        <span className="skeleton-block skeleton-hero" />
+        <span className="skeleton-line" style={{ width: '62%', height: 26 }} />
+        <span className="skeleton-line" style={{ width: '44%' }} />
+        <span className="skeleton-row">
+          <span className="skeleton-block" />
+          <span className="skeleton-block" />
+          <span className="skeleton-block" />
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="skeleton" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="skeleton-card">
+          <span className="skeleton-block skeleton-thumb" />
+          <span className="skeleton-lines">
+            <span className="skeleton-line" style={{ width: '70%' }} />
+            <span className="skeleton-line" style={{ width: '50%' }} />
+            <span className="skeleton-line" style={{ width: '38%' }} />
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Kit «Bo'sh holat»: leaf icon tile, title, one line, an optional way out. */
+export function EmptyState({
+  icon = <SearchIcon size={26} />,
+  title,
+  text,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  text?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="empty-state">
+      <span className="empty-state-icon">{icon}</span>
+      <p className="title">{title}</p>
+      {text && <p className="caption empty-state-text">{text}</p>}
+      {action}
+    </div>
+  );
+}
+
 /** Renders loading / error states; `children` only when the data is there. */
-export function Loaded<T>({ load, children }: { load: Load<T>; children: (data: T) => ReactNode }) {
+export function Loaded<T>({
+  load,
+  children,
+  skeleton = 'list',
+}: {
+  load: Load<T>;
+  children: (data: T) => ReactNode;
+  skeleton?: 'list' | 'detail';
+}) {
   const t = useT();
-  if (load.kind === 'loading') return <p className="muted">{t('state.loading')}</p>;
-  if (load.kind === 'error') {
-    if (load.notFound) return <p className="muted">{t('state.notFound')}</p>;
+  if (load.kind === 'loading') {
     return (
       <>
-        <p className="error">{t('state.error')}</p>
-        <button className="button-primary" onClick={load.retry}>
-          {t('state.retry')}
-        </button>
+        <span className="visually-hidden" role="status">
+          {t('state.loading')}
+        </span>
+        <Skeleton kind={skeleton} />
       </>
+    );
+  }
+  if (load.kind === 'error') {
+    if (load.notFound) {
+      return (
+        <EmptyState
+          title={t('state.notFound')}
+          action={
+            <a className="button-secondary button-fit" href={href({ name: 'bosh' })}>
+              {t('tab.bosh')}
+            </a>
+          }
+        />
+      );
+    }
+    return (
+      <EmptyState
+        title={t('state.errorTitle')}
+        text={t('state.error')}
+        action={
+          <button className="button-secondary button-fit" onClick={load.retry}>
+            {t('state.retry')}
+          </button>
+        }
+      />
     );
   }
   return <>{children(load.data)}</>;
@@ -42,7 +129,8 @@ export function VideoButton({ video }: { video: VideoDto | null }) {
   if (!video) return null;
   return (
     <button className="button-secondary" onClick={() => openExternal(video.url)}>
-      ▶ {t('video.watch')}
+      <PlayIcon size={18} />
+      {t('video.watch')}
     </button>
   );
 }
@@ -66,11 +154,23 @@ export function ArizaButton({
 }
 
 export function PlanIcon() {
+  return <LinePlanIcon size={28} />;
+}
+
+/** Small heart on a list row (kit «Xonadon qatori»). */
+export function RowSevimli({ id }: { id: number }) {
+  const t = useT();
+  const on = useSevimliIds().has(id);
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <rect x="3" y="3" width="22" height="22" rx="2" />
-      <path d="M3 13h10V3M13 13v12M19 13h6" />
-    </svg>
+    <button
+      type="button"
+      className={`row-heart${on ? ' active' : ''}`}
+      aria-pressed={on}
+      aria-label={t(on ? 'sevimli.remove' : 'sevimli.add')}
+      onClick={() => toggleSevimli(id).catch(() => showAlert(t('state.error')))}
+    >
+      <HeartIcon size={18} filled={on} />
+    </button>
   );
 }
 
@@ -87,6 +187,9 @@ export function PlanirovkaRow({
 }) {
   const t = useT();
   const sold = p.holat === 'sotilgan';
+  const meta = [showLoyiha ? p.loyihaNomi : null, showBlok ? t('blok.nomi', { nomi: p.blokNomi }) : null, p.nomi]
+    .filter(Boolean)
+    .join(' · ');
   const body = (
     <>
       <span className="plan-thumb">
@@ -94,52 +197,54 @@ export function PlanirovkaRow({
       </span>
       <span className="plan-text">
         <span className="title">{t('planirovka.short', { n: p.xonalar, maydon: formatMaydon(p.maydon) })}</span>
-        <span className="caption">
-          {[showLoyiha ? p.loyihaNomi : null, showBlok ? t('blok.nomi', { nomi: p.blokNomi }) : null, p.nomi]
-            .filter(Boolean)
-            .join(' · ')}
-        </span>
+        {meta && <span className="caption">{meta}</span>}
         <span className="plan-price">{formatNarx(t, p.boshlangichNarx)}</span>
-      </span>
-      <span className="plan-side">
-        {p.holat === 'sotuvda' ? <BoshBadge n={p.bosh} /> : <HolatBadge holat={p.holat} />}
+        <span className={`plan-holat plan-holat-${p.holat}`}>
+          {p.holat === 'sotuvda' ? t('bosh.count', { n: p.bosh }) : t(HOLAT_KEY[p.holat])}
+        </span>
       </span>
     </>
   );
   if (sold) {
     return (
       <div className="plan-row plan-row-sold" aria-disabled="true">
-        {body}
+        <span className="plan-link">{body}</span>
       </div>
     );
   }
   return (
-    <a className="plan-row" href={href({ name: 'planirovka', id: p.id })}>
-      {body}
-    </a>
+    <div className="plan-row">
+      <a className="plan-link" href={href({ name: 'planirovka', id: p.id })}>
+        {body}
+      </a>
+      <RowSevimli id={p.id} />
+    </div>
   );
 }
 
 /** Chizma that opens full screen on tap; tap again to zoom in, scroll to move around. */
-export function Chizma({ src }: { src: string | null }) {
+export function Chizma({ src, children }: { src: string | null; children?: ReactNode }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   if (!src) {
     return (
       <div className="chizma chizma-empty">
-        <PlanIcon />
+        <LinePlanIcon size={72} />
+        {children}
       </div>
     );
   }
   return (
     <>
-      <button className="chizma" onClick={() => setOpen(true)} aria-label={t('planirovka.chizmaHint')}>
-        <img src={src} alt="" />
-        <span className="chizma-hint caption">{t('planirovka.chizmaHint')}</span>
-      </button>
+      <div className="chizma">
+        <button className="chizma-open" onClick={() => setOpen(true)} aria-label={t('planirovka.chizmaHint')}>
+          <img src={src} alt="" />
+        </button>
+        {children}
+      </div>
       {open && (
-        <div className="lightbox" role="dialog">
+        <div className="lightbox" role="dialog" aria-modal="true">
           <button
             className="lightbox-close"
             onClick={() => {

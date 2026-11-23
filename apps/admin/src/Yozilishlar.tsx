@@ -6,6 +6,7 @@ import type {
   YozilishSozlamalari,
 } from '@yh/shared';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { DatePicker } from '@yh/ui/date';
 import { adminApi, errorText } from './api';
 import { DarajaChip } from './Skoring';
 import './yozilishlar.css';
@@ -103,13 +104,7 @@ export function YozilishlarScreen({ admin: _admin }: { admin: AdminDto }) {
             ))}
           </div>
           {davr === 'kun' && (
-            <input
-              className="yz-date"
-              type="date"
-              value={kun}
-              onChange={(e) => e.target.value && setKun(e.target.value)}
-              aria-label="Kun"
-            />
+            <DatePicker className="yz-date" value={kun} onChange={setKun} aria-label="Kun" />
           )}
         </div>
       </header>
@@ -365,7 +360,7 @@ export function YozilishSozlamalariForm() {
             </span>
           ))}
           <span className="yz-add">
-            <input type="date" min={today} value={yangiBayram} onChange={(e) => setYangiBayram(e.target.value)} aria-label="Bayram kuni" />
+            <DatePicker min={today} value={yangiBayram || today} onChange={setYangiBayram} aria-label="Bayram kuni" />
             <button type="button" onClick={addBayram} disabled={!yangiBayram}>
               + kun
             </button>

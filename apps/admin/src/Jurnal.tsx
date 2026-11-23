@@ -2,6 +2,7 @@ import type { AdminLoyihaListItem, JurnalDto } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { adminApi, errorText } from './api';
 import { qachon } from './format';
+import { Select } from '@yh/ui/select';
 
 const PAGE = 50;
 
@@ -66,17 +67,12 @@ export function JurnalScreen() {
           <h1 className="h2">Jurnal</h1>
           <p className="muted">Narx, holat va katalogdagi har bir o'zgarish</p>
         </div>
-        <label className="field">
-          <span>Loyiha</span>
-          <select value={loyihaId} onChange={(e) => setLoyihaId(e.target.value ? Number(e.target.value) : '')}>
-            <option value="">Hammasi</option>
-            {loyihalar.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nomi}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select<number | ''>
+          label="Loyiha"
+          value={loyihaId}
+          options={[{ value: '', label: 'Hammasi' }, ...loyihalar.map((l) => ({ value: l.id, label: l.nomi }))]}
+          onChange={setLoyihaId}
+        />
       </header>
       {error && <p className="error">{error}</p>}
       <section className="card flush">

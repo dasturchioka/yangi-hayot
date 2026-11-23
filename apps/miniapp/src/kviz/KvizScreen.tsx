@@ -17,6 +17,7 @@ import { useT, type MessageKey } from '../i18n';
 import { href, navigate, replaceRoute, type Route } from '../router';
 import { formatOraliq } from '../tanlash/filtr';
 import '../tanlash/tanlash.css';
+import { CheckIcon, ChevronRightIcon } from '../icons';
 
 /**
  * «Xonadon tanlash» kvizi (#10): the filters one question at a time, then the
@@ -206,9 +207,7 @@ export function KvizKirish() {
         <span className="caption">{t('kviz.kirish.text', { n: QADAMLAR.length - 1 })}</span>
       </span>
       <span className="kviz-kirish-arrow" aria-hidden>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 5l7 7-7 7" />
-        </svg>
+        <ChevronRightIcon size={18} strokeWidth={2.4} />
       </span>
     </a>
   );
@@ -249,9 +248,7 @@ function Variant({ label, on, onClick }: { label: string; on: boolean; onClick: 
     <button role="radio" aria-checked={on} className={on ? 'kviz-option active' : 'kviz-option'} onClick={onClick}>
       <span>{label}</span>
       <span className="kviz-check" aria-hidden>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12.5l4.5 4.5L19 7.5" />
-        </svg>
+        <CheckIcon size={14} />
       </span>
     </button>
   );

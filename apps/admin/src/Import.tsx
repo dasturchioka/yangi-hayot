@@ -7,8 +7,10 @@ import type {
   ImportXato,
 } from '@yh/shared';
 import { useEffect, useRef, useState } from 'react';
+import { Select } from '@yh/ui/select';
 import { adminApi, adminUpload, ApiError, errorText } from './api';
 import { soum } from './format';
+import { UploadLargeIcon } from './icons';
 
 /**
  * «Import» (#6, TZ story 63): a Menejer or Administrator loads a Loyiha's
@@ -113,23 +115,16 @@ export function ImportScreen() {
           <h1 className="h2">Excel'dan import</h1>
           <p className="muted">Blok Planirovkalarini shablon bo'yicha yuklang: avval tekshiramiz, keyin siz tasdiqlaysiz</p>
         </div>
-        <label className="field">
-          <span>Loyiha</span>
-          <select
-            value={loyihaId ?? ''}
-            disabled={busy}
-            onChange={(e) => {
-              setLoyihaId(Number(e.target.value));
-              reset();
-            }}
-          >
-            {loyihalar.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nomi}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="Loyiha"
+          value={loyihaId ?? null}
+          disabled={busy}
+          options={loyihalar.map((l) => ({ value: l.id, label: l.nomi }))}
+          onChange={(id) => {
+            setLoyihaId(id);
+            reset();
+          }}
+        />
       </header>
 
       <section className="card import-setup">
@@ -347,15 +342,5 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: 'fr
 }
 
 function UploadIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 15V4m0 0L8 8m4-4 4 4M5 14v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <UploadLargeIcon />;
 }

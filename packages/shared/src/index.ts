@@ -704,3 +704,58 @@ export interface TaklifQilinganlarResponse {
   taklifchi: TaklifMijozDto;
   taklifQilinganlar: TaklifQilinganDto[];
 }
+
+// ── voronka (#20, UF-7) ──────────────────────────────────────────────────
+
+/**
+ * Funnel steps, in order. `korildi` = the Mijoz opened a Planirovka or a
+ * Xonadon card (ADR 0003: Xonadon views join the same step).
+ */
+export const VORONKA_QADAMLARI = ['bot_kirdi', 'korildi', 'ariza', 'yozilish', 'keldi'] as const;
+export type VoronkaQadami = (typeof VORONKA_QADAMLARI)[number];
+
+export interface VoronkaQadamDto {
+  kalit: VoronkaQadami;
+  nomi: string;
+  /** Distinct Mijozlar; null = the step has no Loyiha (bot entry under a Loyiha filter). */
+  mijozlar: number | null;
+}
+
+export interface VoronkaManbaDto {
+  manba: string;
+  /** Per step, in VORONKA_QADAMLARI order. */
+  mijozlar: (number | null)[];
+}
+
+export interface VoronkaLoyihaDto {
+  id: number;
+  nomi: string;
+  mijozlar: (number | null)[];
+}
+
+export interface KorilganPlanirovkaDto {
+  planirovkaId: number;
+  loyiha: string;
+  blok: string;
+  xonalar: number;
+  maydon: number;
+  nomi: string | null;
+  /** Openings. */
+  korishlar: number;
+  /** Distinct Mijozlar who opened it. */
+  mijozlar: number;
+}
+
+/** GET /admin/api/voronka?dan=&gacha=&manba=&loyihaId= (Administrator). */
+export interface VoronkaResponse {
+  /** Tashkent days, inclusive. */
+  dan: string;
+  gacha: string;
+  manba: string | null;
+  loyihaId: number | null;
+  qadamlar: VoronkaQadamDto[];
+  manbalar: VoronkaManbaDto[];
+  loyihalar: VoronkaLoyihaDto[];
+  engKopKorilgan: KorilganPlanirovkaDto[];
+  tanlov: { manbalar: string[]; loyihalar: { id: number; nomi: string }[] };
+}

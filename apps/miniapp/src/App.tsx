@@ -14,6 +14,7 @@ import { TanlashScreen } from './tanlash/TanlashScreen';
 import { openStartScreen } from './start';
 import { TaklifScreen } from './taklif/TaklifScreen';
 import { getInitData, guessLang, setBackButton } from './telegram';
+import { BoshScreen, isTabRoute, ProfilMenu, TabBar } from './nav/nav';
 
 export function App() {
   const inTelegram = Boolean(getInitData());
@@ -35,32 +36,45 @@ export function App() {
 
   return (
     <I18nProvider lang={mijoz?.lang ?? guessLang()}>
-      <main className="screen">{inTelegram ? <Screens /> : <OutsideTelegram />}</main>
+      {inTelegram ? <Screens /> : <OutsideTelegram />}
     </I18nProvider>
   );
 }
 
 function OutsideTelegram() {
   const t = useT();
-  return <p className="muted">{t('state.openInTelegram')}</p>;
+  return (
+    <main className="screen outside">
+      <img src="/logo.png" alt="" width={72} height={72} />
+      <h1 className="h2">{t('app.title')}</h1>
+      <p className="muted">{t('state.openInTelegram')}</p>
+    </main>
+  );
 }
 
 function Screens() {
   const route = useRoute();
+  const tab = isTabRoute(route) ? route.name : null;
+  // Root tabs have no back step; every inner screen gets Telegram's native back button.
   useEffect(
     () =>
-      setBackButton(
-        route.name === 'loyihalar'
-          ? null
-          : () => (window.history.length > 1 ? window.history.back() : navigate({ name: 'loyihalar' })),
-      ),
-    [route],
+      setBackButton(tab ? null : () => (window.history.length > 1 ? window.history.back() : navigate({ name: 'bosh' }))),
+    [route, tab],
   );
-  return <Screen route={route} />;
+  return (
+    <>
+      <main className={tab ? 'screen screen-tab' : 'screen'}>
+        <Screen route={route} />
+      </main>
+      {tab && <TabBar current={tab} />}
+    </>
+  );
 }
 
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
+    case 'bosh':
+      return <BoshScreen />;
     case 'loyihalar':
       return <LoyihalarScreen />;
     case 'loyiha':
@@ -92,7 +106,12 @@ function Screen({ route }: { route: Route }) {
     case 'yozilishKochirish':
       return <YozilishKochirishScreen key={route.id} id={route.id} />;
     case 'mening':
-      return <MeningScreen />;
+      return (
+        <>
+          <MeningScreen />
+          <ProfilMenu />
+        </>
+      );
     case 'taklif':
       return <TaklifScreen />;
   }

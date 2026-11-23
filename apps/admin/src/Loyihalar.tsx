@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { adminApi, errorText } from './api';
 import { parseNumber, PLANIROVKA_HOLATI_LABEL, soum } from './format';
+import { Select } from '@yh/ui/select';
 
 /**
  * «Loyihalar» (Administrator): create and edit Loyiha (holati Sotuvda /
@@ -227,23 +228,21 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
           <span>Nomi</span>
           <input value={nomi} onChange={(e) => setNomi(e.target.value)} required maxLength={100} />
         </label>
-        <label className="field">
-          <span>Shahar</span>
-          <select value={shahar} onChange={(e) => setShahar(e.target.value as Shahar)}>
-            {SHAHARLAR.map((s) => (
-              <option key={s} value={s}>
-                {SHAHAR_LABEL[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Holati</span>
-          <select value={holat} onChange={(e) => setHolat(e.target.value as LoyihaHolati)}>
-            <option value="sotuvda">Sotuvda</option>
-            <option value="topshirilgan">Topshirilgan</option>
-          </select>
-        </label>
+        <Select
+          label="Shahar"
+          value={shahar}
+          options={SHAHARLAR.map((s) => ({ value: s, label: SHAHAR_LABEL[s] }))}
+          onChange={setShahar}
+        />
+        <Select<LoyihaHolati>
+          label="Holati"
+          value={holat}
+          options={[
+            { value: 'sotuvda', label: 'Sotuvda' },
+            { value: 'topshirilgan', label: 'Topshirilgan' },
+          ]}
+          onChange={setHolat}
+        />
       </div>
       <LokalField label="Manzil" value={manzil} onChange={setManzil} required />
       <LokalField label="Qisqa tavsif" value={qisqa} onChange={setQisqa} />

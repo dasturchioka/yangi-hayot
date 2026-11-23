@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi, ApiError } from './api';
+import { Select } from '@yh/ui/select';
 
 /** Mirrors the server's /admin/api/rassilka responses (apps/server/src/rassilka/rassilka.ts). */
 type Audience = 'all' | 'ru' | 'uz' | 'toshkent' | 'navoiy';
@@ -89,128 +90,166 @@ export function RassilkaScreen() {
     }
   }
 
+  // What the form would send now: the preview follows typing, the confirm step shows the saved draft.
+  const live: Content = { text };
+  if (mediaKind) live.media = { kind: mediaKind, fileId: mediaRef };
+  if (buttonKind === 'url') live.button = { text: buttonText, url: buttonTarget };
+  if (buttonKind === 'app') live.button = { text: buttonText, startapp: buttonTarget };
+
   return (
     <section className="stack">
-      <h1 className="h2">Rassilka</h1>
+      <header>
+        <h1 className="h2">Rassilka</h1>
+        <p className="muted">Bot obunachilariga xabar: avval ko'rib chiqasiz, keyin tasdiqlaysiz</p>
+      </header>
       {error && <p className="error">{error}</p>}
 
-      {!draft ? (
-        <div className="card stack">
-          <label className="field">
-            <span>Auditoriya</span>
-            <select value={audience} onChange={(e) => setAudience(e.target.value as Audience)}>
-              {(Object.keys(AUDIENCE_LABEL) as Audience[]).map((a) => (
-                <option key={a} value={a}>
-                  {AUDIENCE_LABEL[a]}
-                  {counts ? ` (${counts[a]})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Matn (media bilan — izoh, 1024 belgigacha)</span>
-            <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} />
-          </label>
-          <div className="row">
+      <div className="rassilka-grid">
+        {!draft ? (
+          <div className="card stack">
+            <div className="field">
+              <span>Auditoriya</span>
+              <div className="audience" role="group" aria-label="Auditoriya">
+                {(Object.keys(AUDIENCE_LABEL) as Audience[]).map((a) => (
+                  <button key={a} type="button" aria-pressed={a === audience} onClick={() => setAudience(a)}>
+                    {AUDIENCE_LABEL[a]}
+                    {counts && <span className="count">{counts[a]}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label className="field">
-              <span>Media</span>
-              <select value={mediaKind} onChange={(e) => setMediaKind(e.target.value as typeof mediaKind)}>
-                <option value="">Yo'q</option>
-                <option value="photo">Foto</option>
-                <option value="video">Video</option>
-              </select>
+              <span>Matn (media bilan — izoh, 1024 belgigacha)</span>
+              <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} />
             </label>
-            {mediaKind && (
-              <label className="field grow">
-                <span>https havola yoki Telegram file_id</span>
-                <input value={mediaRef} onChange={(e) => setMediaRef(e.target.value)} />
-              </label>
-            )}
-          </div>
-          <div className="row">
-            <label className="field">
-              <span>Tugma</span>
-              <select value={buttonKind} onChange={(e) => setButtonKind(e.target.value as typeof buttonKind)}>
-                <option value="">Tugmasiz</option>
-                <option value="url">Havola</option>
-                <option value="app">Mini App ekrani</option>
-              </select>
-            </label>
-            {buttonKind && (
-              <>
+            <div className="row">
+              <Select<typeof mediaKind>
+                label="Media"
+                value={mediaKind}
+                options={[
+                  { value: '', label: "Yo'q" },
+                  { value: 'photo', label: 'Foto' },
+                  { value: 'video', label: 'Video' },
+                ]}
+                onChange={setMediaKind}
+              />
+              {mediaKind && (
                 <label className="field grow">
-                  <span>Tugma matni</span>
-                  <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} />
+                  <span>https havola yoki Telegram file_id</span>
+                  <input value={mediaRef} onChange={(e) => setMediaRef(e.target.value)} />
                 </label>
-                <label className="field grow">
-                  <span>{buttonKind === 'url' ? 'https://…' : "Ekran (bo'sh = bosh sahifa; booking, ariza)"}</span>
-                  <input value={buttonTarget} onChange={(e) => setButtonTarget(e.target.value)} />
-                </label>
-              </>
-            )}
+              )}
+            </div>
+            <div className="row">
+              <Select<typeof buttonKind>
+                label="Tugma"
+                value={buttonKind}
+                options={[
+                  { value: '', label: 'Tugmasiz' },
+                  { value: 'url', label: 'Havola' },
+                  { value: 'app', label: 'Mini App ekrani' },
+                ]}
+                onChange={setButtonKind}
+              />
+              {buttonKind && (
+                <>
+                  <label className="field grow">
+                    <span>Tugma matni</span>
+                    <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} />
+                  </label>
+                  <label className="field grow">
+                    <span>{buttonKind === 'url' ? 'https://…' : "Ekran (bo'sh = bosh sahifa; booking, ariza)"}</span>
+                    <input value={buttonTarget} onChange={(e) => setButtonTarget(e.target.value)} />
+                  </label>
+                </>
+              )}
+            </div>
+            <div>
+              <button className="primary" disabled={!text.trim()} onClick={() => void createDraft()}>
+                Ko'rib chiqish
+              </button>
+            </div>
           </div>
-          <div>
-            <button className="primary" disabled={!text.trim()} onClick={() => void createDraft()}>
-              Ko'rib chiqish
-            </button>
+        ) : (
+          <div className="confirm-panel">
+            <p className="title">{draft.recipients} ta qabul qiluvchiga yuborilsinmi?</p>
+            <p className="muted">
+              Auditoriya: {AUDIENCE_LABEL[draft.audience]}. Yuborilgandan keyin to'xtatib bo'lmaydi.
+            </p>
+            <div className="row">
+              <button className="primary" onClick={() => void act('confirm')}>
+                Yuborish
+              </button>
+              <button onClick={() => void act('cancel')}>Bekor qilish</button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="card stack">
-          <p className="muted">Qabul qiluvchilar ko'radi:</p>
-          <Preview content={draft.content} />
-          <p className="title">{draft.recipients} ta qabul qiluvchiga yuborilsinmi?</p>
-          <div className="row">
-            <button className="primary" onClick={() => void act('confirm')}>
-              ✅ Yuborish
-            </button>
-            <button onClick={() => void act('cancel')}>❌ Bekor qilish</button>
-          </div>
-        </div>
-      )}
+        )}
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Matn</th>
-            <th>Auditoriya</th>
-            <th>Holat</th>
-            <th>Yetkazildi</th>
-            <th>Botni bloklagan</th>
-            <th>Xato</th>
-            <th>Navbatda</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((r) => (
-            <tr key={r.id}>
-              <td>{r.id}</td>
-              <td className="clip">{r.content.text}</td>
-              <td>{AUDIENCE_LABEL[r.audience]}</td>
-              <td>{STATUS_LABEL[r.status]}</td>
-              <td>{r.stats.delivered}</td>
-              <td>{r.stats.blocked}</td>
-              <td>{r.stats.error}</td>
-              <td>{r.stats.pending}</td>
+        <aside className="tg-preview">
+          <p className="title">{draft ? "Qabul qiluvchilar shuni ko'radi" : "Telegram'da shunday ko'rinadi"}</p>
+          <Preview content={draft ? draft.content : live} />
+        </aside>
+      </div>
+
+      <section className="card flush">
+        <h2 className="title pad">Yuborilganlar</h2>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Matn</th>
+              <th>Auditoriya</th>
+              <th>Holat</th>
+              <th className="num">Yetkazildi</th>
+              <th className="num">Botni bloklagan</th>
+              <th className="num">Xato</th>
+              <th className="num">Navbatda</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((r) => (
+              <tr key={r.id}>
+                <td>{r.id}</td>
+                <td className="clip">{r.content.text}</td>
+                <td>{AUDIENCE_LABEL[r.audience]}</td>
+                <td>
+                  <span className={`status-badge ${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                </td>
+                <td className="num">{r.stats.delivered}</td>
+                <td className="num">{r.stats.blocked}</td>
+                <td className="num">{r.stats.error}</td>
+                <td className="num">{r.stats.pending}</td>
+              </tr>
+            ))}
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={8} className="muted">
+                  Hali rassilka yuborilmagan
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
     </section>
   );
 }
 
 function Preview({ content }: { content: Content }) {
   return (
-    <div className="preview">
-      {content.media && (
-        <p className="muted">
-          [{content.media.kind === 'photo' ? 'Foto' : 'Video'}: {content.media.fileId}]
+    <div className="tg-chat">
+      <div className="tg-bubble">
+        {content.media && (
+          <div className="tg-media">
+            {content.media.kind === 'photo' ? 'Foto' : 'Video'}
+            {content.media.fileId ? ` · ${content.media.fileId.slice(0, 32)}` : ''}
+          </div>
+        )}
+        <p className={content.text.trim() ? 'tg-text' : 'tg-text placeholder'}>
+          {content.text.trim() || 'Xabar matni shu yerda ko‘rinadi'}
         </p>
-      )}
-      <p className="pre">{content.text}</p>
-      {content.button && <span className="chip">{content.button.text}</span>}
+      </div>
+      {content.button && <span className="tg-button">{content.button.text || 'Tugma'}</span>}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useT } from '../i18n';
 import { copyText, hapticSuccess, shareToChat, showAlert } from '../telegram';
+import { CheckIcon as KitCheckIcon, SendIcon } from '../icons';
 
 type State =
   | { kind: 'loading' }
@@ -139,17 +140,9 @@ function LinkSkeleton() {
 }
 
 function PlaneIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M21 3 3 10.5l7 2.5 2.5 7L21 3z M10 13l4.5-4.5" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
+  return <SendIcon />;
 }
 
 function CheckIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
-      <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <KitCheckIcon size={16} />;
 }

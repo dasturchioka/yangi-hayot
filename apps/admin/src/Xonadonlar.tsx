@@ -12,7 +12,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { adminApi, errorText } from './api';
 import { parseNumber, qachon, soum, XONADON_HOLATI_LABEL } from './format';
 import { Icon } from './icons';
-import { Listbox, type ListboxOption } from './Listbox';
+import { Select, type SelectOption } from '@yh/ui/select';
+import '@yh/ui/select.css';
 import './xonadonlar.css';
 
 /**
@@ -139,13 +140,13 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
           <p className="muted">Status va narx o'zgarishi Mini App va AI-menejerda 1 daqiqada ko'rinadi</p>
         </div>
         <div className="xon-actions">
-          <Listbox
-            label="Loyiha"
-            className="lb-field"
-            value={loyihaId ?? 0}
+          <Select
+            aria-label="Loyiha"
+            className="xon-loyiha"
+            value={loyihaId}
             options={loyihalar.map((l) => ({
               value: l.id,
-              text: l.nomi,
+              textValue: l.nomi,
               label: (
                 <span className="lb-two">
                   {l.nomi}
@@ -227,15 +228,14 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
               onChange={(e) => setQidiruv(e.target.value)}
             />
           </label>
-          <Listbox
-            label="Status"
-            className="lb-field"
+          <Select
+            aria-label="Status"
+            className="xon-filtr"
             value={filtr}
             options={[
               { value: '' as const, label: 'hammasi' },
-              ...XONADON_HOLATLARI.map((h) => ({ value: h, label: <HolatDot holat={h} text />, text: XONADON_HOLATI_LABEL[h] })),
+              ...XONADON_HOLATLARI.map((h) => ({ value: h, label: <HolatDot holat={h} text />, textValue: XONADON_HOLATI_LABEL[h] })),
             ]}
-            renderValue={(o) => <>Status: {o?.label}</>}
             onChange={setFiltr}
           />
         </div>
@@ -502,10 +502,10 @@ function HolatDot({ holat, text }: { holat: XonadonHolati; text?: boolean }) {
   );
 }
 
-const holatOptions: ListboxOption<XonadonHolati>[] = XONADON_HOLATLARI.map((h) => ({
+const holatOptions: SelectOption<XonadonHolati>[] = XONADON_HOLATLARI.map((h) => ({
   value: h,
   label: <HolatDot holat={h} text />,
-  text: XONADON_HOLATI_LABEL[h],
+  textValue: XONADON_HOLATI_LABEL[h],
 }));
 
 function planirovkaText(p: AdminPlanirovkaDto) {
@@ -612,14 +612,14 @@ function XonadonRow({
         <Narx x={x} p={planirovka} />
       </td>
       <td>
-        <Listbox
-          label={`${blokNomi}-${x.raqam} holati`}
-          className={`pill ${x.holat}`}
+        <Select
+          aria-label={`${blokNomi}-${x.raqam} statusi`}
+          className={`xon-pill ${x.holat}`}
+          size="sm"
           value={x.holat}
           options={holatOptions}
-          renderValue={(o) => o?.text}
           onChange={holat}
-          busy={busy}
+          disabled={busy}
         />
       </td>
       <td className="muted small nowrap oxirgi-td">
@@ -737,9 +737,10 @@ function XonadonForm({
         />
       </td>
       <td colSpan={2}>
-        <Listbox
-          label="Planirovka"
-          className="lb-cell"
+        <Select
+          aria-label="Planirovka"
+          className="xon-cell-select"
+          size="sm"
           value={planirovkaId}
           options={planirovkalar.map((x) => ({ value: x.id, label: planirovkaText(x) }))}
           onChange={setPlanirovkaId}
@@ -756,12 +757,12 @@ function XonadonForm({
         />
       </td>
       <td>
-        <Listbox
-          label="Holat"
-          className={`pill ${holat}`}
+        <Select
+          aria-label="Status"
+          className={`xon-pill ${holat}`}
+          size="sm"
           value={holat}
           options={holatOptions}
-          renderValue={(o) => o?.text}
           onChange={setHolat}
         />
       </td>
