@@ -156,6 +156,24 @@ export const ru = {
   'kontent.telegram': 'Telegram',
   'kontent.xarita': 'Карта',
   'kontent.qongiroq': 'Позвонить',
+
+  'taklif.open': 'Пригласить друга',
+  'taklif.openHint': 'Личная ссылка для друзей',
+  'taklif.title': 'Пригласите друга',
+  'taklif.hero': 'Друг купит квартиру\u00a0— вам бонус',
+  'taklif.heroNote': 'Условия бонуса определяет Yangi Hayot — подробности расскажет менеджер.',
+  'taklif.yourLink': 'Ваша ссылка',
+  'taklif.copy': 'Копировать',
+  'taklif.copied': 'Скопировано',
+  'taklif.soni': 'приглашено',
+  'taklif.soniNone': 'Пока никто не пришёл по вашей ссылке.',
+  'taklif.howTitle': 'Как это работает',
+  'taklif.step1': 'Отправьте ссылку другу',
+  'taklif.step2': 'Он выбирает квартиру через бота',
+  'taklif.step3': 'Договор подписан — вы получаете бонус',
+  'taklif.send': 'Отправить в Telegram',
+  'taklif.shareText': 'Квартиры Yangi Hayot в Ташкенте и Навои — цены и планировки в боте. Посмотри:',
+  'taklif.unavailable': 'Приглашения пока не настроены. Попробуйте позже.',
 } as const;
 
 export type MessageKey = keyof typeof ru;

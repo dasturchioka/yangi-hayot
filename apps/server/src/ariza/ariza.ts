@@ -6,6 +6,7 @@ import type { Messenger } from '../adapters/messenger/messenger';
 import type { Clock } from '../clock';
 import { SHARED_MANBA } from '../mijoz/manba';
 import { getSetting, setSetting } from '../settings/settings';
+import { taklifQilganLines } from '../taklif/taklif';
 import { knownCrmContact, knownPhone } from './legacy';
 import { arizaNote, type ArizaKontekst } from './note';
 import { ARIZA_TURI, TASK_TEXT } from './turlar';
@@ -122,7 +123,12 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       if (!m) throw new Error(`Ariza for unknown Mijoz ${input.telegramId}`);
       const kontekst = await loadKontekst(db, input.loyihaId ?? null, input.planirovkaId ?? null);
       const manba = input.manba ?? m.last_source;
-      const izoh = [...(manba === SHARED_MANBA ? await sharerLines(db, input.telegramId) : []), ...(input.izoh ?? [])];
+      const izoh = [
+        ...(manba === SHARED_MANBA ? await sharerLines(db, input.telegramId) : []),
+        // #19: the inviter stays on every Ariza of an invited Mijoz, whatever the later Manba.
+        ...(await taklifQilganLines(db, input.telegramId)),
+        ...(input.izoh ?? []),
+      ];
       const phone = input.phone ?? (await knownPhone(db, input.telegramId));
 
       const repeat = await db.query<{ id: number }>(

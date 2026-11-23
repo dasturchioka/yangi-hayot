@@ -5,8 +5,8 @@ import type { Migration } from './index';
  * input, the settings-applied result and the Ariza it was sent with (if any).
  * Read by dojim #17 («hisobladi va 24 soat ichida Ariza yo'q») and Daraja #18.
  */
-export const m0009_t12_kalkulyator: Migration = {
-  name: '0009_t12_kalkulyator',
+export const m0010_t12_kalkulyator: Migration = {
+  name: '0010_t12_kalkulyator',
   sql: `
     CREATE TABLE kalkulyator_hisob (
       id            serial  PRIMARY KEY,

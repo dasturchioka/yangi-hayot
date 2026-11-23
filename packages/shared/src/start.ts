@@ -7,6 +7,7 @@
  * - `src_<nomi>`          — Manba tag (#7), handled by the server's manba module;
  * - `pl<id>_u<ulashish>`  — «Ulashish» link (#16): opens Planirovka <id>,
  *                            <ulashish> names who shared it;
+ * - `taklif_<kod>`        — personal «Do'stingni taklif qil» link (#19);
  * - `booking`, `ariza`, ''— bot buttons (#7), screens of later tickets.
  */
 
@@ -32,4 +33,19 @@ export function parseUlashishParam(param: string | null | undefined): UlashishPa
   const ulashishId = Number(m[2]);
   if (planirovkaId > 2_147_483_647 || ulashishId > 2_147_483_647) return null;
   return { planirovkaId, ulashishId };
+}
+
+/**
+ * «Do'stingni taklif qil» (#19): a Mijoz's personal link carries
+ * `taklif_<kod>` (bot `?start=` and, as well, Mini App `startapp`).
+ */
+const TAKLIF = /^taklif_([a-z0-9]{6,32})$/;
+
+export function taklifStartParam(kod: string): string {
+  return `taklif_${kod}`;
+}
+
+/** The personal taklif code in this start parameter, or null. */
+export function parseTaklifParam(param: string | null | undefined): string | null {
+  return param ? (TAKLIF.exec(param)?.[1] ?? null) : null;
 }

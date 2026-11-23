@@ -382,3 +382,56 @@ export interface UlashishResponse {
   /** `<MINIAPP_LINK>?startapp=pl<id>_u<n>`; opens that Planirovka in the Mini App. */
   url: string;
 }
+
+// ---- «Do'stingni taklif qil» (#19, UF-6) ----
+
+/** GET /api/taklif: the Mijoz's personal link and how many Mijozlar came by it. */
+export interface TaklifResponse {
+  /** `https://t.me/<bot>?start=taklif_<kod>`: opens the bot for the friend. */
+  url: string;
+  /** Mijozlar who first came to the bot by this link. */
+  soni: number;
+}
+
+/** A Mijoz as the admin-panel shows them in the taklif lists. */
+export interface TaklifMijozDto {
+  telegramId: string;
+  name: string;
+  username: string | null;
+  phone: string | null;
+}
+
+/** GET /admin/api/takliflar row: a Mijoz who invited at least one other. */
+export interface TaklifchiDto extends TaklifMijozDto {
+  soni: number;
+  /** When the latest invited Mijoz came (ISO). */
+  oxirgiAt: string;
+}
+
+export interface TaklifchilarResponse {
+  taklifchilar: TaklifchiDto[];
+}
+
+/** An amoCRM Bitim of an invited Mijoz, as known from their Arizalar. */
+export interface TaklifBitimDto {
+  id: string;
+  /** Link into amoCRM when AMO_BASE_URL is set. */
+  url: string | null;
+  arizalarSoni: number;
+  oxirgiArizaAt: string;
+}
+
+export interface TaklifQilinganDto extends TaklifMijozDto {
+  /** When they first came to the bot (ISO). */
+  kelganAt: string;
+  arizalarSoni: number;
+  /** Arizalar not yet in amoCRM (queued for retry). */
+  kutilayotganArizalar: number;
+  bitimlar: TaklifBitimDto[];
+}
+
+/** GET /admin/api/takliflar/:telegramId */
+export interface TaklifQilinganlarResponse {
+  taklifchi: TaklifMijozDto;
+  taklifQilinganlar: TaklifQilinganDto[];
+}

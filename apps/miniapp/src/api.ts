@@ -12,6 +12,7 @@ import type {
   MeResponse,
   PlanirovkaResponse,
   SevimlilarResponse,
+  TaklifResponse,
   TaqqoslashResponse,
   UlashishResponse,
 } from '@yh/shared';
@@ -85,4 +86,6 @@ export const api = {
   /** «Hisobni menejerga yuborish»: 400 = bad phone or input outside the settings, 429 = too many Arizalar. */
   kalkulyatorAriza: (body: KalkulyatorArizaRequest) => apiSend<ArizaCreatedResponse>('POST', '/kalkulyator/ariza', body),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
+  /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
+  taklif: () => apiGet<TaklifResponse>('/taklif'),
 };

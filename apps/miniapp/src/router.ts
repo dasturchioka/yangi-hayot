@@ -12,6 +12,8 @@ export type Route =
   | { name: 'kalkulyator'; planirovkaId?: number }
   | { name: 'sotibOlish' }
   | { name: 'bizHaqimizda' }
+  /** «Do'stingni taklif qil» (#19). */
+  | { name: 'taklif' }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
   | { name: 'ariza'; loyihaId?: number; planirovkaId?: number };
 
@@ -36,6 +38,7 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'qanday-sotib-olish') return { name: 'sotibOlish' };
   if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
+  if (parts[0] === 'taklif') return { name: 'taklif' };
   if (parts[0] === 'taqqoslash') {
     const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
     if (ids.length > 0) return { name: 'taqqoslash', ids };
@@ -70,6 +73,8 @@ export function href(route: Route): string {
       return '#/qanday-sotib-olish';
     case 'bizHaqimizda':
       return '#/biz-haqimizda';
+    case 'taklif':
+      return '#/taklif';
   }
 }
 
