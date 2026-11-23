@@ -7,6 +7,7 @@ import { JurnalScreen } from './Jurnal';
 import { LoginScreen } from './Login';
 import { LoyihalarScreen } from './Loyihalar';
 import { RassilkaScreen } from './Rassilka';
+import { TakliflarScreen } from './Takliflar';
 import { XonadonlarScreen } from './Xonadonlar';
 
 /**
@@ -26,6 +27,7 @@ const SECTIONS: Section[] = [
   { name: 'Yozilishlar', rollar: ['administrator', 'menejer'] },
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
+  { name: 'Takliflar', rollar: ['administrator'], render: () => <TakliflarScreen /> },
   { name: 'Analitika', rollar: ['administrator'] },
   { name: 'Matnlar va sozlamalar', rollar: ['administrator'] },
   { name: 'Foydalanuvchilar', rollar: ['administrator'], render: (a) => <FoydalanuvchilarScreen me={a} /> },

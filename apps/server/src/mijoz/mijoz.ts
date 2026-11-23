@@ -79,17 +79,20 @@ function toRecord(row: Row): MijozRecord {
  * `ulashishId`: the «Ulashish» link of this visit (with manba «mijoz
  * ulashdi»). Every tagged visit rewrites `last_ulashish_id`, so it is set
  * exactly while the last Manba is «mijoz ulashdi».
+ *
+ * `taklifQilganId`: who invited the Mijoz by a personal link (#19). Stored
+ * only when this visit creates the Mijoz; a known Mijoz is never «invited».
  */
 export async function ensureMijoz(
   db: pg.Pool,
   user: TelegramUser,
   now: Date,
-  opts: { manba?: string | null; ulashishId?: number | null } = {},
+  opts: { manba?: string | null; ulashishId?: number | null; taklifQilganId?: string | null } = {},
 ): Promise<MijozRecord> {
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ');
   const { rows } = await db.query<Row>(
-    `INSERT INTO mijoz (telegram_id, name, username, lang, first_source, last_source, last_ulashish_id, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, coalesce($5, $6), coalesce($5, $6), $8, $7, $7)
+    `INSERT INTO mijoz (telegram_id, name, username, lang, first_source, last_source, last_ulashish_id, taklif_qilgan_id, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, coalesce($5, $6), coalesce($5, $6), $8, $9, $7, $7)
      ON CONFLICT (telegram_id) DO UPDATE SET
        updated_at  = EXCLUDED.updated_at,
        username    = coalesce(EXCLUDED.username, mijoz.username),
@@ -105,6 +108,7 @@ export async function ensureMijoz(
       DIRECT_MANBA,
       now,
       opts.ulashishId ?? null,
+      opts.taklifQilganId ?? null,
     ],
   );
   return toRecord(rows[0]!);

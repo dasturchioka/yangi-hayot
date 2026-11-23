@@ -8,6 +8,7 @@ import type {
   MeResponse,
   PlanirovkaResponse,
   SevimlilarResponse,
+  TaklifResponse,
   TaqqoslashResponse,
   UlashishResponse,
 } from '@yh/shared';
@@ -73,4 +74,6 @@ export const api = {
   removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
   taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
+  /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
+  taklif: () => apiGet<TaklifResponse>('/taklif'),
 };

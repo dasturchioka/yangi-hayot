@@ -508,3 +508,53 @@ input.short {
   grid-column: 1 / -1;
   background: var(--yh-surface);
 }
+
+/* ---- Takliflar (#19) ---- */
+.link-button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.link-button:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.bitimlar {
+  display: grid;
+  gap: var(--yh-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bitimlar a {
+  color: var(--yh-primary);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.taklif-detail {
+  animation: taklif-detail-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes taklif-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taklif-detail {
+    animation: none;
+  }
+}

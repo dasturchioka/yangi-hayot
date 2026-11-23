@@ -21,9 +21,17 @@ export function LoyihalarScreen() {
     <>
       <div className="row-between">
         <h1 className="h1">{t('katalog.title')}</h1>
-        <a className="button-icon" href={href({ name: 'sevimlilar' })} aria-label={t('sevimli.open')}>
-          ♡
-        </a>
+        <div className="row-actions">
+          <a className="button-icon" href={href({ name: 'taklif' })} aria-label={t('taklif.open')} title={t('taklif.open')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="9" cy="8" r="3.5" />
+              <path d="M3 19.5c.8-3.2 3.2-5 6-5s5.2 1.8 6 5M18 8v6M15 11h6" strokeLinecap="round" />
+            </svg>
+          </a>
+          <a className="button-icon" href={href({ name: 'sevimlilar' })} aria-label={t('sevimli.open')}>
+            ♡
+          </a>
+        </div>
       </div>
       <Loaded load={load}>
         {({ loyihalar }) => {

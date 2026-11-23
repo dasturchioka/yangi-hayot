@@ -7,6 +7,7 @@ import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } 
 import { navigate, useRoute, type Route } from './router';
 import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
 import { openStartScreen } from './start';
+import { TaklifScreen } from './taklif/TaklifScreen';
 import { getInitData, guessLang, setBackButton } from './telegram';
 
 export function App() {
@@ -69,5 +70,7 @@ function Screen({ route }: { route: Route }) {
       return <SevimlilarScreen />;
     case 'taqqoslash':
       return <TaqqoslashScreen key={route.ids.join(',')} ids={route.ids} />;
+    case 'taklif':
+      return <TaklifScreen />;
   }
 }
