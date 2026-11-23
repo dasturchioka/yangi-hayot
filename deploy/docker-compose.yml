@@ -1,0 +1,37 @@
+name: yangihayot
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: yangi_hayot
+      POSTGRES_USER: yh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "yh"], interval: 5s, retries: 20 }
+  server:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: server }
+    restart: unless-stopped
+    env_file: server.env
+    environment:
+      DATABASE_URL: postgres://yh:${POSTGRES_PASSWORD}@postgres:5432/yangi_hayot
+      HOST: 0.0.0.0
+      PORT: "3000"
+      BACKUP_DIR: /backups
+    volumes: [./backups:/backups]
+    depends_on: { postgres: { condition: service_healthy } }
+  bot:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: bot }
+    restart: unless-stopped
+    env_file: bot.env
+    environment:
+      SERVER_URL: http://server:3000
+    depends_on: [server]
+    profiles: [bot]
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    restart: unless-stopped
+    ports: ["127.0.0.1:4380:80"]
+    depends_on: [server]
+volumes:
+  pgdata:
