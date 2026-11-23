@@ -1,4 +1,6 @@
 import pg from 'pg';
+import { amoCrmFromEnv } from './adapters/crm/amocrm-env';
+import type { Crm } from './adapters/crm/crm';
 import { RecordingCrm } from './adapters/crm/recording-crm';
 import type { Messenger } from './adapters/messenger/messenger';
 import { RecordingMessenger } from './adapters/messenger/recording-messenger';
@@ -20,18 +22,23 @@ const messenger: Messenger = config.miniAppUrl
   ? new TelegramMessenger({ botToken: config.botToken, miniAppUrl: config.miniAppUrl })
   : new RecordingMessenger();
 
+const amoCrm = await amoCrmFromEnv(process.env, db, systemClock);
+const crm: Crm = amoCrm ?? new RecordingCrm();
+
 const app = buildApp(
   {
     config,
     db,
     clock: systemClock,
-    // TODO: replace with the amoCRM adapter when it lands.
-    crm: new RecordingCrm(),
+    crm,
     messenger,
   },
   { logger: true },
 );
-app.log.warn('CRM is an in-memory fake: nothing is sent to amoCRM');
+if (!amoCrm) app.log.warn('AMO_BASE_URL not set: CRM is an in-memory fake, nothing is sent to amoCRM');
+
+// Background jobs (Ariza CRM retries, …): one tick every 30 s.
+const stopJobs = app.jobs.start();
 if (!config.miniAppUrl) app.log.warn('MINIAPP_URL not set: Messenger is an in-memory fake, nothing is sent to Telegram');
 
 // Rassilka queue: recovers rows interrupted by the last shutdown, then sends ≤ 25/s.
@@ -58,6 +65,7 @@ if (config.backup.dir) {
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, async () => {
+    stopJobs();
     stopBackups();
     await rassilkaWorker.stop();
     await app.close();

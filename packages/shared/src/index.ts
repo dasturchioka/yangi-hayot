@@ -133,6 +133,40 @@ export interface PlanirovkaResponse {
   planirovka: PlanirovkaDto;
 }
 
+// ---- Ariza (TZ 8-bo'lim) ----
+
+/** form = «Ariza qoldirish», quiz = «Xonadon tanlash», visit = ko'rishga yozilish, calc = kalkulyator, ai = AI-menejer, human = «Menejer kerak». */
+export const ARIZA_TURLARI = ['form', 'quiz', 'visit', 'calc', 'ai', 'human'] as const;
+export type ArizaTuri = (typeof ARIZA_TURLARI)[number];
+
+/** POST /api/arizalar — the «Ariza qoldirish» form. */
+export interface ArizaFormRequest {
+  name: string;
+  /** Any common Uzbek format; stored as +998XXXXXXXXX. */
+  phone: string;
+  loyihaId?: number;
+  planirovkaId?: number;
+}
+
+export interface ArizaCreatedResponse {
+  id: number;
+}
+
+export interface ArizaDto {
+  id: number;
+  tur: ArizaTuri;
+  /** ISO instant. */
+  createdAt: string;
+  loyihaId: number | null;
+  planirovkaId: number | null;
+}
+
+/** GET /api/arizalar — the Mijoz's own Arizalar (newest first) and the contact to prefill forms with. */
+export interface ArizalarResponse {
+  kontakt: { name: string; phone: string | null };
+  arizalar: ArizaDto[];
+}
+
 // ---- Admin-panel (#5) ----
 
 /** Administrator: everything. Menejer: Xonadon holatlari (counts) and yozilishlar only. */

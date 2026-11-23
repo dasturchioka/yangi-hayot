@@ -9,10 +9,19 @@ export type Route =
   | { name: 'sevimlilar' }
   | { name: 'taqqoslash'; ids: number[] }
   | { name: 'sotibOlish' }
-  | { name: 'bizHaqimizda' };
+  | { name: 'bizHaqimizda' }
+  /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
+  | { name: 'ariza'; loyihaId?: number; planirovkaId?: number };
 
 export function parseRoute(hash: string): Route {
-  const parts = hash.replace(/^#\/?/, '').split('/');
+  const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?');
+  const parts = path.split('/');
+  if (parts[0] === 'ariza') {
+    const q = new URLSearchParams(query);
+    const loyihaId = Number(q.get('loyiha')) || undefined;
+    const planirovkaId = Number(q.get('planirovka')) || undefined;
+    return { name: 'ariza', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
+  }
   const id = Number(parts[1]);
   if (parts[0] === 'loyiha' && id > 0) {
     return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
@@ -38,6 +47,13 @@ export function href(route: Route): string {
       return `#/loyiha/${route.loyihaId}/planirovkalar`;
     case 'planirovka':
       return `#/planirovka/${route.id}`;
+    case 'ariza': {
+      const q = new URLSearchParams();
+      if (route.loyihaId) q.set('loyiha', String(route.loyihaId));
+      if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      const qs = q.toString();
+      return qs ? `#/ariza?${qs}` : '#/ariza';
+    }
     case 'sevimlilar':
       return '#/sevimlilar';
     case 'taqqoslash':

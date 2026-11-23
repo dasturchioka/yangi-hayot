@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { inject } from 'vitest';
 import { buildApp } from '../../src/app';
@@ -19,12 +20,19 @@ export const TEST_AI_API_KEY = 'test-ai-api-key-0123456789';
 export const TEST_MINIAPP_LINK = 'https://t.me/YangiHayotTestBot/app';
 
 export interface TestApp {
-  app: ReturnType<typeof buildApp>;
+  app: FastifyInstance;
   clock: FakeClock;
   crm: RecordingCrm;
   messenger: RecordingMessenger;
   /** Pool on this test's own database (cloned from the migrated template). */
   db: pg.Pool;
+  /** Runs every background job once (move `clock` first); fails if a job threw. */
+  runJobs(): Promise<void>;
+  /**
+   * Simulates a server restart: a new app on the same database, clock and
+   * adapters. Nothing kept in memory survives.
+   */
+  restart(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -45,29 +53,41 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const clock = new FakeClock(opts.now ?? DEFAULT_NOW);
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
-  const app = buildApp({
-    config: {
-      botToken: TEST_BOT_TOKEN,
-      botApiSecret: TEST_BOT_API_SECRET,
-      aiApiKey: TEST_AI_API_KEY,
-      miniAppLink: TEST_MINIAPP_LINK,
-    },
-    db,
-    clock,
-    crm,
-    messenger,
-  });
-  await app.ready();
+  const build = async () => {
+    const app = buildApp({
+      config: {
+        botToken: TEST_BOT_TOKEN,
+        botApiSecret: TEST_BOT_API_SECRET,
+        aiApiKey: TEST_AI_API_KEY,
+        miniAppLink: TEST_MINIAPP_LINK,
+      },
+      db,
+      clock,
+      crm,
+      messenger,
+    });
+    await app.ready();
+    return app;
+  };
 
-  return {
-    app,
+  const t: TestApp = {
+    app: await build(),
     clock,
     crm,
     messenger,
     db,
+    async runJobs() {
+      const failures = await t.app.jobs.runAll();
+      if (failures.length > 0) throw failures[0]!.error;
+    },
+    async restart() {
+      await t.app.close();
+      t.app = await build();
+    },
     async close() {
-      await app.close();
+      await t.app.close();
       await db.end();
     },
   };
+  return t;
 }

@@ -30,8 +30,8 @@ export type CrmFailureMode = 'unavailable' | 'auth';
 export class RecordingCrm implements Crm {
   readonly calls: Array<CrmCall & { ok: boolean }> = [];
   readonly contacts: CrmContact[] = [];
-  readonly bitimlar: Array<CrmBitim & { open: boolean; tags: string[]; notes: string[] }> = [];
-  readonly tasks: Array<CrmTask & { closed: boolean; result?: string }> = [];
+  readonly bitimlar: Array<CrmBitim & { open: boolean; tags: string[]; notes: string[]; manba?: string }> = [];
+  readonly tasks: Array<CrmTask & { closed: boolean; result?: string; responsibleUserId?: string }> = [];
 
   #failure: CrmFailureMode | null = null;
   #seq = 0;
@@ -89,11 +89,16 @@ export class RecordingCrm implements Crm {
     for (const t of tags) if (!b.tags.includes(t)) b.tags.push(t);
   }
 
+  async setManba(bitimId: string, manba: string): Promise<void> {
+    this.#enter('setManba', [bitimId, manba]);
+    this.#bitim(bitimId).manba = manba;
+  }
+
   async createTask(input: NewCrmTask): Promise<CrmTask> {
     this.#enter('createTask', [input]);
     this.#bitim(input.bitimId);
     const task = { id: this.#id('task'), bitimId: input.bitimId, kind: input.kind, text: input.text, dueAt: input.dueAt };
-    this.tasks.push({ ...task, closed: false });
+    this.tasks.push({ ...task, responsibleUserId: input.responsibleUserId, closed: false });
     return task;
   }
 

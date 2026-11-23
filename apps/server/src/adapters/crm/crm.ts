@@ -18,8 +18,10 @@ export interface Crm {
   createBitim(input: NewCrmBitim): Promise<CrmBitim>;
 
   addNote(bitimId: string, text: string): Promise<void>;
-  /** Adds tags (`bot_form`, `bot_quiz`, …, Daraja) to a Bitim. */
+  /** Adds tags (`bot_form`, `bot_quiz`, …, Manba, Daraja) to a Bitim. */
   addTags(bitimId: string, tags: string[]): Promise<void>;
+  /** Writes the (last) Manba into the Bitim's «Manba» field, if the CRM has one. */
+  setManba(bitimId: string, manba: string): Promise<void>;
 
   createTask(input: NewCrmTask): Promise<CrmTask>;
   rescheduleTask(taskId: string, dueAt: Date): Promise<void>;

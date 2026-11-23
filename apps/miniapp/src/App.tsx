@@ -2,6 +2,7 @@ import type { MijozDto } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { I18nProvider, useT } from './i18n';
+import { ArizaScreen } from './ariza/ArizaScreen';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
 import { BizHaqimizdaScreen, SotibOlishScreen } from './kontent/screens';
 import { navigate, useRoute, type Route } from './router';
@@ -63,6 +64,8 @@ function Screen({ route }: { route: Route }) {
       return <PlanirovkalarScreen key={route.loyihaId} loyihaId={route.loyihaId} />;
     case 'planirovka':
       return <PlanirovkaScreen key={route.id} id={route.id} />;
+    case 'ariza':
+      return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
     case 'sevimlilar':
       return <SevimlilarScreen />;
     case 'taqqoslash':

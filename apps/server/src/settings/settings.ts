@@ -1,6 +1,7 @@
 import type { BizHaqimizdaKontent, BotMedia, KontaktlarKontent, Lang, SotibOlishKontent } from '@yh/shared';
 import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
+import type { WorkingHours } from '../ariza/working-hours';
 
 /** Welcome (salomlashish) set by an administrator with /welcome. */
 export type WelcomeContent = Record<Lang, { text: string; media?: BotMedia }>;
@@ -22,6 +23,13 @@ export interface Settings {
   bizHaqimizda: BizHaqimizdaKontent;
   /** Phone (1349), office address, working hours, map (#13). */
   kontaktlar: KontaktlarKontent;
+  /**
+   * Deadline of «Qo'ng'iroq qilish» / «Bog'lanish» CRM tasks (8-bo'lim):
+   * `minutes` of working time from the Ariza.
+   */
+  crmTaskDue: { minutes: number; workingHours: WorkingHours };
+  /** Set when admins were alerted about an amoCRM auth error; cleared by the next successful delivery. */
+  crmAuthAlertedAt: string | null;
 }
 
 const DEFAULTS: Settings = {
@@ -31,6 +39,9 @@ const DEFAULTS: Settings = {
   sotibOlish: DEFAULT_SOTIB_OLISH,
   bizHaqimizda: DEFAULT_BIZ_HAQIMIZDA,
   kontaktlar: DEFAULT_KONTAKTLAR,
+  // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
+  crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
+  crmAuthAlertedAt: null,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {

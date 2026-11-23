@@ -2,7 +2,7 @@ import type { PlanirovkaDto, PlanirovkaHolati, VideoDto } from '@yh/shared';
 import { useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { href } from '../router';
-import { openExternal, showAlert } from '../telegram';
+import { openExternal } from '../telegram';
 import type { Load } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
 
@@ -47,13 +47,21 @@ export function VideoButton({ video }: { video: VideoDto | null }) {
   );
 }
 
-/** TODO(#9): open the Ariza form with this context (loyihaId / planirovkaId). */
-export function ArizaButton({ primary = true }: { loyihaId?: number; planirovkaId?: number; primary?: boolean }) {
+/** Opens the «Ariza qoldirish» form about this Loyiha or Planirovka. */
+export function ArizaButton({
+  loyihaId,
+  planirovkaId,
+  primary = true,
+}: {
+  loyihaId?: number;
+  planirovkaId?: number;
+  primary?: boolean;
+}) {
   const t = useT();
   return (
-    <button className={primary ? 'button-primary' : 'button-secondary'} onClick={() => showAlert(t('ariza.soon'))}>
+    <a className={primary ? 'button-primary' : 'button-secondary'} href={href({ name: 'ariza', loyihaId, planirovkaId })}>
       {t('ariza.leave')}
-    </button>
+    </a>
   );
 }
 

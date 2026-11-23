@@ -477,6 +477,277 @@ a {
   box-shadow: var(--yh-shadow-sticky);
 }
 
+/* ---------------------------------------------------------------- Ariza */
+
+/* Fills the screen so the send button sits at the bottom, as in the kit */
+.ariza-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+
+/* Context card, as on the booking screen: thumb + Loyiha + one meta line */
+.ariza-kontekst {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-8);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+}
+
+.ariza-kontekst-thumb {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--yh-bg);
+  color: var(--yh-primary);
+}
+
+.ariza-kontekst-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ariza-kontekst-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.ariza-kontekst-text .caption {
+  color: var(--yh-ink-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font: var(--yh-caption);
+  font-weight: 600;
+  color: var(--yh-ink);
+}
+
+.field-error {
+  margin: 0;
+  font: var(--yh-caption);
+  color: var(--yh-status-error-fg);
+}
+
+/* Kiritish maydoni (52px): filled surface; focus → green outline on white; error → red outline */
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--yh-button-h);
+  padding: 0 16px;
+  border: 1.5px solid transparent;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  caret-color: var(--yh-primary);
+  font: var(--yh-body);
+  /* 16px+: iOS does not zoom the page on focus */
+  font-size: 16px;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.input::placeholder,
+.input-phone input::placeholder {
+  color: var(--yh-muted);
+  opacity: 0.7;
+}
+
+.input:focus,
+.input-phone:focus-within {
+  outline: none;
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+}
+
+.input[aria-invalid='true'],
+.input-phone[data-invalid] {
+  border-color: var(--yh-status-error-fg);
+  background: var(--yh-bg);
+}
+
+.input-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-phone input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  caret-color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.input-prefix,
+.input-phone input {
+  line-height: 1;
+}
+
+.input-prefix {
+  color: var(--yh-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.note-error {
+  background: var(--yh-status-error-bg);
+  color: var(--yh-status-error-fg);
+}
+
+/* Tugma holatlari (kit): press, «Faol emas», «Yuborilmoqda» */
+.button-primary,
+.button-secondary {
+  gap: var(--yh-space-8);
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button-primary:active:not(:disabled),
+.button-secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.button-primary:disabled {
+  background: var(--yh-line);
+  color: var(--yh-muted);
+  cursor: default;
+}
+
+.button-primary[aria-busy='true'] {
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* «Ariza qabul qilindi»: leaf-shaped mark, then the text, one entrance */
+.ariza-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: var(--yh-space-12);
+  padding-top: var(--yh-space-32);
+  text-align: center;
+}
+
+.ariza-done > .sticky-actions {
+  align-self: stretch;
+}
+
+.ariza-done > .h2,
+.ariza-done > .body-text {
+  margin: 0;
+  max-width: 32ch;
+}
+
+.ariza-done-mark {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: var(--yh-space-8);
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-status-free-bg);
+}
+
+.ariza-done-mark > span {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px 4px 18px 4px;
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+.ariza-done > * {
+  animation: rise 360ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.ariza-done > :nth-child(2) {
+  animation-delay: 50ms;
+}
+.ariza-done > :nth-child(3) {
+  animation-delay: 100ms;
+}
+.ariza-done > .sticky-actions {
+  animation: none;
+}
+.ariza-done-mark svg path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw 320ms 160ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ariza-done > * {
+    animation: fade 200ms ease both;
+  }
+  .ariza-done-mark svg path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .spinner {
+    animation-duration: 1.2s;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
 /* ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ---- */
 .button-icon {
   flex: none;
