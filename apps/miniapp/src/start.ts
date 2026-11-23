@@ -12,13 +12,14 @@ let opened = false;
  *
  * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka; the bot's
  * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form.
- * TODO(#11): 'booking' once its screen exists.
+ * The bot's «Ko'rishga yozilish» button `booking` (#7, #11) → the booking screen.
  */
 export function openStartScreen(fromServer: StartDto | null): void {
   if (opened) return;
-  if (getStartParam() === 'ariza') {
+  const param = getStartParam();
+  if (param === 'ariza' || param === 'booking') {
     opened = true;
-    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: 'ariza' });
+    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: param === 'ariza' ? 'ariza' : 'yozilish' });
     return;
   }
   const link = parseUlashishParam(getStartParam());

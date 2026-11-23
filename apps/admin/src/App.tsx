@@ -9,6 +9,7 @@ import { LoyihalarScreen } from './Loyihalar';
 import { MatnlarScreen } from './Matnlar';
 import { RassilkaScreen } from './Rassilka';
 import { XonadonlarScreen } from './Xonadonlar';
+import { YozilishlarScreen } from './Yozilishlar';
 
 /**
  * Admin-panel shell: login, then sections by rol. Administrator sees
@@ -24,7 +25,7 @@ interface Section {
 const SECTIONS: Section[] = [
   { name: 'Xonadonlar', rollar: ['administrator', 'menejer'], render: (a) => <XonadonlarScreen admin={a} /> },
   { name: 'Loyihalar', rollar: ['administrator'], render: () => <LoyihalarScreen /> },
-  { name: 'Yozilishlar', rollar: ['administrator', 'menejer'] },
+  { name: 'Yozilishlar', rollar: ['administrator', 'menejer'], render: (a) => <YozilishlarScreen admin={a} /> },
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
   { name: 'Analitika', rollar: ['administrator'] },

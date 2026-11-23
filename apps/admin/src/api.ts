@@ -51,6 +51,8 @@ export function errorText(e: unknown): string {
       blok_taken: 'Bu Loyihada bunday Blok allaqachon bor',
       login_taken: 'Bu login band',
       cannot_demote_self: "O'zingizni o'chira yoki Menejer qila olmaysiz",
+      kelajak: "Ko'rish kuni hali kelmagan",
+      bekor: 'Mijoz bu yozilishni bekor qilgan',
     };
     return (code && known[code]) || `Xato (${e.status})`;
   }

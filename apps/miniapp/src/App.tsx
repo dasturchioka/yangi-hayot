@@ -7,6 +7,7 @@ import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } 
 import { BizHaqimizdaScreen, SotibOlishScreen } from './kontent/screens';
 import { navigate, useRoute, type Route } from './router';
 import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
+import { MeningScreen, YozilishKochirishScreen, YozilishKorishScreen, YozilishScreen } from './yozilish/screens';
 import { openStartScreen } from './start';
 import { getInitData, guessLang, setBackButton } from './telegram';
 
@@ -74,5 +75,13 @@ function Screen({ route }: { route: Route }) {
       return <SotibOlishScreen />;
     case 'bizHaqimizda':
       return <BizHaqimizdaScreen />;
+    case 'yozilish':
+      return <YozilishScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
+    case 'yozilishKorish':
+      return <YozilishKorishScreen key={`${route.id}:${route.yangi}`} {...route} />;
+    case 'yozilishKochirish':
+      return <YozilishKochirishScreen key={route.id} id={route.id} />;
+    case 'mening':
+      return <MeningScreen />;
   }
 }

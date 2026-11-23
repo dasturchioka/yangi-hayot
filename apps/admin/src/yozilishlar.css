@@ -1,0 +1,272 @@
+/* ---- «Ko'rishga yozilishlar» and «Ko'rish kunlari va vaqtlari» (#11, UI kit p.22–23) ---- */
+
+.yozilishlar {
+  max-width: 1120px;
+}
+
+.yz-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+}
+.yz-head .h2 {
+  font: var(--yh-h1);
+}
+.yz-periods {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.yz-periods .tab {
+  font: var(--yh-label);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  border-radius: 12px;
+}
+.yz-periods .tab.active {
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+  box-shadow: none;
+}
+.yz-date,
+.yz-add input {
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  min-height: 40px;
+  padding: 0 var(--yh-space-12);
+  border: 1px solid var(--yh-line);
+  border-radius: 12px;
+  background: var(--yh-bg);
+}
+
+.yz-table-card {
+  padding: 0;
+  overflow-x: auto;
+}
+.yz-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.yz-table thead th {
+  padding: var(--yh-space-12) var(--yh-space-20);
+  font: var(--yh-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--yh-muted);
+  text-align: left;
+  border-bottom: 1px solid var(--yh-line);
+}
+.yz-table td {
+  padding: 14px var(--yh-space-20);
+  border-bottom: 1px solid var(--yh-line);
+  vertical-align: middle;
+}
+.yz-table tbody:last-of-type tr:last-child td {
+  border-bottom: 0;
+}
+.yz-day-row th {
+  padding: var(--yh-space-8) var(--yh-space-20);
+  background: var(--yh-surface);
+  font: var(--yh-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--yh-ink-2);
+  text-align: left;
+}
+.yz-row[data-davomat='keldi'] {
+  background: color-mix(in srgb, var(--yh-status-free-bg) 45%, transparent);
+}
+.yz-row.is-bekor td {
+  color: var(--yh-muted);
+}
+.yz-row.is-bekor .yz-time,
+.yz-row.is-bekor .yz-name {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--yh-muted) 60%, transparent);
+}
+.yz-time {
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+  width: 88px;
+}
+.yz-name {
+  display: block;
+  font: var(--yh-title);
+}
+.yz-sub {
+  display: block;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+.yz-manba {
+  color: var(--yh-ink-2);
+}
+.yz-holat {
+  width: 230px;
+}
+.yz-mark,
+.yz-marked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.yz-mark button {
+  min-height: 40px;
+  padding: 0 var(--yh-space-12);
+  font: var(--yh-title);
+  font-size: 14px;
+  border-radius: 12px;
+  transition: transform 140ms var(--yh-ease-out);
+}
+.yz-mark button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.yz-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--yh-radius-pill);
+  font: var(--yh-label);
+  font-size: 13px;
+}
+.yz-badge-keldi {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+.yz-badge-kelmadi {
+  background: var(--yh-status-error-bg);
+  color: var(--yh-status-error-fg);
+}
+.yz-badge-bekor {
+  background: var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
+}
+.yz-undo {
+  min-height: 32px;
+  padding: 0 var(--yh-space-8);
+  border: 0;
+  background: none;
+  color: var(--yh-muted);
+  font: var(--yh-caption);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.yz-undo:hover {
+  color: var(--yh-ink);
+}
+.yz-row-error {
+  display: block;
+  margin-top: var(--yh-space-4);
+  font: var(--yh-caption);
+  color: var(--yh-status-error-fg);
+}
+.yz-foot {
+  margin: 0;
+  padding: var(--yh-space-12) var(--yh-space-20);
+  border-top: 1px solid var(--yh-line);
+}
+.yz-empty {
+  display: grid;
+  gap: var(--yh-space-4);
+}
+
+/* Settings */
+.yz-setting {
+  display: grid;
+  gap: var(--yh-space-8);
+}
+.yz-setting .field-label {
+  font: var(--yh-label);
+  color: var(--yh-ink-2);
+}
+.yz-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--yh-space-8);
+}
+.yz-weekday {
+  min-width: 48px;
+  min-height: 40px;
+  padding: 0 var(--yh-space-12);
+  border-radius: 12px;
+  font: var(--yh-title);
+  font-size: 14px;
+  transition:
+    transform 140ms var(--yh-ease-out),
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.yz-weekday[aria-pressed='true'] {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.yz-weekday:active {
+  transform: scale(0.96);
+}
+.yz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.yz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 12px;
+  min-height: 36px;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-surface);
+  font: var(--yh-title);
+  font-size: 14px;
+}
+.yz-chip.is-past {
+  color: var(--yh-muted);
+}
+.yz-chip button {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--yh-muted);
+  font-size: 16px;
+}
+.yz-chip button:hover {
+  background: var(--yh-bg);
+  color: var(--yh-status-error-fg);
+}
+.yz-add {
+  display: inline-flex;
+  gap: var(--yh-space-4);
+  align-items: center;
+}
+.yz-add button {
+  min-height: 36px;
+  border-style: dashed;
+  border-color: var(--yh-primary);
+  color: var(--yh-primary);
+  border-radius: var(--yh-radius-pill);
+  font-size: 13px;
+}
+.yz-days-field {
+  max-width: 260px;
+}
+
+.yz-weekday:focus-visible,
+.yz-mark button:focus-visible,
+.yz-chip button:focus-visible,
+.yz-undo:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yz-mark button,
+  .yz-weekday {
+    transition: none;
+  }
+}
