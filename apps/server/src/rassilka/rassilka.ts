@@ -69,7 +69,10 @@ function audienceWhere(audience: Audience): { sql: string; params: unknown[] } {
     case 'toshkent':
     case 'navoiy':
       return {
-        sql: `${base} AND EXISTS (SELECT 1 FROM mijoz_shahar_qiziqish q WHERE q.telegram_id = m.telegram_id AND q.shahar = $1)`,
+        // City interest: recorded by the new bot/Mini App, or carried over
+        // from the old bot (Ko'chirish #8, legacy_mijoz.shahar_qiziqish).
+        sql: `${base} AND (EXISTS (SELECT 1 FROM mijoz_shahar_qiziqish q WHERE q.telegram_id = m.telegram_id AND q.shahar = $1)
+          OR EXISTS (SELECT 1 FROM legacy_mijoz l WHERE l.telegram_id = m.telegram_id AND $1 = ANY (l.shahar_qiziqish)))`,
         params: [audience],
       };
   }

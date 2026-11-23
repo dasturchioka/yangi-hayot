@@ -9,6 +9,8 @@
     "build": "tsup",
     "migrate": "tsx --env-file-if-exists=.env src/db/migrate-cli.ts",
     "seed": "tsx --env-file-if-exists=.env src/katalog/seed-cli.ts",
+    "import:legacy": "tsx --env-file-if-exists=.env src/kochirish/cli.ts",
+    "zaxira": "tsx --env-file-if-exists=.env src/zaxira/cli.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
