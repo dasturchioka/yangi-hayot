@@ -1,6 +1,7 @@
-import type { Lang, PlanirovkaDto, TaqqoslashDto } from '@yh/shared';
+import { namunaviyOylik, type KalkulyatorSozlamalari, type Lang, type PlanirovkaDto, type TaqqoslashDto } from '@yh/shared';
 import type pg from 'pg';
 import type { Katalog } from '../katalog/katalog';
+import { getSetting } from '../settings/settings';
 
 /**
  * A Mijoz's sevimli Planirovkalar, kept on the server so they follow the
@@ -41,14 +42,15 @@ export function createSevimlilar(deps: { db: pg.Pool; katalog: Katalog }) {
      */
     async taqqosla(ids: number[], lang: Lang): Promise<TaqqoslashDto[]> {
       const all = await Promise.all(ids.map((id) => katalog.planirovka(id, lang)));
-      return all.filter((p): p is PlanirovkaDto => p !== null).map(taqqoslashDto);
+      const sozlama = await getSetting(db, 'kalkulyator');
+      return all.filter((p): p is PlanirovkaDto => p !== null).map((p) => taqqoslashDto(p, sozlama));
     },
   };
 }
 
 export type Sevimlilar = ReturnType<typeof createSevimlilar>;
 
-function taqqoslashDto(p: PlanirovkaDto): TaqqoslashDto {
+function taqqoslashDto(p: PlanirovkaDto, sozlama: KalkulyatorSozlamalari): TaqqoslashDto {
   return {
     id: p.id,
     loyihaNomi: p.loyihaNomi,
@@ -58,8 +60,7 @@ function taqqoslashDto(p: PlanirovkaDto): TaqqoslashDto {
     maydon: p.maydon,
     boshlangichNarx: p.boshlangichNarx,
     kvMetrNarxi: p.boshlangichNarx === null || p.maydon <= 0 ? null : Math.round(p.boshlangichNarx / p.maydon),
-    // TODO(#12): muddatli to'lov (S − V)(1 + k) / N from the kalkulyator settings.
-    oylikTolov: null,
+    oylikTolov: namunaviyOylik(p.boshlangichNarx, sozlama),
     holat: p.holat,
   };
 }

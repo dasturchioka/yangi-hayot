@@ -1,4 +1,4 @@
-import type { BotMedia, Lang } from '@yh/shared';
+import { DEFAULT_KALKULYATOR, type BotMedia, type KalkulyatorSozlamalari, type Lang } from '@yh/shared';
 import type pg from 'pg';
 import type { WorkingHours } from '../ariza/working-hours';
 
@@ -23,6 +23,8 @@ export interface Settings {
   crmTaskDue: { minutes: number; workingHours: WorkingHours };
   /** Set when admins were alerted about an amoCRM auth error; cleared by the next successful delivery. */
   crmAuthAlertedAt: string | null;
+  /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
+  kalkulyator: KalkulyatorSozlamalari;
 }
 
 const DEFAULTS: Settings = {
@@ -32,6 +34,7 @@ const DEFAULTS: Settings = {
   // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
   crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
   crmAuthAlertedAt: null,
+  kalkulyator: DEFAULT_KALKULYATOR,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
