@@ -22,6 +22,10 @@ const EnvSchema = z.object({
   ADMIN_TELEGRAM_IDS: idList,
   /** Initial managers group chat id; written to settings only if not set yet. */
   MANAGERS_GROUP_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().regex(/^-?\d+$/).optional()),
+  /** Mini App URL (web_app buttons in messages the server sends). Unset = messages are not sent to Telegram (dev). */
+  MINIAPP_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
+  /** Temporary admin-panel token until #5 (login, roles); unset = admin API closed. */
+  ADMIN_API_TOKEN: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(32).optional()),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
   AI_API_KEY: z.string().min(16).optional(),
@@ -31,6 +35,8 @@ export interface Config {
   databaseUrl: string;
   botToken: string;
   botApiSecret: string;
+  miniAppUrl?: string;
+  adminApiToken?: string;
   seed: { admins?: string[]; managersGroupId?: string };
   port: number;
   host: string;
@@ -45,6 +51,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     databaseUrl: e.DATABASE_URL,
     botToken: e.BOT_TOKEN,
     botApiSecret: e.BOT_API_SECRET,
+    miniAppUrl: e.MINIAPP_URL,
+    adminApiToken: e.ADMIN_API_TOKEN,
     seed: { admins: e.ADMIN_TELEGRAM_IDS, managersGroupId: e.MANAGERS_GROUP_ID },
     port: e.PORT,
     host: e.HOST,

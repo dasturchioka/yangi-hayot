@@ -3,14 +3,17 @@ import type pg from 'pg';
 import type { Crm } from './adapters/crm/crm';
 import type { Messenger } from './adapters/messenger/messenger';
 import type { Clock } from './clock';
+import { requireAdmin } from './auth/admin-auth';
 import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { Jobs } from './jobs/jobs';
 import { createKatalog } from './katalog/katalog';
+import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
+import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { miniAppRoutes } from './routes/mini-app';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
@@ -18,8 +21,9 @@ export interface AppDeps {
   /**
    * botApiSecret: shared secret apps/bot sends on /internal/bot/*.
    * aiApiKey: Bearer key of the AI-menejer for /ai/*; unset → /ai/* rejects everything.
+   * adminApiToken: temporary admin-panel token until #5 (login, roles); unset → /admin/api/* rejects everything.
    */
-  config: { botToken: string; botApiSecret: string; aiApiKey?: string };
+  config: { botToken: string; botApiSecret: string; aiApiKey?: string; adminApiToken?: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -55,6 +59,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      scope.addHook('preSerialization', katalogQiziqishHook(deps, katalog));
       await katalogRoutes(scope, katalog);
     },
     { prefix: '/api/katalog' },
@@ -72,6 +77,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await katalogRoutes(scope, katalog);
     },
     { prefix: '/ai/katalog' },
+  );
+  app.register(
+    async (scope) => {
+      scope.addHook('preHandler', requireAdmin(deps.config.adminApiToken));
+      await adminRassilkaRoutes(scope, deps);
+    },
+    { prefix: '/admin/api' },
   );
 
   return app;
