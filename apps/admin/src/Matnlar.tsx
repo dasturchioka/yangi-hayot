@@ -8,6 +8,7 @@ import {
 } from '@yh/shared';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
+import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
 import { SkoringForm } from './Skoring';
 import './matnlar.css';
@@ -59,6 +60,13 @@ const TABS: Tab[] = [
     name: 'Ball qoidalari',
     // Lead skoringi (UF-4, #18): own settings key (GET/PUT /admin/api/skoring).
     render: () => <SkoringForm />,
+  },
+  {
+    id: 'dojim',
+    name: 'Dojim (eslatmalar)',
+    // Own settings key (GET/PUT /admin/api/dojim): the bot's reminder texts (#17).
+    render: () => null,
+    own: () => <DojimForm />,
   },
 ];
 

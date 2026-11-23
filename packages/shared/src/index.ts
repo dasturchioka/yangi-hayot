@@ -9,6 +9,7 @@ export * from './kalkulyator';
 export * from './kontent';
 export * from './skoring';
 import type { Daraja } from './skoring';
+export * from './dojim';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -417,6 +418,8 @@ export interface YozilishRequest {
   name: string;
   /** Any common Uzbek format; stored as +998XXXXXXXXX. */
   phone: string;
+  /** The dojim whose button opened this Mini App launch (#17); the booking then counts as «dojimdan». */
+  dojimId?: number;
 }
 
 /** POST /api/yozilishlar/:id/kochirish. */

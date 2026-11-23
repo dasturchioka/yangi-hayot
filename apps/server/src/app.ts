@@ -11,9 +11,11 @@ import { foldLegacyArizalar } from './ariza/legacy';
 import { hisobotJob } from './hisobot/jadval';
 import { davomatHodisasi } from './hodisa/hodisa';
 import { Jobs } from './jobs/jobs';
+import { createDojim } from './dojim/dojim';
 import { createKalkulyator } from './kalkulyator/kalkulyator';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminDojimRoutes } from './routes/admin-dojim';
 import { adminKatalogRoutes } from './routes/admin-katalog';
 import { adminHisobotRoutes } from './routes/admin-hisobot';
 import { adminKvizRoutes } from './routes/admin-kviz';
@@ -89,6 +91,9 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.decorate('yozilishlar', yozilishlar);
   yozilishlar.onDavomat((e) => davomatHodisasi(deps.db, e)); // funnel «keldi» (#15/#20)
   jobs.register('hisobot', hisobotJob(deps)); // 19:30 daily, Monday weekly (#15)
+  const dojim = createDojim({ ...deps, log: app.log });
+  yozilishlar.onDavomat((e) => dojim.davomat(e));
+  jobs.register('dojim', () => dojim.run());
   const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
@@ -140,7 +145,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       await kontentRoutes(scope, deps);
-      await yozilishRoutes(scope, { db: deps.db, clock: deps.clock, yozilishlar });
+      await yozilishRoutes(scope, { db: deps.db, clock: deps.clock, yozilishlar, dojim });
     },
     { prefix: '/api' },
   );
@@ -165,6 +170,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       scope.addHook('preHandler', onlyRol('administrator'));
       await adminRassilkaRoutes(scope, deps);
       await adminKalkulyatorRoutes(scope, deps);
+      await adminDojimRoutes(scope, deps);
       await adminTaklifRoutes(scope, taklif);
       await adminHisobotRoutes(scope, deps);
       await adminSkoringRoutes(scope, deps);

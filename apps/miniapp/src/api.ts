@@ -27,6 +27,7 @@ import type {
   YozilishResponse,
   YozilishSlotlarResponse,
 } from '@yh/shared';
+import { launchDojimId } from './start';
 import { filtrQuery } from './tanlash/filtr';
 import { getInitData } from './telegram';
 
@@ -100,7 +101,11 @@ export const api = {
   /** Booking calendar: always fresh (today's slots disappear as time passes). */
   yozilishSlotlar: () => apiGet<YozilishSlotlarResponse>('/yozilish/slotlar'),
   /** 201 new, 200 = the same booking again (double tap); 409 slot gone; 400 bad phone / Loyiha; 429 too many. */
-  yozil: (body: YozilishRequest, lang: Lang) => apiSend<YozilishResponse>('POST', `/yozilishlar?lang=${lang}`, body),
+  /** Opened by a dojim button (#17)? The booking says so, for the report. */
+  yozil: (body: YozilishRequest, lang: Lang) => {
+    const dojimId = launchDojimId();
+    return apiSend<YozilishResponse>('POST', `/yozilishlar?lang=${lang}`, dojimId ? { ...body, dojimId } : body);
+  },
   yozilishlar: (lang: Lang) => apiGet<YozilishlarResponse>(`/yozilishlar?lang=${lang}`),
   yozilish: (id: number, lang: Lang) => apiGet<YozilishResponse>(`/yozilishlar/${id}?lang=${lang}`),
   /** 409 {error: slot | otgan | bekor}. */
