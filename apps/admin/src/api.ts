@@ -21,7 +21,7 @@ export function onUnauthorized(fn: () => void): () => void {
   return () => unauthorizedListeners.delete(fn);
 }
 
-export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown): Promise<T> {
+export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/admin/api${path}`, {
     method,
     credentials: 'same-origin',
@@ -30,6 +30,23 @@ export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH', path: string
   });
   const json = await res.json().catch(() => null);
   if (res.status === 401 && !path.startsWith('/auth/login')) unauthorizedListeners.forEach((fn) => fn());
+  if (!res.ok) throw new ApiError(res.status, json);
+  return json as T;
+}
+
+/**
+ * Sends a file as the raw request body (the import endpoints read the bytes,
+ * whatever the file name says). Same error handling as `adminApi`.
+ */
+export async function adminUpload<T>(path: string, file: Blob): Promise<T> {
+  const res = await fetch(`/admin/api${path}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/octet-stream' },
+    body: file,
+  });
+  const json = await res.json().catch(() => null);
+  if (res.status === 401) unauthorizedListeners.forEach((fn) => fn());
   if (!res.ok) throw new ApiError(res.status, json);
   return json as T;
 }
@@ -50,6 +67,7 @@ export function errorText(e: unknown): string {
       slug_taken: 'Bunday Loyiha allaqachon bor',
       blok_taken: 'Bu Loyihada bunday Blok allaqachon bor',
       login_taken: 'Bu login band',
+      import_xatolar: "Faylda xato bor, import qilinmadi",
       cannot_demote_self: "O'zingizni o'chira yoki Menejer qila olmaysiz",
     };
     return (code && known[code]) || `Xato (${e.status})`;

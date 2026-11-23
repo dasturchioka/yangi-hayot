@@ -1,4 +1,5 @@
-import type { BotMedia, Lang } from '@yh/shared';
+import type { BizHaqimizdaKontent, BotMedia, KontaktlarKontent, Lang, SotibOlishKontent } from '@yh/shared';
+import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
 import type { WorkingHours } from '../ariza/working-hours';
 
@@ -6,8 +7,8 @@ import type { WorkingHours } from '../ariza/working-hours';
 export type WelcomeContent = Record<Lang, { text: string; media?: BotMedia }>;
 
 /**
- * Settings changed without code (by administrators in the bot, later in the
- * admin-panel). Stored as JSON in the `settings` table, one row per key.
+ * Settings changed without code (by administrators in the bot or in the
+ * admin-panel). New keys: add a field + default here, no migration needed. Stored as JSON in the `settings` table, one row per key.
  */
 export interface Settings {
   /** Telegram IDs of administrators (/welcome, /broadcast, /report). */
@@ -16,6 +17,12 @@ export interface Settings {
   managersGroupId: string | null;
   /** Welcome text and media; null = built-in default text. */
   welcome: WelcomeContent | null;
+  /** «Qanday sotib olish» + FAQ (admin-panel → Kontent, #13). */
+  sotibOlish: SotibOlishKontent;
+  /** «Biz haqimizda» text and company numbers (#13). */
+  bizHaqimizda: BizHaqimizdaKontent;
+  /** Phone (1349), office address, working hours, map (#13). */
+  kontaktlar: KontaktlarKontent;
   /**
    * Deadline of «Qo'ng'iroq qilish» / «Bog'lanish» CRM tasks (8-bo'lim):
    * `minutes` of working time from the Ariza.
@@ -29,6 +36,9 @@ const DEFAULTS: Settings = {
   admins: [],
   managersGroupId: null,
   welcome: null,
+  sotibOlish: DEFAULT_SOTIB_OLISH,
+  bizHaqimizda: DEFAULT_BIZ_HAQIMIZDA,
+  kontaktlar: DEFAULT_KONTAKTLAR,
   // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
   crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
   crmAuthAlertedAt: null,

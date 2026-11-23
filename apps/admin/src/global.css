@@ -509,6 +509,231 @@ input.short {
   background: var(--yh-surface);
 }
 
+/* ---- #6: Excel / CSV import ---- */
+
+.import {
+  --import-ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.import button,
+.import a.button {
+  transition: transform 140ms var(--import-ease), background-color 150ms ease;
+}
+
+.import button:active:not(:disabled),
+.import a.button:active {
+  transform: scale(0.97);
+}
+
+.import a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  font: var(--yh-label);
+  min-height: var(--yh-button-h-secondary);
+  padding: 0 var(--yh-space-20);
+  border-radius: var(--yh-radius-control);
+  border: 1px solid var(--yh-primary);
+  color: var(--yh-primary);
+  background: var(--yh-bg);
+  text-decoration: none;
+}
+
+.import a.button[aria-disabled='true'] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.import :focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+.import-setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--yh-space-20);
+}
+
+.import-shablon {
+  display: grid;
+  gap: var(--yh-space-12);
+  align-content: start;
+}
+
+.import-shablon .small {
+  max-width: 60ch;
+}
+
+.dropzone {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--yh-space-4);
+  min-height: 160px;
+  padding: var(--yh-space-20);
+  text-align: center;
+  color: var(--yh-ink);
+  background: var(--yh-surface);
+  border: 1.5px dashed color-mix(in srgb, var(--yh-primary) 35%, var(--yh-line));
+  border-radius: var(--yh-radius-card);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.dropzone svg {
+  color: var(--yh-primary);
+  margin-bottom: var(--yh-space-4);
+}
+
+.dropzone input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dropzone:has(input:focus-visible) {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dropzone:hover {
+    border-color: var(--yh-primary);
+  }
+}
+
+.dropzone.drag {
+  border-color: var(--yh-primary);
+  background: var(--yh-status-free-bg);
+}
+
+.dropzone.busy {
+  cursor: progress;
+}
+
+.dropzone.busy svg {
+  animation: import-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes import-pulse {
+  to {
+    opacity: 0.35;
+  }
+}
+
+.dropzone .clip {
+  max-width: 100%;
+}
+
+.table th.qator {
+  width: 72px;
+}
+
+.table th.ustun {
+  width: 180px;
+}
+
+.error-title {
+  color: var(--yh-status-error-fg);
+}
+
+.import-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 160px));
+  gap: var(--yh-space-32);
+  padding: 0 var(--yh-space-20) var(--yh-space-12);
+}
+
+.stat-label.primary {
+  color: var(--yh-primary);
+}
+
+.table td.changed {
+  color: var(--yh-primary);
+  font-weight: 600;
+}
+
+.badge.amal-yangi {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+
+.badge.amal-yangilanadi {
+  box-shadow: inset 0 0 0 1px var(--yh-primary);
+  color: var(--yh-primary);
+}
+
+.badge.amal-ozgarishsiz {
+  background: var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
+}
+
+.amal-fields {
+  display: block;
+  margin-top: var(--yh-space-4);
+}
+
+.card.success {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--yh-space-12);
+  justify-content: space-between;
+  align-items: center;
+  background: var(--yh-status-free-bg);
+  border-color: transparent;
+  color: var(--yh-status-free-fg);
+}
+
+.card.success .title {
+  color: var(--yh-ink);
+}
+
+.card.success p {
+  margin: var(--yh-space-4) 0 0;
+}
+
+.reveal {
+  transition:
+    opacity 220ms var(--import-ease),
+    transform 220ms var(--import-ease);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: opacity 160ms ease;
+
+    @starting-style {
+      transform: none;
+    }
+  }
+  .import button,
+  .import a.button {
+    transition: none;
+  }
+  .dropzone.busy svg {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .import-setup {
+    grid-template-columns: 1fr;
+  }
+  .import-stats {
+    gap: var(--yh-space-12);
+  }
+}
+
 /* ---- Takliflar (#19) ---- */
 .link-button {
   min-height: 0;
