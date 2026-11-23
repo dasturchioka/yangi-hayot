@@ -36,13 +36,13 @@ describe('GET /api/taqqoslash', () => {
     return l.bloklar.flatMap((b) => b.planirovkalar.map((p) => p.id));
   }
 
-  it('compares Planirovkalar by narx, maydon, xonalar, Blok and to‘lov, in the order asked, without qavat', async () => {
+  it('compares Planirovkalar by narx, maydon, xonalar, Blok and to‘lov, in the order asked', async () => {
     const [a2, b3, b1] = await seed();
 
     const res = await taqqosla([b3!, a2!, b1!]);
 
     expect(res.statusCode).toBe(200);
-    expect(res.json().planirovkalar).toEqual([
+    expect(res.json().ustunlar).toMatchObject([
       {
         id: b3,
         loyihaNomi: 'Jozibali Maskan',
@@ -80,7 +80,8 @@ describe('GET /api/taqqoslash', () => {
         holat: 'sotuvda',
       },
     ]);
-    expect(JSON.stringify(res.json())).not.toMatch(/qavat/i);
+    // #25 (TZ UF-5): a Planirovka column has the qavatlar of its bo'sh Xonadonlar; none left → null.
+    expect(res.json().ustunlar[0].qavat).toBeNull();
   });
 
   it('refuses more than 3 Planirovkalar', async () => {
@@ -99,7 +100,7 @@ describe('GET /api/taqqoslash', () => {
     const res = await taqqosla([a2!, a2!, b3!, b1!]);
 
     expect(res.statusCode).toBe(200);
-    expect(res.json().planirovkalar.map((p: { id: number }) => p.id)).toEqual([a2, b3, b1]);
+    expect(res.json().ustunlar.map((p: { id: number }) => p.id)).toEqual([a2, b3, b1]);
   });
 
   it('leaves out Planirovkalar that are no longer in the katalog', async () => {
@@ -107,7 +108,7 @@ describe('GET /api/taqqoslash', () => {
 
     const res = await taqqosla([a2!, 999_999]);
 
-    expect(res.json().planirovkalar.map((p: { id: number }) => p.id)).toEqual([a2]);
+    expect(res.json().ustunlar.map((p: { id: number }) => p.id)).toEqual([a2]);
   });
 
   it('needs at least one id', async () => {

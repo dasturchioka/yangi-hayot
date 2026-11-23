@@ -26,7 +26,7 @@ export const DAVOMAT_KUTISH_MS = 3600_000;
 export const ESKIRISH_MS = 48 * 3600_000;
 /** Reminders go out only in these Tashkent hours (no night messages); outside them they wait. */
 export const YUBORISH_SOATLARI = { dan: '09:00', gacha: '21:00' };
-/** «O'xshash Planirovka»: same xonalar, maydon within this share, Sotuvda. */
+/** «O'xshash Planirovka / Xonadon»: same xonalar, maydon within this share, Sotuvda (and bo'sh). */
 export const OXSHASH_MAYDON_ULUSHI = 0.15;
 export const OXSHASH_MAX = 3;
 
@@ -58,9 +58,11 @@ export interface Dojim {
 }
 
 /**
- * Inside the transaction that changes a Planirovka's counts (the one choke
- * point of admin edits, Menejer «ko'chirish» and Excel import): when bo'sh
- * drops to 0, every Mijoz who has it among sevimlilar gets a planned dojim.
+ * Inside the transaction of a Xonadon write (xonadon-admin `boshKuzat`: admin
+ * form, bulk holat, Excel import): when a Planirovka's bo'sh drops to 0,
+ * every Mijoz who has that Planirovka among sevimlilar gets a planned dojim.
+ * Kept next to the Xonadon trigger below: Planirovkalar can still be
+ * favourited (#16), and «no bo'sh left» is what matters for them.
  */
 export async function sevimliBandBoldi(c: pg.PoolClient, planirovkaId: number, at: Date): Promise<void> {
   await c.query(
@@ -71,6 +73,24 @@ export async function sevimliBandBoldi(c: pg.PoolClient, planirovkaId: number, a
         AND NOT EXISTS (SELECT 1 FROM dojim d WHERE d.mijoz_id = s.mijoz_id AND d.planirovka_id = s.planirovka_id
                           AND d.ssenariy = 'sevimliBand' AND d.holat = 'kutilmoqda')`,
     [planirovkaId, at],
+  );
+}
+
+/**
+ * TZ UF-3 «Sevimlilardagi xonadon bronga o'tdi» (#25): inside the transaction
+ * that takes a Xonadon out of bo'sh (bron or sotilgan — xonadon-admin
+ * `updateXonadonIn`, the one write path of the form, bulk holat and import),
+ * every Mijoz who has it among sevimli Xonadonlar gets a planned dojim.
+ */
+export async function sevimliXonadonBandBoldi(c: pg.PoolClient, xonadonId: number, at: Date): Promise<void> {
+  await c.query(
+    `INSERT INTO dojim (mijoz_id, ssenariy, planirovka_id, xonadon_id, hodisa_at, due_at, created_at)
+     SELECT s.mijoz_id, 'sevimliBand', x.planirovka_id, x.id, $2, $2, $2
+       FROM sevimli_xonadon s JOIN xonadon x ON x.id = s.xonadon_id JOIN mijoz m ON m.telegram_id = s.mijoz_id
+      WHERE s.xonadon_id = $1 AND m.dojim_toxtatildi_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM dojim d WHERE d.mijoz_id = s.mijoz_id AND d.xonadon_id = x.id
+                          AND d.ssenariy = 'sevimliBand' AND d.holat = 'kutilmoqda')`,
+    [xonadonId, at],
   );
 }
 
@@ -91,6 +111,7 @@ interface DueRow {
   mijoz_id: string;
   ssenariy: DojimSsenariy;
   planirovka_id: number | null;
+  xonadon_id: number | null;
   yozilish_id: number | null;
   hodisa_at: Date;
   due_at: Date;
@@ -109,6 +130,53 @@ interface PlanirovkaInfo {
   bosh: number;
 }
 
+/** A Xonadon as a dojim names it. */
+interface XonadonInfo {
+  id: number;
+  raqam: string;
+  qavat: number;
+  holat: string;
+  blokId: number;
+  planirovkaId: number;
+  loyihaId: number;
+  loyihaNomi: string;
+  xonalar: number;
+  maydon: number;
+}
+
+const XONADON_SQL = `
+  SELECT x.id, b.nomi || '-' || x.raqam AS raqam, x.qavat, x.holat, x.blok_id, x.planirovka_id,
+         b.loyiha_id, l.nomi AS loyiha_nomi, p.xonalar, p.maydon
+    FROM xonadon x JOIN planirovka p ON p.id = x.planirovka_id JOIN blok b ON b.id = x.blok_id
+    JOIN loyiha l ON l.id = b.loyiha_id
+   WHERE l.holat = 'sotuvda'`;
+
+interface XonadonSqlRow {
+  id: number;
+  raqam: string;
+  qavat: number;
+  holat: string;
+  blok_id: number;
+  planirovka_id: number;
+  loyiha_id: number;
+  loyiha_nomi: string;
+  xonalar: number;
+  maydon: string;
+}
+
+const xonadonInfo = (r: XonadonSqlRow): XonadonInfo => ({
+  id: r.id,
+  raqam: r.raqam,
+  qavat: r.qavat,
+  holat: r.holat,
+  blokId: r.blok_id,
+  planirovkaId: r.planirovka_id,
+  loyihaId: r.loyiha_id,
+  loyihaNomi: r.loyiha_nomi,
+  xonalar: r.xonalar,
+  maydon: Number(r.maydon),
+});
+
 type Reja = { ok: true; message: Omit<OutgoingMessage, 'chatId'> } | { ok: false; sabab: string };
 
 export function createDojim(deps: DojimDeps): Dojim {
@@ -126,21 +194,25 @@ export function createDojim(deps: DojimDeps): Dojim {
     const dan = new Date(gacha.getTime() - ESKIRISH_MS);
     await db.query(
       `WITH faollik AS (
-         SELECT mijoz_id, planirovka_id, at FROM hodisa WHERE tur = 'planirovka_korildi' AND at > $1
+         SELECT mijoz_id, planirovka_id, xonadon_id, at FROM hodisa
+          WHERE tur IN ('planirovka_korildi', 'xonadon_korildi') AND at > $1
          UNION ALL
-         SELECT mijoz_id, planirovka_id, created_at FROM kalkulyator_hisob WHERE created_at > $1
+         SELECT mijoz_id, planirovka_id, xonadon_id, created_at FROM kalkulyator_hisob WHERE created_at > $1
        ), oxirgi AS (
          SELECT mijoz_id, max(at) AS at,
-                (array_agg(planirovka_id ORDER BY at DESC) FILTER (WHERE planirovka_id IS NOT NULL))[1] AS planirovka_id
+                (array_agg(planirovka_id ORDER BY at DESC, xonadon_id NULLS LAST)
+                   FILTER (WHERE planirovka_id IS NOT NULL))[1] AS planirovka_id,
+                (array_agg(xonadon_id ORDER BY at DESC, xonadon_id NULLS LAST)
+                   FILTER (WHERE planirovka_id IS NOT NULL))[1] AS xonadon_id
            FROM faollik GROUP BY mijoz_id
        )
-       INSERT INTO dojim (mijoz_id, ssenariy, planirovka_id, hodisa_at, due_at, created_at)
-       SELECT o.mijoz_id, 'korish', o.planirovka_id, o.at, o.at + interval '24 hours', $3
+       INSERT INTO dojim (mijoz_id, ssenariy, planirovka_id, xonadon_id, hodisa_at, due_at, created_at)
+       SELECT o.mijoz_id, 'korish', o.planirovka_id, o.xonadon_id, o.at, o.at + interval '24 hours', $3
          FROM oxirgi o JOIN mijoz m ON m.telegram_id = o.mijoz_id
         WHERE o.at <= $2 AND m.dojim_toxtatildi_at IS NULL
           AND NOT EXISTS (SELECT 1 FROM dojim d WHERE d.mijoz_id = o.mijoz_id AND d.ssenariy = 'korish' AND d.hodisa_at >= o.at)
        ON CONFLICT (mijoz_id) WHERE ssenariy = 'korish' AND holat = 'kutilmoqda'
-       DO UPDATE SET planirovka_id = EXCLUDED.planirovka_id, hodisa_at = EXCLUDED.hodisa_at, due_at = EXCLUDED.due_at`,
+       DO UPDATE SET planirovka_id = EXCLUDED.planirovka_id, xonadon_id = EXCLUDED.xonadon_id, hodisa_at = EXCLUDED.hodisa_at, due_at = EXCLUDED.due_at`,
       [dan, gacha, now],
     );
   }
@@ -185,6 +257,23 @@ export function createDojim(deps: DojimDeps): Dojim {
     }));
   }
 
+  async function xonadon(id: number | null): Promise<XonadonInfo | null> {
+    if (id === null) return null;
+    const r = (await db.query<XonadonSqlRow>(`${XONADON_SQL} AND x.id = $1`, [id])).rows[0];
+    return r ? xonadonInfo(r) : null;
+  }
+
+  /** Bo'sh Xonadonlar like `x`: same xonalar, near maydon; same Blok, then same Loyiha first, then nearest maydon and qavat. */
+  async function oxshashXonadonlar(x: XonadonInfo): Promise<XonadonInfo[]> {
+    const { rows } = await db.query<XonadonSqlRow>(
+      `${XONADON_SQL} AND x.holat = 'bosh' AND x.id <> $1 AND p.xonalar = $2 AND abs(p.maydon - $3) <= $3 * $4
+        ORDER BY (x.blok_id = $5) DESC, (b.loyiha_id = $6) DESC, abs(p.maydon - $3), abs(x.qavat - $7), x.id
+        LIMIT $8`,
+      [x.id, x.xonalar, x.maydon, OXSHASH_MAYDON_ULUSHI, x.blokId, x.loyihaId, x.qavat, OXSHASH_MAX],
+    );
+    return rows.map(xonadonInfo);
+  }
+
   /** What to send for this row, or why not (the ssenariy's own conditions). */
   async function reja(d: DueRow, now: Date): Promise<Reja> {
     const sozlama = (await getSetting(db, 'dojim'))[d.ssenariy];
@@ -203,6 +292,19 @@ export function createDojim(deps: DojimDeps): Dojim {
           new Date(d.hodisa_at.getTime() - KORISH_KUTISH_MS),
         ]);
         if (ariza.rowCount) return { ok: false, sabab: 'ariza' };
+        const x = await xonadon(d.xonadon_id);
+        if (x) {
+          return {
+            ok: true,
+            message: {
+              text: fill(matn, { planirovka: xonadonMatni(x, d.lang), loyiha: x.loyihaNomi }),
+              buttons: [
+                [btn(t.btnDojimXonadon, { ekran: 'xonadon', xonadonId: x.id })],
+                [btn(t.btnBooking, { ekran: 'yozilish', loyihaId: x.loyihaId, planirovkaId: x.planirovkaId })],
+              ],
+            },
+          };
+        }
         const p = await planirovka(d.planirovka_id);
         if (!p) return { ok: false, sabab: 'planirovka_yoq' };
         return {
@@ -217,6 +319,25 @@ export function createDojim(deps: DojimDeps): Dojim {
         };
       }
       case 'sevimliBand': {
+        if (d.xonadon_id !== null) {
+          const x = await xonadon(d.xonadon_id);
+          if (!x) return { ok: false, sabab: 'xonadon_yoq' };
+          if (x.holat === 'bosh') return { ok: false, sabab: 'bosh_bor' };
+          const sevimli = await db.query(`SELECT 1 FROM sevimli_xonadon WHERE mijoz_id = $1 AND xonadon_id = $2`, [
+            d.mijoz_id,
+            x.id,
+          ]);
+          if (!sevimli.rowCount) return { ok: false, sabab: 'sevimli_emas' };
+          const variantlar = await oxshashXonadonlar(x);
+          if (variantlar.length === 0) return { ok: false, sabab: 'oxshash_yoq' };
+          return {
+            ok: true,
+            message: {
+              text: fill(matn, { planirovka: xonadonMatni(x, d.lang), loyiha: x.loyihaNomi }),
+              buttons: variantlar.map((v) => [btn(xonadonTugmasi(v, d.lang), { ekran: 'xonadon', xonadonId: v.id })]),
+            },
+          };
+        }
         const p = await planirovka(d.planirovka_id);
         if (!p) return { ok: false, sabab: 'planirovka_yoq' };
         if (p.bosh > 0) return { ok: false, sabab: 'bosh_bor' };
@@ -341,7 +462,7 @@ export function createDojim(deps: DojimDeps): Dojim {
       const soat = toTashkent(now).time;
       if (soat < YUBORISH_SOATLARI.dan || soat >= YUBORISH_SOATLARI.gacha) return;
       const { rows } = await db.query<DueRow>(
-        `SELECT d.id, d.mijoz_id::text AS mijoz_id, d.ssenariy, d.planirovka_id, d.yozilish_id, d.hodisa_at, d.due_at,
+        `SELECT d.id, d.mijoz_id::text AS mijoz_id, d.ssenariy, d.planirovka_id, d.xonadon_id, d.yozilish_id, d.hodisa_at, d.due_at,
                 m.lang, m.bot_blocked, m.dojim_toxtatildi_at IS NOT NULL AS toxtatildi
            FROM dojim d JOIN mijoz m ON m.telegram_id = d.mijoz_id
           WHERE d.holat = 'kutilmoqda' AND d.due_at <= $1
@@ -362,6 +483,18 @@ export function planirovkaMatni(p: { xonalar: number; maydon: number }, lang: La
   return lang === 'uz'
     ? `${p.xonalar} xonali, ${formatMaydon(p.maydon)} m²`
     : `${p.xonalar}-комн., ${formatMaydon(p.maydon)} м²`;
+}
+
+/** «A-12, 2 xonali, 54,5 m²» / «A-12, 2-комн., 54,5 м²». */
+export function xonadonMatni(x: XonadonInfo, lang: Lang): string {
+  return `${x.raqam}, ${planirovkaMatni(x, lang)}`;
+}
+
+/** Button of an o'xshash Xonadon: «Sayhun · A-13 · 5-qavat · 54,5 m²». */
+function xonadonTugmasi(x: XonadonInfo, lang: Lang): string {
+  return lang === 'uz'
+    ? `${x.loyihaNomi} · ${x.raqam} · ${x.qavat}-qavat · ${formatMaydon(x.maydon)} m²`
+    : `${x.loyihaNomi} · ${x.raqam} · ${x.qavat} эт. · ${formatMaydon(x.maydon)} м²`;
 }
 
 /** Button of an o'xshash Planirovka: «Sayhun · A · 52 m²». */

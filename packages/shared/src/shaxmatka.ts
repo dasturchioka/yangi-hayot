@@ -76,7 +76,7 @@ export function xonadonFiltriBor(f: PlanirovkaFiltr): boolean {
 
 /**
  * Mini App `startapp=xn<id>` opens that Xonadon kartochkasi (#23). The
- * tracked «Ulashish» of a Xonadon is #25's.
+ * tracked «Ulashish» of a Xonadon is `xn<id>_u<n>` (start.ts, #25).
  */
 export function xonadonStartParam(id: number): string {
   return `xn${id}`;

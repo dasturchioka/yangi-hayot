@@ -24,6 +24,7 @@ const Id = z.number().int().positive().max(2_147_483_647);
 const CreateBody = z.object({
   loyihaId: Id,
   planirovkaId: Id.optional(),
+  xonadonId: Id.optional(),
   sana: Sana,
   vaqt: Vaqt,
   name: z.string().trim().min(1).max(100),

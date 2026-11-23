@@ -1,4 +1,11 @@
-import { parseDojimParam, parseUlashishParam, parseXonadonParam, type DojimEkran, type StartDto } from '@yh/shared';
+import {
+  parseDojimParam,
+  parseUlashishParam,
+  parseXonadonParam,
+  parseXonadonUlashishParam,
+  type DojimEkran,
+  type StartDto,
+} from '@yh/shared';
 import { navigate, parseRoute, type Route } from './router';
 import { getStartParam } from './telegram';
 
@@ -16,6 +23,8 @@ function dojimRoute(e: DojimEkran): Route {
   switch (e.ekran) {
     case 'planirovka':
       return { name: 'planirovka', id: e.planirovkaId };
+    case 'xonadon':
+      return { name: 'xonadon', id: e.xonadonId };
     case 'yozilish':
       return { name: 'yozilish', loyihaId: e.loyihaId, ...(e.planirovkaId ? { planirovkaId: e.planirovkaId } : {}) };
     case 'kalkulyator':
@@ -29,7 +38,7 @@ function dojimRoute(e: DojimEkran): Route {
  * null (reads the parameter locally, no waiting) and again with the server's
  * reading from /api/me.
  *
- * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka; the bot's
+ * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka, `xn<id>_u<n>` (#25) → that Xonadon; the bot's
  * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form; `kalkulyator` (#12) → the calculator;
  * «Ko'rishga yozilish» button `booking` (#7, #11) → the booking screen;
  * dojim buttons `dj<id>_…` (#17) → Planirovka, booking or calculator; `xn<id>` (#23) → that Xonadon kartochkasi.
@@ -42,7 +51,7 @@ export function openStartScreen(fromServer: StartDto | null): void {
     if (parseRoute(window.location.hash).name === 'bosh') navigate({ name: param === 'booking' ? 'yozilish' : param });
     return;
   }
-  const xonadonId = parseXonadonParam(param);
+  const xonadonId = parseXonadonParam(param) ?? parseXonadonUlashishParam(param)?.xonadonId;
   if (xonadonId) {
     opened = true;
     if (parseRoute(window.location.hash).name === 'bosh') navigate({ name: 'xonadon', id: xonadonId });
@@ -60,5 +69,5 @@ export function openStartScreen(fromServer: StartDto | null): void {
   if (!start) return;
   opened = true;
   if (parseRoute(window.location.hash).name !== 'bosh') return;
-  navigate({ name: 'planirovka', id: start.planirovkaId });
+  navigate(start.ekran === 'xonadon' ? { name: 'xonadon', id: start.xonadonId } : { name: 'planirovka', id: start.planirovkaId });
 }

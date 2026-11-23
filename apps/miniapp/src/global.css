@@ -1374,6 +1374,13 @@ button.chip-on-photo {
   opacity: 0.4;
   cursor: default;
 }
+/* Price with the holat badge under the text (#25): wraps instead of squeezing the row */
+.sevimli-narx {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--yh-space-4) var(--yh-space-8);
+}
 .sevimli-link {
   display: flex;
   flex: 1;

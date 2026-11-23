@@ -10,6 +10,12 @@ export function formatNarx(t: Translate, narx: number | null): string {
   return t('narx.from', { narx: mln });
 }
 
+/** One Xonadon's own price (#25): «455,5 mln so'm», not a «from» price; none → «Narx so'rov bo'yicha». */
+export function formatSomMln(t: Translate, narx: number | null): string {
+  if (narx === null) return t('narx.onRequest');
+  return t('narx.som', { narx: t('narx.mln', { n: decimal(narx / 1_000_000, 1) }) });
+}
+
 /** 54.2 → «54,2» */
 export function formatMaydon(m2: number): string {
   return decimal(m2, 1);

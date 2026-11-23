@@ -21,7 +21,9 @@ import type {
   XonadonResponse,
   SevimlilarResponse,
   TaklifResponse,
+  TaqqoslashKalit,
   TaqqoslashResponse,
+  UlashishRequest,
   UlashishResponse,
   YozilishKochirishRequest,
   YozilishlarResponse,
@@ -95,7 +97,10 @@ export const api = {
   sevimlilar: (lang: Lang) => apiGet<SevimlilarResponse>(`/sevimlilar?lang=${lang}`),
   addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),
   removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
-  taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
+  addSevimliXonadon: (id: number) => apiSend('PUT', `/sevimlilar/xonadonlar/${id}`),
+  removeSevimliXonadon: (id: number) => apiSend('DELETE', `/sevimlilar/xonadonlar/${id}`),
+  taqqoslash: (ids: TaqqoslashKalit[], lang: Lang) =>
+    apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
   /** Planirovkalar matching the filter (#10), cheapest first. */
   planirovkalar: (f: PlanirovkaFiltr, lang: Lang) =>
     cachedGet<PlanirovkalarResponse>(`/katalog/planirovkalar?${filtrQuery(f)}&lang=${lang}`),
@@ -125,7 +130,7 @@ export const api = {
   kalkulyatorHisob: (body: KalkulyatorHisobRequest) => apiSend('POST', '/kalkulyator/hisob', body),
   /** «Hisobni menejerga yuborish»: 400 = bad phone or input outside the settings, 429 = too many Arizalar. */
   kalkulyatorAriza: (body: KalkulyatorArizaRequest) => apiSend<ArizaCreatedResponse>('POST', '/kalkulyator/ariza', body),
-  ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
+  ulashish: (body: UlashishRequest) => apiSend<UlashishResponse>('POST', '/ulashish', body),
   /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
   taklif: () => apiGet<TaklifResponse>('/taklif'),
 };

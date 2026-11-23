@@ -89,7 +89,7 @@ function Screen({ route }: { route: Route }) {
     case 'xonadon':
       return <XonadonScreen key={route.id} id={route.id} />;
     case 'ariza':
-      return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
+      return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}:${route.xonadonId}`} {...route} />;
     case 'kalkulyator':
       return (
         <KalkulyatorScreen
@@ -111,7 +111,7 @@ function Screen({ route }: { route: Route }) {
     case 'bizHaqimizda':
       return <BizHaqimizdaScreen />;
     case 'yozilish':
-      return <YozilishScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
+      return <YozilishScreen key={`${route.loyihaId}:${route.planirovkaId}:${route.xonadonId}`} {...route} />;
     case 'yozilishKorish':
       return <YozilishKorishScreen key={`${route.id}:${route.yangi}`} {...route} />;
     case 'yozilishKochirish':

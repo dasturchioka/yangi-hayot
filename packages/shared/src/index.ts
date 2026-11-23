@@ -185,6 +185,8 @@ export interface ArizaFormRequest {
   phone: string;
   loyihaId?: number;
   planirovkaId?: number;
+  /** The Xonadon the Ariza is about (#25); its Planirovka and Loyiha are implied. */
+  xonadonId?: number;
 }
 
 export interface ArizaCreatedResponse {
@@ -198,6 +200,7 @@ export interface ArizaDto {
   createdAt: string;
   loyihaId: number | null;
   planirovkaId: number | null;
+  xonadonId: number | null;
   /** As it was when the Ariza was made; null without a Loyiha. */
   loyihaNomi: string | null;
 }
@@ -444,42 +447,76 @@ export interface ImportNatija {
 
 // ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
 
-/** GET /api/sevimlilar: newest first; only Planirovkalar still in the katalog. */
+/** A sevimli Xonadon with its Planirovka (chizma, nomi, Loyiha nomi). */
+export interface SevimliXonadonDto {
+  xonadon: XonadonDto;
+  planirovka: PlanirovkaDto;
+}
+
+/**
+ * GET /api/sevimlilar: newest first; only ones still in the katalog. Xonadonlar
+ * (#25, ADR 0003) and Planirovkalar (#16) are favourited separately.
+ */
 export interface SevimlilarResponse {
+  xonadonlar: SevimliXonadonDto[];
   planirovkalar: PlanirovkaDto[];
 }
 
 /** At most this many Planirovkalar side by side in taqqoslash. */
 export const TAQQOSLASH_MAX = 3;
 
-/** One column of taqqoslash (no qavat: ADR 0001). */
+/**
+ * A taqqoslash column key: `x<id>` = Xonadon, `p<id>` = Planirovka. Used in
+ * `GET /api/taqqoslash?ids=` and the Mini App route.
+ */
+export type TaqqoslashKalit = `x${number}` | `p${number}`;
+
+export function taqqoslashKaliti(tur: 'xonadon' | 'planirovka', id: number): TaqqoslashKalit {
+  return tur === 'xonadon' ? `x${id}` : `p${id}`;
+}
+
+/** `x12` / `p5` (a bare number = Planirovka, the #16 form) → {tur, id}; else null. */
+export function parseTaqqoslashKaliti(s: string): { tur: 'xonadon' | 'planirovka'; id: number } | null {
+  const m = /^([xp]?)([1-9][0-9]{0,9})$/.exec(s);
+  if (!m) return null;
+  const id = Number(m[2]);
+  if (id > 2_147_483_647) return null;
+  return { tur: m[1] === 'x' ? 'xonadon' : 'planirovka', id };
+}
+
+/** One column of taqqoslash: a Xonadon (exact narx, its qavat) or a Planirovka (from-price, qavatlar of its bo'sh Xonadonlar). */
 export interface TaqqoslashDto {
+  kalit: TaqqoslashKalit;
+  tur: 'xonadon' | 'planirovka';
   id: number;
+  /** Xonadon: «A-12»; Planirovka: null. */
+  raqam: string | null;
+  /** Xonadon: its qavat (dan = gacha); Planirovka: lowest–highest qavat of its bo'sh Xonadonlar; null if none. */
+  qavat: { dan: number; gacha: number } | null;
   loyihaNomi: string;
   blokNomi: string;
   nomi: string | null;
   xonalar: number;
   maydon: number;
-  /** UZS; null → «Narx so'rov bo'yicha». */
+  /** UZS: Xonadon narx, or the Planirovka's Boshlang'ich narx; null → «Narx so'rov bo'yicha». */
   boshlangichNarx: number | null;
-  /** Boshlang'ich narx / maydon, whole so'm; null without a price. */
+  /** Narx / maydon, whole so'm; null without a price. */
   kvMetrNarxi: number | null;
   /** Typical monthly payment (namunaviyOylik: muddatli to'lov, else first bank annuitet), UZS; null without a price. */
   oylikTolov: number | null;
+  /** Xonadon holati as a Planirovka one: bo'sh → sotuvda, bron → band. */
   holat: PlanirovkaHolati;
 }
 
-/** GET /api/taqqoslash?ids=1,2,3: in the order asked; ids no longer in the katalog are left out. */
+/** GET /api/taqqoslash?ids=x12,p5,x7: in the order asked; ones no longer in the katalog are left out. */
 export interface TaqqoslashResponse {
-  planirovkalar: TaqqoslashDto[];
+  ustunlar: TaqqoslashDto[];
 }
 
-/** POST /api/ulashish {planirovkaId}: a Mini App link to send into a Telegram chat. */
-export interface UlashishRequest {
-  planirovkaId: number;
-}
+/** POST /api/ulashish {planirovkaId} | {xonadonId}: a Mini App link to send into a Telegram chat. */
+export type UlashishRequest = { planirovkaId: number } | { xonadonId: number };
 export interface UlashishResponse {
-  /** `<MINIAPP_LINK>?startapp=pl<id>_u<n>`; opens that Planirovka in the Mini App. */
+  /** `<MINIAPP_LINK>?startapp=pl<id>_u<n>` | `…xn<id>_u<n>`; opens that Planirovka / Xonadon in the Mini App. */
   url: string;
 }
 
@@ -504,6 +541,8 @@ export interface YozilishSlotlarResponse {
 export interface YozilishRequest {
   loyihaId: number;
   planirovkaId?: number;
+  /** The Xonadon the booking is about (#25); must be in the Loyiha (and the Planirovka, if given). */
+  xonadonId?: number;
   sana: string;
   vaqt: string;
   name: string;

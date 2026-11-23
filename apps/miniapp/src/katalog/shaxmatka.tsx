@@ -1,5 +1,6 @@
 import {
   namunaviyOylik,
+  taqqoslashKaliti,
   xonadonFiltriBor,
   xonadonMos,
   XONALAR_VARIANTLARI,
@@ -421,10 +422,9 @@ function Xonadon({ x, p }: { x: XonadonDto; p: PlanirovkaDto }) {
   return (
     <>
       <Chizma src={p.chizma}>
-        {/* TODO(#25): Ulashish and Sevimlilar act on the Planirovka until they move to the Xonadon. */}
         <div className="chizma-actions">
-          <UlashishButton p={p} />
-          <SevimliButton id={p.id} />
+          <UlashishButton p={p} x={x} />
+          <SevimliButton kalit={taqqoslashKaliti('xonadon', x.id)} />
         </div>
       </Chizma>
 
@@ -473,8 +473,7 @@ function Xonadon({ x, p }: { x: XonadonDto; p: PlanirovkaDto }) {
       {p.video && (
         <>
           <VideoButton video={p.video} />
-          {/* TODO(#25): booking from a Xonadon carries the Planirovka until yozilish has xonadonId. */}
-          {!sold && <VideoYozilishLink loyihaId={x.loyihaId} planirovkaId={p.id} />}
+          {!sold && <VideoYozilishLink loyihaId={x.loyihaId} planirovkaId={p.id} xonadonId={x.id} />}
         </>
       )}
 
@@ -486,16 +485,15 @@ function Xonadon({ x, p }: { x: XonadonDto; p: PlanirovkaDto }) {
 
       {!sold && (
         <div className="sticky-actions actions-call">
-          {/* TODO(#25): Ariza / yozilish about this Xonadon (xonadonId), today about its Planirovka. */}
           <a
             className="button-secondary button-square"
-            href={href({ name: 'ariza', planirovkaId: p.id })}
+            href={href({ name: 'ariza', planirovkaId: p.id, xonadonId: x.id })}
             aria-label={t('planirovka.qongiroq')}
             title={t('planirovka.qongiroq')}
           >
             <PhoneIcon />
           </a>
-          <YozilishButton primary loyihaId={x.loyihaId} planirovkaId={p.id} />
+          <YozilishButton primary loyihaId={x.loyihaId} planirovkaId={p.id} xonadonId={x.id} />
         </div>
       )}
     </>

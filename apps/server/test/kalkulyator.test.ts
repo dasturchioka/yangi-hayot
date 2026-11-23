@@ -121,7 +121,7 @@ describe('taqqoslash: oylik to‘lov', () => {
     });
     const ids = bloklar[0]!.planirovkalar.map((p) => p.id);
     const res = await t.app.inject({ method: 'GET', url: `/api/taqqoslash?ids=${ids.join(',')}`, headers: auth() });
-    return res.json().planirovkalar.map((p: { oylikTolov: number | null }) => p.oylikTolov);
+    return res.json().ustunlar.map((p: { oylikTolov: number | null }) => p.oylikTolov);
   }
 
   it('muddatli to‘lov with the minimal boshlang‘ich to‘lov over the maximal muddat; no price → null', async () => {

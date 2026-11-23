@@ -27,27 +27,38 @@ export function YozilishButton({
   primary = false,
   loyihaId,
   planirovkaId,
+  xonadonId,
   label = 'kontent.yozilish',
 }: {
   primary?: boolean;
   loyihaId?: number;
   planirovkaId?: number;
+  /** The Xonadon the booking is about (#25). */
+  xonadonId?: number;
   /** A shorter label where two buttons share the bottom bar. */
   label?: MessageKey;
 }) {
   const t = useT();
   return (
-    <a className={primary ? 'button-primary' : 'button-secondary'} href={href({ name: 'yozilish', loyihaId, planirovkaId })}>
+    <a className={primary ? 'button-primary' : 'button-secondary'} href={href({ name: 'yozilish', loyihaId, planirovkaId, xonadonId })}>
       {t(label)}
     </a>
   );
 }
 
 /** «Ko'rishga yozilish» right under a video (TZ 2-b.: «video ostida»): one quiet line, not another big button. */
-export function VideoYozilishLink({ loyihaId, planirovkaId }: { loyihaId: number; planirovkaId?: number }) {
+export function VideoYozilishLink({
+  loyihaId,
+  planirovkaId,
+  xonadonId,
+}: {
+  loyihaId: number;
+  planirovkaId?: number;
+  xonadonId?: number;
+}) {
   const t = useT();
   return (
-    <a className="yz-link yz-video-link" href={href({ name: 'yozilish', loyihaId, planirovkaId })}>
+    <a className="yz-link yz-video-link" href={href({ name: 'yozilish', loyihaId, planirovkaId, xonadonId })}>
       {t('yozilish.video')}
     </a>
   );

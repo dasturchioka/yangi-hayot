@@ -147,13 +147,21 @@ function Kalkulyator({
     if (!key || key === recorded.current) return;
     const timer = setTimeout(() => {
       recorded.current = key;
-      api.kalkulyatorHisob({ kirish: JSON.parse(key) as KalkulyatorKirish, planirovkaId }).catch(() => {});
+      api.kalkulyatorHisob({ kirish: JSON.parse(key) as KalkulyatorKirish, planirovkaId, xonadonId }).catch(() => {});
     }, HISOB_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [key, planirovkaId]);
+  }, [key, planirovkaId, xonadonId]);
 
   if (sending && kirish && natija) {
-    return <Yuborish kirish={kirish} natija={natija} planirovkaId={planirovkaId} onBack={() => setSending(false)} />;
+    return (
+      <Yuborish
+        kirish={kirish}
+        natija={natija}
+        planirovkaId={planirovkaId}
+        xonadonId={xonadonId}
+        onBack={() => setSending(false)}
+      />
+    );
   }
 
   const bank = rejim === 'ipoteka' && bankId ? sozlama.banklar.find((b) => b.id === bankId) : undefined;
@@ -164,7 +172,7 @@ function Kalkulyator({
         <h1 className="h1">{t('kalk.title')}</h1>
       </header>
 
-      {planirovkaId && <Kontekst planirovkaId={planirovkaId} />}
+      {(planirovkaId || xonadonId) && <Kontekst planirovkaId={planirovkaId} xonadonId={xonadonId} />}
 
       {sozlama.muddatli.yoqilgan && (
         <div className="segmented" role="tablist">
@@ -422,11 +430,13 @@ function Yuborish({
   kirish,
   natija,
   planirovkaId,
+  xonadonId,
   onBack,
 }: {
   kirish: KalkulyatorKirish;
   natija: KalkulyatorNatija;
   planirovkaId?: number;
+  xonadonId?: number;
   onBack: () => void;
 }) {
   const t = useT();
@@ -464,7 +474,7 @@ function Yuborish({
     if (phone.length !== 9) return phoneRef.current?.focus();
     setState({ kind: 'sending' });
     try {
-      await api.kalkulyatorAriza({ name: name.trim(), phone: `+998${phone}`, kirish, planirovkaId });
+      await api.kalkulyatorAriza({ name: name.trim(), phone: `+998${phone}`, kirish, planirovkaId, xonadonId });
       setState({ kind: 'sent' });
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;

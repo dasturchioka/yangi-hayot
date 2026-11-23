@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
 import { useLang, useT } from '../i18n';
-import { formatMaydon, formatNarx } from '../katalog/format';
+import { formatMaydon, formatNarx, formatSomMln } from '../katalog/format';
 import { PlanIcon } from '../katalog/parts';
 import { href } from '../router';
 import { CheckIcon } from '../icons';
@@ -20,7 +20,15 @@ export function localDigits(phone: string | null): string {
 }
 
 /** «Ariza qoldirish»: name + phone, about a Loyiha or Planirovka when opened from its card. */
-export function ArizaScreen({ loyihaId, planirovkaId }: { loyihaId?: number; planirovkaId?: number }) {
+export function ArizaScreen({
+  loyihaId,
+  planirovkaId,
+  xonadonId,
+}: {
+  loyihaId?: number;
+  planirovkaId?: number;
+  xonadonId?: number;
+}) {
   const t = useT();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -58,7 +66,7 @@ export function ArizaScreen({ loyihaId, planirovkaId }: { loyihaId?: number; pla
     if (phone.length !== 9) return phoneRef.current?.focus();
     setState({ kind: 'sending' });
     try {
-      await api.createAriza({ name: name.trim(), phone: `+998${phone}`, loyihaId, planirovkaId });
+      await api.createAriza({ name: name.trim(), phone: `+998${phone}`, loyihaId, planirovkaId, xonadonId });
       setState({ kind: 'sent' });
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;
@@ -78,7 +86,7 @@ export function ArizaScreen({ loyihaId, planirovkaId }: { loyihaId?: number; pla
   return (
     <form className="ariza-form" onSubmit={submit} noValidate>
       <h1 className="h1">{t('ariza.title')}</h1>
-      <Kontekst loyihaId={loyihaId} planirovkaId={planirovkaId} />
+      <Kontekst loyihaId={loyihaId} planirovkaId={planirovkaId} xonadonId={xonadonId} />
       <p className="muted">{t('ariza.hint')}</p>
 
       <div className="field">
@@ -175,14 +183,38 @@ interface KontekstView {
 }
 
 /** What the Ariza is about: a card like the booking screen's (from the katalog cache). */
-export function Kontekst({ loyihaId, planirovkaId }: { loyihaId?: number; planirovkaId?: number }) {
+export function Kontekst({
+  loyihaId,
+  planirovkaId,
+  xonadonId,
+}: {
+  loyihaId?: number;
+  planirovkaId?: number;
+  /** A Xonadon (#25) wins: its raqam, qavat and exact narx. */
+  xonadonId?: number;
+}) {
   const t = useT();
   const lang = useLang();
   const [view, setView] = useState<KontekstView | null>(null);
 
   useEffect(() => {
     let live = true;
-    if (planirovkaId) {
+    if (xonadonId) {
+      api.xonadon(xonadonId, lang).then(
+        ({ xonadon: x, planirovka: p }) =>
+          live &&
+          setView({
+            thumb: p.chizma,
+            title: `${p.loyihaNomi} · № ${x.blokNomi}-${x.raqam}`,
+            meta: [
+              t('planirovka.short', { n: x.xonalar, maydon: formatMaydon(x.maydon) }),
+              t('shaxmatka.qavat', { n: x.qavat }),
+              formatSomMln(t, x.narx),
+            ].join(' · '),
+          }),
+        () => {},
+      );
+    } else if (planirovkaId) {
       api.planirovka(planirovkaId, lang).then(
         ({ planirovka: p }) =>
           live &&
@@ -206,7 +238,7 @@ export function Kontekst({ loyihaId, planirovkaId }: { loyihaId?: number; planir
     return () => {
       live = false;
     };
-  }, [loyihaId, planirovkaId, lang, t]);
+  }, [loyihaId, planirovkaId, xonadonId, lang, t]);
 
   if (!view) return null;
   return (

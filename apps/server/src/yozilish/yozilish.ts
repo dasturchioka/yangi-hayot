@@ -52,6 +52,8 @@ export interface NewYozilish {
   telegramId: string;
   loyihaId: number;
   planirovkaId?: number;
+  /** The Xonadon the booking is about (#25); must be in the Loyiha. */
+  xonadonId?: number;
   /** Tashkent `YYYY-MM-DD` and `HH:mm`; must be an offered slot. */
   sana: string;
   vaqt: string;
@@ -265,6 +267,7 @@ export function createYozilishlar(deps: YozilishDeps): Yozilishlar {
       phone: input.phone,
       loyihaId: input.loyihaId,
       planirovkaId: input.planirovkaId ?? null,
+      xonadonId: input.xonadonId ?? null,
       izoh: [`Ko'rish vaqti: ${vaqtMatni(at)}`, `Ko'rsatuv manzili: ${loyiha.manzil.uz}`],
       taskDueAt: at,
       bitimNomi: bitimNomi(loyiha.nomi, at, input.name),
@@ -272,10 +275,11 @@ export function createYozilishlar(deps: YozilishDeps): Yozilishlar {
     });
 
     const inserted = await db.query<{ id: number }>(
-      `INSERT INTO yozilish (ariza_id, mijoz_id, loyiha_id, planirovka_id, vaqt, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $6)
+      // Planirovka and Xonadon as the Ariza resolved them (a Xonadon implies its Planirovka).
+      `INSERT INTO yozilish (ariza_id, mijoz_id, loyiha_id, planirovka_id, xonadon_id, vaqt, created_at, updated_at)
+       SELECT a.id, $2, $3, a.planirovka_id, a.xonadon_id, $4, $5, $5 FROM ariza a WHERE a.id = $1
        ON CONFLICT (ariza_id) DO NOTHING RETURNING id`,
-      [ariza.id, input.telegramId, input.loyihaId, input.planirovkaId ?? null, at, now],
+      [ariza.id, input.telegramId, input.loyihaId, at, now],
     );
     const row = inserted.rows[0];
     if (!row) {

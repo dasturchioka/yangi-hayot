@@ -8,7 +8,8 @@ import { taklifVisit, type Taklif } from '../taklif/taklif';
 import type { Skoring } from '../skoring/skoring';
 import type { Ulashish } from '../ulashish/ulashish';
 
-const UlashishBody = z.object({ planirovkaId: z.number().int().positive().max(2_147_483_647) });
+const Id = z.number().int().positive().max(2_147_483_647);
+const UlashishBody = z.union([z.object({ xonadonId: Id }).strict(), z.object({ planirovkaId: Id }).strict()]);
 
 /** Mini App API: every route here requires valid initData. Mounted under /api. */
 export async function miniAppRoutes(app: FastifyInstance, deps: AppDeps & { ulashish: Ulashish; taklif: Taklif; skoring: Skoring }) {
@@ -45,14 +46,14 @@ export async function miniAppRoutes(app: FastifyInstance, deps: AppDeps & { ulas
     return deps.taklif.link(m.telegramId);
   });
 
-  /** «Ulashish»: a link to send this Planirovka into a Telegram chat. */
+  /** «Ulashish»: a link to send this Xonadon or Planirovka into a Telegram chat. */
   app.post('/ulashish', async (req, reply): Promise<UlashishResponse | void> => {
     const body = UlashishBody.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'bad_request' });
     if (!deps.config.miniAppLink) return reply.code(503).send({ error: 'ulashish_sozlanmagan' });
     const now = deps.clock.now();
     const m = await ensureMijoz(deps.db, req.telegramUser, now);
-    const link = await deps.ulashish.create(m.telegramId, body.data.planirovkaId, now);
+    const link = await deps.ulashish.create(m.telegramId, body.data, now);
     if (!link) return reply.code(404).send({ error: 'not_found' });
     return link;
   });

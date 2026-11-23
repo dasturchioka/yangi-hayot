@@ -243,6 +243,8 @@ export function namunaviyOylik(narx: number | null, sozlama: KalkulyatorSozlamal
 export interface KalkulyatorHisobRequest {
   kirish: KalkulyatorKirish;
   planirovkaId?: number;
+  /** The Xonadon whose narx was put in (#25); its Planirovka is implied. */
+  xonadonId?: number;
 }
 
 /** POST /api/kalkulyator/ariza — «Hisobni menejerga yuborish». */

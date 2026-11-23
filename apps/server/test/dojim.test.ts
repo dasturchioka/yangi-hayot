@@ -178,6 +178,115 @@ describe("dojim: sevimli Planirovkada bo'sh qolmadi", () => {
   });
 });
 
+/**
+ * Xonadon level (#25, TZ UF-3: «Sevimlilardagi xonadon bronga o'tdi»).
+ * Sayhun A: 2 xonali 54,5 m² — A-12 (5-qavat), A-13 (5-qavat), A-20 (7-qavat, sotilgan);
+ * 2 xonali 52 m² — A-30 (3-qavat); 3 xonali 54 m² — A-40. Navoiy 1: 2 xonali 55 m² — 1-7.
+ */
+async function xonadonlar() {
+  const sayhun = await seedLoyiha(t.db, {
+    nomi: 'Sayhun',
+    bloklar: [
+      blok('A', [
+        {
+          xonalar: 2,
+          maydon: 54.5,
+          xonadonlar: [
+            { qavat: 5, raqam: 12, narx: 455_500_000 },
+            { qavat: 5, raqam: 13 },
+            { qavat: 7, raqam: 20, holat: 'sotilgan' },
+          ],
+        },
+        { xonalar: 2, maydon: 52, xonadonlar: [{ qavat: 3, raqam: 30 }] },
+        { xonalar: 3, maydon: 54, xonadonlar: [{ qavat: 4, raqam: 40 }] },
+      ]),
+    ],
+  });
+  await seedLoyiha(t.db, {
+    nomi: 'Navoiy Bahor',
+    shahar: 'navoiy',
+    bloklar: [blok('1', [{ xonalar: 2, maydon: 55, xonadonlar: [{ qavat: 2, raqam: 7 }] }])],
+  });
+  const { rows } = await t.db.query<{ id: number; nom: string; loyiha_id: number; planirovka_id: number }>(
+    `SELECT x.id, b.nomi || '-' || x.raqam AS nom, b.loyiha_id, x.planirovka_id FROM xonadon x JOIN blok b ON b.id = x.blok_id`,
+  );
+  const id = (nom: string) => rows.find((r) => r.nom === nom)!.id;
+  return { id, loyihaId: sayhun.id as number, planirovkaOf: (nom: string) => rows.find((r) => r.nom === nom)!.planirovka_id };
+}
+
+const xonadonHolati = (id: number, holat: 'bosh' | 'bron' | 'sotilgan', headers: { cookie: string }) =>
+  admin('PATCH', `/katalog/xonadonlar/${id}`, headers, { holat });
+
+describe("dojim: sevimli Xonadon bronga o'tdi (#25)", () => {
+  it("offers o'xshash bo'sh Xonadonlar: same xonalar, near maydon — the same Blok and Loyiha first", async () => {
+    const { id } = await xonadonlar();
+    await ochdi(aziz);
+    expect((await miniApp(aziz, 'PUT', `/sevimlilar/xonadonlar/${id('A-12')}`)).statusCode).toBe(204);
+    const menejer = await adminLogin(t, 'menejer');
+
+    expect((await xonadonHolati(id('A-12'), 'bron', menejer)).statusCode).toBe(200);
+    const [msg, ...rest] = await after(0.5, AZIZ);
+
+    expect(rest).toEqual([]);
+    expect(msg!.text).toContain('Sayhun');
+    expect(msg!.text).toContain('A-12, 2 xonali, 54,5 m²');
+    expect(startapps(msg!.buttons).map((p) => p!.ekran)).toEqual([
+      { ekran: 'xonadon', xonadonId: id('A-13') }, // same Planirovka
+      { ekran: 'xonadon', xonadonId: id('A-30') }, // 52 m², same Blok
+      { ekran: 'xonadon', xonadonId: id('1-7') }, // another Loyiha; not A-20 (sotilgan), not A-40 (3 xonali)
+    ]);
+    expect(stopButton(msg!)).toEqual({ text: '🔕 Yubormang', callbackData: 'dojim:stop' });
+  });
+
+  it('is not sent when the Xonadon is back to bo‘sh before the morning, nor for a Xonadon no longer sevimli', async () => {
+    const { id } = await xonadonlar();
+    await ochdi(aziz);
+    await miniApp(aziz, 'PUT', `/sevimlilar/xonadonlar/${id('A-12')}`);
+    await miniApp(aziz, 'PUT', `/sevimlilar/xonadonlar/${id('A-13')}`);
+    const administrator = await adminLogin(t, 'administrator');
+
+    t.clock.set(tashkentInstant(bugun(), '22:00')); // night: waits for the morning
+    expect((await xonadonHolati(id('A-12'), 'sotilgan', administrator)).statusCode).toBe(200);
+    expect((await xonadonHolati(id('A-12'), 'bosh', administrator)).statusCode).toBe(200);
+    expect((await xonadonHolati(id('A-13'), 'bron', administrator)).statusCode).toBe(200);
+    await t.app.inject({ method: 'DELETE', url: `/api/sevimlilar/xonadonlar/${id('A-13')}`, headers: auth(aziz) });
+
+    expect(await after(12, AZIZ)).toEqual([]);
+  });
+
+  it('keeps «7 kunda 1 ta» and «Yubormang»', async () => {
+    const { id } = await xonadonlar();
+    for (const u of [aziz, olga]) {
+      await ochdi(u);
+      for (const nom of ['A-12', 'A-13']) await miniApp(u, 'PUT', `/sevimlilar/xonadonlar/${id(nom)}`);
+    }
+    await botEvent(t, aziz, { type: 'callback', data: 'dojim:stop' });
+    const menejer = await adminLogin(t, 'menejer');
+
+    await xonadonHolati(id('A-12'), 'bron', menejer);
+    expect(await after(1, OLGA)).toHaveLength(1);
+    kun(3, '10:00');
+    await xonadonHolati(id('A-13'), 'bron', await adminLogin(t, 'menejer'));
+    expect(await after(1, OLGA)).toEqual([]); // 3 days after the last one
+
+    expect(t.messenger.deliveredTo(AZIZ)).toEqual([]);
+  });
+
+  it("24 hours after viewing a Xonadon kartochkasi the reminder opens that Xonadon", async () => {
+    const { id, loyihaId, planirovkaOf } = await xonadonlar();
+    await ochdi(aziz);
+    expect((await miniApp(aziz, 'GET', `/katalog/xonadonlar/${id('A-12')}?lang=uz`)).statusCode).toBe(200);
+
+    const [msg] = await after(24, AZIZ);
+
+    expect(msg!.text).toContain('A-12, 2 xonali, 54,5 m²');
+    expect(startapps(msg!.buttons).map((p) => p!.ekran)).toEqual([
+      { ekran: 'xonadon', xonadonId: id('A-12') },
+      { ekran: 'yozilish', loyihaId, planirovkaId: planirovkaOf('A-12') },
+    ]);
+  });
+});
+
 describe("dojim: ko'rishga keldi / kelmadi", () => {
   it('«kelmadi» → offers a new time an hour later; «keldi» → «Qanday bo\'ldi?» with the calculator', async () => {
     const { loyihaId } = await katalog();

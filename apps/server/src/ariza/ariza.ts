@@ -1,4 +1,4 @@
-import type { ArizaDto, ArizaTuri } from '@yh/shared';
+import type { ArizaDto, ArizaTuri, XonadonHolati } from '@yh/shared';
 import type pg from 'pg';
 import type { Crm } from '../adapters/crm/crm';
 import { CrmAuthError } from '../adapters/crm/crm';
@@ -34,6 +34,8 @@ export interface NewAriza {
   loyihaId?: number | null;
   /** Its Loyiha and Blok are taken from it; `loyihaId` may be omitted. */
   planirovkaId?: number | null;
+  /** The Xonadon the Ariza is about (#25): its Planirovka, Blok and Loyiha are implied; a given planirovkaId / loyihaId must match. */
+  xonadonId?: number | null;
   /** Manba of this Ariza when it is not the Mijoz's last Manba (e.g. «mijoz ulashdi»). */
   manba?: string;
   /** Type-specific lines for the CRM note (quiz answers, calculation, booking date, AI summary…). */
@@ -54,7 +56,7 @@ export interface CreatedAriza {
   duplicate: boolean;
 }
 
-/** Unknown or not visible Loyiha / Planirovka. */
+/** Unknown or not visible Loyiha / Planirovka / Xonadon, or ones that do not belong together. */
 export class ArizaKontekstError extends Error {
   override name = 'ArizaKontekstError';
 }
@@ -149,7 +151,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       );
       const m = mijoz.rows[0];
       if (!m) throw new Error(`Ariza for unknown Mijoz ${input.telegramId}`);
-      const kontekst = await loadKontekst(db, input.loyihaId ?? null, input.planirovkaId ?? null);
+      const kontekst = await loadKontekst(db, input.loyihaId ?? null, input.planirovkaId ?? null, input.xonadonId ?? null);
       const manba = input.manba ?? m.last_source;
       const izoh = [
         ...(manba === SHARED_MANBA ? await sharerLines(db, input.telegramId) : []),
@@ -163,7 +165,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
         `SELECT id FROM ariza
           WHERE mijoz_id = $1 AND tur = $2 AND created_at > $3
             AND loyiha_id IS NOT DISTINCT FROM $4 AND planirovka_id IS NOT DISTINCT FROM $5
-            AND phone IS NOT DISTINCT FROM $6 AND izoh = $7
+            AND phone IS NOT DISTINCT FROM $6 AND izoh = $7 AND xonadon_id IS NOT DISTINCT FROM $8
           ORDER BY id DESC LIMIT 1`,
         [
           input.telegramId,
@@ -173,6 +175,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           kontekst?.planirovka?.id ?? null,
           phone,
           izoh,
+          kontekst?.xonadon?.id ?? null,
         ],
       );
       if (repeat.rows[0]) return { id: repeat.rows[0].id, duplicate: true };
@@ -185,8 +188,9 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
 
       const { rows } = await db.query<{ id: number }>(
         `INSERT INTO ariza (mijoz_id, tur, name, phone, lang, first_manba, manba, loyiha_id, planirovka_id,
-                            kontekst, izoh, tags, task_due_at, payload, created_at, crm_next_attempt_at, crm_bitim_nomi)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                            kontekst, izoh, tags, task_due_at, payload, created_at, crm_next_attempt_at, crm_bitim_nomi,
+                            xonadon_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          RETURNING id`,
         [
           input.telegramId,
@@ -207,6 +211,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           // A lease: if the process dies before the attempt below, the retry job picks it up.
           new Date(now.getTime() + CRM_RETRY_EVERY_MS),
           input.bitimNomi ?? null,
+          kontekst?.xonadon?.id ?? null,
         ],
       );
       if (phone) await db.query('UPDATE mijoz SET phone = $2 WHERE telegram_id = $1', [input.telegramId, phone]);
@@ -379,9 +384,10 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       created_at: Date;
       loyiha_id: number | null;
       planirovka_id: number | null;
+      xonadon_id: number | null;
       loyiha_nomi: string | null;
     }>(
-      `SELECT id, tur, created_at, loyiha_id, planirovka_id, kontekst->'loyiha'->>'nomi' AS loyiha_nomi FROM ariza
+      `SELECT id, tur, created_at, loyiha_id, planirovka_id, xonadon_id, kontekst->'loyiha'->>'nomi' AS loyiha_nomi FROM ariza
         WHERE mijoz_id = $1 ORDER BY created_at DESC, id DESC`,
       [telegramId],
     );
@@ -391,6 +397,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       createdAt: r.created_at.toISOString(),
       loyihaId: r.loyiha_id,
       planirovkaId: r.planirovka_id,
+      xonadonId: r.xonadon_id,
       loyihaNomi: r.loyiha_nomi,
     }));
   }
@@ -428,16 +435,24 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
 
 /** «mijoz ulashdi»: who shared the link that brought this Mijoz (#16), for the note. */
 async function sharerLines(db: pg.Pool, telegramId: string): Promise<string[]> {
-  const { rows } = await db.query<{ name: string; username: string | null; sharer: string; planirovka_id: number }>(
-    `SELECT s.name, s.username, s.telegram_id::text AS sharer, u.planirovka_id
+  const { rows } = await db.query<{
+    name: string;
+    username: string | null;
+    sharer: string;
+    planirovka_id: number;
+    xonadon: string | null;
+  }>(
+    `SELECT s.name, s.username, s.telegram_id::text AS sharer, u.planirovka_id,
+            CASE WHEN x.id IS NOT NULL THEN b.nomi || '-' || x.raqam END AS xonadon
        FROM mijoz m JOIN ulashish u ON u.id = m.last_ulashish_id JOIN mijoz s ON s.telegram_id = u.mijoz_id
+       LEFT JOIN xonadon x ON x.id = u.xonadon_id LEFT JOIN blok b ON b.id = x.blok_id
       WHERE m.telegram_id = $1`,
     [telegramId],
   );
   const r = rows[0];
   if (!r) return [];
   const who = [r.name, r.username ? `@${r.username}` : null, `ID ${r.sharer}`].filter(Boolean).join(' · ');
-  return [`Ulashgan: ${who} (Planirovka #${r.planirovka_id})`];
+  return [`Ulashgan: ${who} (${r.xonadon ? `Xonadon ${r.xonadon}` : `Planirovka #${r.planirovka_id}`})`];
 }
 
 function bitimName(row: Row): string {
@@ -445,7 +460,28 @@ function bitimName(row: Row): string {
 }
 
 /** Context of the Ariza from the catalog, frozen at creation. Only Sotuvdagi Loyihalar. */
-async function loadKontekst(db: pg.Pool, loyihaId: number | null, planirovkaId: number | null): Promise<ArizaKontekst | null> {
+async function loadKontekst(
+  db: pg.Pool,
+  loyihaId: number | null,
+  givenPlanirovkaId: number | null,
+  xonadonId: number | null,
+): Promise<ArizaKontekst | null> {
+  let planirovkaId = givenPlanirovkaId;
+  let xonadon: ArizaKontekst['xonadon'] = null;
+  if (xonadonId !== null) {
+    const { rows } = await db.query<{
+      id: number;
+      planirovka_id: number;
+      qavat: number;
+      raqam: number;
+      narx: string | null;
+      holat: XonadonHolati;
+    }>(`SELECT id, planirovka_id, qavat, raqam, narx, holat FROM xonadon WHERE id = $1`, [xonadonId]);
+    const x = rows[0];
+    if (!x || (planirovkaId !== null && planirovkaId !== x.planirovka_id)) throw new ArizaKontekstError('unknown Xonadon');
+    planirovkaId = x.planirovka_id;
+    xonadon = { id: x.id, qavat: x.qavat, raqam: x.raqam, narx: x.narx === null ? null : Number(x.narx), holat: x.holat };
+  }
   if (planirovkaId !== null) {
     const { rows } = await db.query<{
       loyiha_id: number;
@@ -457,9 +493,10 @@ async function loadKontekst(db: pg.Pool, loyihaId: number | null, planirovkaId: 
       maydon: string;
       nomi: { ru: string; uz: string } | null;
       narx: string | null;
+      qolda_narx: string | null;
     }>(
       `SELECT l.id AS loyiha_id, l.nomi AS loyiha_nomi, l.crm_responsible_id AS responsible, b.nomi AS blok_nomi,
-              p.id, p.xonalar, p.maydon, p.nomi, p.boshlangich_narx AS narx
+              p.id, p.xonalar, p.maydon, p.nomi, p.boshlangich_narx AS narx, p.qolda_narx
          FROM planirovka_view p JOIN blok b ON b.id = p.blok_id JOIN loyiha l ON l.id = b.loyiha_id
         WHERE p.id = $1 AND l.holat = 'sotuvda'`,
       [planirovkaId],
@@ -476,6 +513,11 @@ async function loadKontekst(db: pg.Pool, loyihaId: number | null, planirovkaId: 
         nomi: r.nomi?.uz ?? null,
         narx: r.narx === null ? null : Number(r.narx),
       },
+      // A Xonadon without its own narx costs its Planirovka's qo'lda narx (ADR 0003), as in the katalog.
+      xonadon: xonadon && {
+        ...xonadon,
+        narx: xonadon.narx ?? (r.qolda_narx === null ? null : Number(r.qolda_narx)),
+      },
     };
   }
   if (loyihaId !== null) {
@@ -485,7 +527,7 @@ async function loadKontekst(db: pg.Pool, loyihaId: number | null, planirovkaId: 
     );
     const r = rows[0];
     if (!r) throw new ArizaKontekstError('unknown Loyiha');
-    return { loyiha: { id: r.id, nomi: r.nomi, responsibleId: r.responsible }, blok: null, planirovka: null };
+    return { loyiha: { id: r.id, nomi: r.nomi, responsibleId: r.responsible }, blok: null, planirovka: null, xonadon: null };
   }
   return null;
 }

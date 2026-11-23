@@ -1,4 +1,4 @@
-import type { PlanirovkaFiltr } from '@yh/shared';
+import { parseTaqqoslashKaliti, taqqoslashKaliti, type PlanirovkaFiltr, type TaqqoslashKalit } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { filtrQuery, parseFiltr } from './tanlash/filtr';
 
@@ -20,7 +20,8 @@ export type Route =
   /** Xonadon kartochkasi (#23). */
   | { name: 'xonadon'; id: number }
   | { name: 'sevimlilar' }
-  | { name: 'taqqoslash'; ids: number[] }
+  /** Taqqoslash columns: `x<id>` Xonadon, `p<id>` Planirovka (#25). */
+  | { name: 'taqqoslash'; ids: TaqqoslashKalit[] }
   /** To'lov kalkulyatori; from a Planirovka its Boshlang'ich narx is put in, from a Xonadon its own narx. */
   | { name: 'kalkulyator'; planirovkaId?: number; xonadonId?: number }
   | { name: 'sotibOlish' }
@@ -28,9 +29,9 @@ export type Route =
   /** «Do'stingni taklif qil» (#19). */
   | { name: 'taklif' }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
-  | { name: 'ariza'; loyihaId?: number; planirovkaId?: number }
+  | { name: 'ariza'; loyihaId?: number; planirovkaId?: number; xonadonId?: number }
   /** «Ko'rishga yozilish» (#11): Loyiha → kun → vaqt → ism, telefon. Without a Loyiha the Mijoz picks one. */
-  | { name: 'yozilish'; loyihaId?: number; planirovkaId?: number }
+  | { name: 'yozilish'; loyihaId?: number; planirovkaId?: number; xonadonId?: number }
   /** One own booking: confirmation («yangi» right after booking), «Xarita», «Ko'chirish», «Bekor qilish». */
   | { name: 'yozilishKorish'; id: number; yangi?: 'yozildi' | 'kochirildi' }
   /** Pick a new day and time for an own booking. */
@@ -49,7 +50,13 @@ export function parseRoute(hash: string): Route {
     const q = new URLSearchParams(query);
     const loyihaId = Number(q.get('loyiha')) || undefined;
     const planirovkaId = Number(q.get('planirovka')) || undefined;
-    return { name: 'ariza', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
+    const xonadonId = Number(q.get('xonadon')) || undefined;
+    return {
+      name: 'ariza',
+      ...(loyihaId ? { loyihaId } : {}),
+      ...(planirovkaId ? { planirovkaId } : {}),
+      ...(xonadonId ? { xonadonId } : {}),
+    };
   }
   if (parts[0] === 'tanlash') {
     const q = new URLSearchParams(query);
@@ -71,7 +78,13 @@ export function parseRoute(hash: string): Route {
     }
     const loyihaId = Number(q.get('loyiha')) || undefined;
     const planirovkaId = Number(q.get('planirovka')) || undefined;
-    return { name: 'yozilish', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
+    const xonadonId = Number(q.get('xonadon')) || undefined;
+    return {
+      name: 'yozilish',
+      ...(loyihaId ? { loyihaId } : {}),
+      ...(planirovkaId ? { planirovkaId } : {}),
+      ...(xonadonId ? { xonadonId } : {}),
+    };
   }
   if (parts[0] === 'mening') return { name: 'mening' };
   if (parts[0] === 'loyihalar') return { name: 'loyihalar' };
@@ -106,7 +119,10 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
   if (parts[0] === 'taklif') return { name: 'taklif' };
   if (parts[0] === 'taqqoslash') {
-    const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
+    const ids = (parts[1] ?? '')
+      .split(',')
+      .map(parseTaqqoslashKaliti)
+      .flatMap((k) => (k ? [taqqoslashKaliti(k.tur, k.id)] : []));
     if (ids.length > 0) return { name: 'taqqoslash', ids };
   }
   return { name: 'bosh' };
@@ -137,6 +153,7 @@ export function href(route: Route): string {
       const q = new URLSearchParams();
       if (route.loyihaId) q.set('loyiha', String(route.loyihaId));
       if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      if (route.xonadonId) q.set('xonadon', String(route.xonadonId));
       const qs = q.toString();
       return qs ? `#/ariza?${qs}` : '#/ariza';
     }
@@ -144,6 +161,7 @@ export function href(route: Route): string {
       const q = new URLSearchParams();
       if (route.loyihaId) q.set('loyiha', String(route.loyihaId));
       if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      if (route.xonadonId) q.set('xonadon', String(route.xonadonId));
       const qs = q.toString();
       return qs ? `#/yozilish?${qs}` : '#/yozilish';
     }

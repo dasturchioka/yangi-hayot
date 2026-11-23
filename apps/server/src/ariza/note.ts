@@ -1,4 +1,4 @@
-import type { ArizaTuri } from '@yh/shared';
+import type { ArizaTuri, XonadonHolati } from '@yh/shared';
 import { ARIZA_TURI } from './turlar';
 
 /** Catalog context of an Ariza, frozen when it is created. */
@@ -6,6 +6,8 @@ export interface ArizaKontekst {
   loyiha: { id: number; nomi: string; responsibleId: string | null };
   blok: string | null;
   planirovka: { id: number; xonalar: number; maydon: number; nomi: string | null; narx: number | null } | null;
+  /** The Xonadon the Ariza is about (#25); narx = its own, else the Planirovka's qo'lda narx. Absent in older rows. */
+  xonadon?: { id: number; qavat: number; raqam: number; narx: number | null; holat: XonadonHolati } | null;
 }
 
 export interface NoteSource {
@@ -33,7 +35,8 @@ function formatMaydon(m: number): string {
 
 /**
  * The CRM note (8-bo'lim): who, Loyiha / Blok / Planirovka (xonalar, m²,
- * Boshlang'ich narx) when known, both Manbalar and the language, then the
+ * Boshlang'ich narx) or the Xonadon («xonadon (tanlangan bo'lsa)»: Blok,
+ * qavat, raqam, xonalar, m², its narx) when known, both Manbalar and the language, then the
  * type-specific lines. Same text goes to the managers group when the CRM is down.
  */
 export function arizaNote(a: NoteSource): string {
@@ -48,7 +51,20 @@ export function arizaNote(a: NoteSource): string {
   if (k) {
     lines.push(`Loyiha: ${k.loyiha.nomi}`);
     if (k.blok) lines.push(`Blok: ${k.blok}`);
-    if (k.planirovka) {
+    if (k.xonadon && k.planirovka) {
+      const x = k.xonadon;
+      const p = k.planirovka;
+      lines.push(
+        `Xonadon ${k.blok}-${x.raqam}: ${[
+          `${k.blok} blok`,
+          `${x.qavat}-qavat`,
+          `${x.raqam}-xonadon`,
+          `${p.xonalar} xonali`,
+          `${formatMaydon(p.maydon)} m²`,
+          x.narx === null ? "Narx so'rov bo'yicha" : `${formatSom(x.narx)} so'm`,
+        ].join(', ')}${p.nomi ? ` (planirovka «${p.nomi}»)` : ''}${x.holat === 'bosh' ? '' : ` — hozir ${x.holat === 'bron' ? 'bron' : 'sotilgan'}`}`,
+      );
+    } else if (k.planirovka) {
       const p = k.planirovka;
       lines.push(
         `Planirovka: ${[

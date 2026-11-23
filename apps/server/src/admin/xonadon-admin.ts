@@ -1,6 +1,6 @@
 import type { AdminBlokXonadonlarResponse, AdminXonadonDto, AdminXonadonInput, XonadonHolati } from '@yh/shared';
 import type pg from 'pg';
-import { sevimliBandBoldi } from '../dojim/dojim';
+import { sevimliBandBoldi, sevimliXonadonBandBoldi } from '../dojim/dojim';
 import { farq, yozJurnal, type Muallif } from './jurnal';
 import { blokOf, KatalogAdminError, planirovkalarOfBlok, tx } from './katalog-admin';
 
@@ -67,7 +67,7 @@ const boshOf = async (c: pg.PoolClient, planirovkaId: number) =>
 /**
  * Runs a Xonadon write and, when it leaves a Planirovka with no bo'sh
  * Xonadon (it had some before), tells the dojim (#17: «sevimli Planirovkada
- * bo'sh qolmadi»). #25 will move the dojim to the Xonadon level.
+ * bo'sh qolmadi»). The Xonadon-level trigger (#25) is in `updateXonadonIn`.
  */
 async function boshKuzat<T>(c: pg.PoolClient, at: Date, planirovkaIds: number[], write: () => Promise<T>): Promise<T> {
   const ids = [...new Set(planirovkaIds)];
@@ -200,6 +200,8 @@ export async function updateXonadonIn(
       [after.planirovkaId, after.qavat, after.raqam, after.narx, after.holat, by.at, id],
     ),
   );
+  // TZ UF-3: a sevimli Xonadon went bron (or sotilgan) → o'xshash bo'sh Xonadonlar (#25).
+  if (before.holat === 'bosh' && after.holat !== 'bosh') await sevimliXonadonBandBoldi(c, id, by.at);
   await yozJurnal(c, by, {
     obyekt: 'xonadon',
     obyektId: id,

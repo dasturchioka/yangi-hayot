@@ -117,7 +117,16 @@ function useSlotlar() {
 // ---------------------------------------------------------------- «Ko'rishga yozilish»
 
 /** Loyiha → kun → vaqt → ism, telefon → confirmation. */
-export function YozilishScreen({ loyihaId: given, planirovkaId }: { loyihaId?: number; planirovkaId?: number }) {
+export function YozilishScreen({
+  loyihaId: given,
+  planirovkaId,
+  xonadonId,
+}: {
+  loyihaId?: number;
+  planirovkaId?: number;
+  /** From a Xonadon kartochkasi (#25): the booking is about that Xonadon. */
+  xonadonId?: number;
+}) {
   const t = useT();
   const lang = useLang();
   const { load, reload } = useSlotlar();
@@ -165,7 +174,7 @@ export function YozilishScreen({ loyihaId: given, planirovkaId }: { loyihaId?: n
     setState({ kind: 'sending' });
     try {
       const { yozilish } = await api.yozil(
-        { loyihaId, planirovkaId, sana, vaqt, name: name.trim(), phone: `+998${phone}` },
+        { loyihaId, planirovkaId, xonadonId, sana, vaqt, name: name.trim(), phone: `+998${phone}` },
         lang,
       );
       hapticNotify('success');
@@ -190,7 +199,7 @@ export function YozilishScreen({ loyihaId: given, planirovkaId }: { loyihaId?: n
   return (
     <form className="yz-form" onSubmit={submit} noValidate>
       <h1 className="h1">{t('yozilish.title')}</h1>
-      {given ? <Kontekst loyihaId={given} planirovkaId={planirovkaId} /> : <LoyihaPicker value={loyihaId} onChange={setLoyihaId} />}
+      {given ? <Kontekst loyihaId={given} planirovkaId={planirovkaId} xonadonId={xonadonId} /> : <LoyihaPicker value={loyihaId} onChange={setLoyihaId} />}
 
       <Loaded load={load}>
         {({ kunlar }) => (

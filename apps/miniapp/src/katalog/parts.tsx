@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { HeartIcon, PlanIcon as LinePlanIcon, PlayIcon, SearchIcon } from '../icons';
 import { href } from '../router';
-import { toggleSevimli, useSevimliIds } from '../sevimlilar/store';
+import { toggleSevimli, useSevimliKalitlar } from '../sevimlilar/store';
 import { openExternal, showAlert } from '../telegram';
 import type { Load } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
@@ -160,14 +160,15 @@ export function PlanIcon() {
 /** Small heart on a list row (kit «Xonadon qatori»). */
 export function RowSevimli({ id }: { id: number }) {
   const t = useT();
-  const on = useSevimliIds().has(id);
+  const kalit = `p${id}` as const;
+  const on = useSevimliKalitlar().has(kalit);
   return (
     <button
       type="button"
       className={`row-heart${on ? ' active' : ''}`}
       aria-pressed={on}
       aria-label={t(on ? 'sevimli.remove' : 'sevimli.add')}
-      onClick={() => toggleSevimli(id).catch(() => showAlert(t('state.error')))}
+      onClick={() => toggleSevimli(kalit).catch(() => showAlert(t('state.error')))}
     >
       <HeartIcon size={18} filled={on} />
     </button>

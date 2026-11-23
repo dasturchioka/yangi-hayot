@@ -7,12 +7,14 @@
  * - `src_<nomi>`          — Manba tag (#7), handled by the server's manba module;
  * - `pl<id>_u<ulashish>`  — «Ulashish» link (#16): opens Planirovka <id>,
  *                            <ulashish> names who shared it;
+ * - `xn<id>_u<ulashish>`  — «Ulashish» of a Xonadon (#25): opens Xonadon <id>;
+ * - `xn<id>`              — opens Xonadon <id> (#23, no tracked share);
  * - `taklif_<kod>`        — personal «Do'stingni taklif qil» link (#19);
  * - `booking`, `ariza`, ''— bot buttons (#7), screens of later tickets.
  */
 
 /** Screen the Mini App opens with, as resolved from the start parameter. */
-export type StartDto = { ekran: 'planirovka'; planirovkaId: number };
+export type StartDto = { ekran: 'planirovka'; planirovkaId: number } | { ekran: 'xonadon'; xonadonId: number };
 
 export interface UlashishParam {
   planirovkaId: number;
@@ -33,6 +35,27 @@ export function parseUlashishParam(param: string | null | undefined): UlashishPa
   const ulashishId = Number(m[2]);
   if (planirovkaId > 2_147_483_647 || ulashishId > 2_147_483_647) return null;
   return { planirovkaId, ulashishId };
+}
+
+export interface XonadonUlashishParam {
+  xonadonId: number;
+  ulashishId: number;
+}
+
+export function xonadonUlashishStartParam(p: XonadonUlashishParam): string {
+  return `xn${p.xonadonId}_u${p.ulashishId}`;
+}
+
+const XONADON_ULASHISH = /^xn([1-9][0-9]{0,9})_u([1-9][0-9]{0,9})$/;
+
+/** The «Ulashish» link of a Xonadon (#25) in this start parameter, or null. */
+export function parseXonadonUlashishParam(param: string | null | undefined): XonadonUlashishParam | null {
+  const m = param ? XONADON_ULASHISH.exec(param) : null;
+  if (!m) return null;
+  const xonadonId = Number(m[1]);
+  const ulashishId = Number(m[2]);
+  if (xonadonId > 2_147_483_647 || ulashishId > 2_147_483_647) return null;
+  return { xonadonId, ulashishId };
 }
 
 /**

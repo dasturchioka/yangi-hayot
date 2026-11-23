@@ -1,6 +1,7 @@
 import {
   namunaviyOylik,
   SHAHARLAR,
+  taqqoslashKaliti,
   type KalkulyatorSozlamalari,
   type LoyihaCardDto,
   type LoyihaDto,
@@ -427,7 +428,7 @@ function Planirovka({ p }: { p: PlanirovkaDto }) {
       <Chizma src={p.chizma}>
         <div className="chizma-actions">
           <UlashishButton p={p} />
-          <SevimliButton id={p.id} />
+          <SevimliButton kalit={taqqoslashKaliti('planirovka', p.id)} />
         </div>
       </Chizma>
 

@@ -15,6 +15,7 @@ const FormBody = z.object({
   phone: z.string().max(40),
   loyihaId: z.number().int().positive().optional(),
   planirovkaId: z.number().int().positive().optional(),
+  xonadonId: z.number().int().positive().max(2_147_483_647).optional(),
 });
 
 /**
@@ -39,6 +40,7 @@ export async function arizaRoutes(app: FastifyInstance, deps: { db: pg.Pool; clo
         phone,
         loyihaId: body.data.loyihaId,
         planirovkaId: body.data.planirovkaId,
+        xonadonId: body.data.xonadonId,
       });
       const res: ArizaCreatedResponse = { id: created.id };
       return reply.code(created.duplicate ? 200 : 201).send(res);

@@ -51,7 +51,8 @@ const Kirish = z.discriminatedUnion('sxema', [
   }),
 ]);
 
-const HisobBody = z.object({ kirish: Kirish, planirovkaId: z.number().int().positive().optional() });
+const Id = z.number().int().positive().max(2_147_483_647);
+const HisobBody = z.object({ kirish: Kirish, planirovkaId: Id.optional(), xonadonId: Id.optional() });
 const ArizaBody = HisobBody.extend({ name: z.string().trim().min(1).max(100), phone: z.string().max(40) });
 
 function kirishXatosi(reply: FastifyReply, error: unknown) {
@@ -77,7 +78,10 @@ export async function kalkulyatorRoutes(
       manba: manbaFromStartParam(req.startParam),
     });
     try {
-      await deps.kalkulyator.hisob(mijoz.telegramId, body.data.kirish, body.data.planirovkaId);
+      await deps.kalkulyator.hisob(mijoz.telegramId, body.data.kirish, {
+        planirovkaId: body.data.planirovkaId,
+        xonadonId: body.data.xonadonId,
+      });
       await deps.skoring.harakat(mijoz.telegramId); // «hisobladi» counts for the Daraja (UF-4)
       return reply.code(204).send();
     } catch (error) {
@@ -100,6 +104,7 @@ export async function kalkulyatorRoutes(
         phone,
         kirish: body.data.kirish,
         planirovkaId: body.data.planirovkaId,
+        xonadonId: body.data.xonadonId,
       });
       const res: ArizaCreatedResponse = { id: created.id };
       return reply.code(created.duplicate ? 200 : 201).send(res);

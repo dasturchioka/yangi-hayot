@@ -64,22 +64,33 @@ export function createKalkulyator(deps: { db: pg.Pool; clock: Clock; arizalar: A
     mijozId: string,
     kirish: KalkulyatorKirish,
     natija: KalkulyatorNatija,
-    planirovkaId: number | undefined,
+    joy: HisobJoyi,
     arizaId: number | null,
   ): Promise<number> {
+    // Unknown ids are dropped, not errors (a «hisobladi» fact is kept anyway); a Xonadon implies its Planirovka.
     const { rows } = await db.query<{ id: number }>(
-      `INSERT INTO kalkulyator_hisob (mijoz_id, planirovka_id, sxema, kirish, natija, ariza_id, created_at)
-       VALUES ($1, (SELECT id FROM planirovka WHERE id = $2), $3, $4, $5, $6, $7) RETURNING id`,
-      [mijozId, planirovkaId ?? null, kirish.sxema, JSON.stringify(kirish), JSON.stringify(natija), arizaId, clock.now()],
+      `INSERT INTO kalkulyator_hisob (mijoz_id, planirovka_id, xonadon_id, sxema, kirish, natija, ariza_id, created_at)
+       VALUES ($1, COALESCE((SELECT planirovka_id FROM xonadon WHERE id = $8), (SELECT id FROM planirovka WHERE id = $2)),
+               (SELECT id FROM xonadon WHERE id = $8), $3, $4, $5, $6, $7) RETURNING id`,
+      [
+        mijozId,
+        joy.planirovkaId ?? null,
+        kirish.sxema,
+        JSON.stringify(kirish),
+        JSON.stringify(natija),
+        arizaId,
+        clock.now(),
+        joy.xonadonId ?? null,
+      ],
     );
     return rows[0]!.id;
   }
 
   return {
     /** «Hisobladi»: the Mijoz looked at a result. Throws KalkulyatorKirishError for an input outside the settings. */
-    async hisob(mijozId: string, kirish: KalkulyatorKirish, planirovkaId?: number): Promise<KalkulyatorNatija> {
+    async hisob(mijozId: string, kirish: KalkulyatorKirish, joy: HisobJoyi = {}): Promise<KalkulyatorNatija> {
       const natija = await compute(kirish);
-      await record(mijozId, kirish, natija, planirovkaId, null);
+      await record(mijozId, kirish, natija, joy, null);
       return natija;
     },
 
@@ -90,6 +101,7 @@ export function createKalkulyator(deps: { db: pg.Pool; clock: Clock; arizalar: A
       phone: string;
       kirish: KalkulyatorKirish;
       planirovkaId?: number;
+      xonadonId?: number;
     }): Promise<{ id: number; duplicate: boolean }> {
       const natija = await compute(a.kirish);
       const created = await arizalar.create({
@@ -98,16 +110,23 @@ export function createKalkulyator(deps: { db: pg.Pool; clock: Clock; arizalar: A
         name: a.name,
         phone: a.phone,
         planirovkaId: a.planirovkaId,
+        xonadonId: a.xonadonId,
         izoh: hisobIzohi(a.kirish, natija),
         payload: { kirish: a.kirish, natija },
       });
-      if (!created.duplicate) await record(a.telegramId, a.kirish, natija, a.planirovkaId, created.id);
+      if (!created.duplicate) await record(a.telegramId, a.kirish, natija, a, created.id);
       return created;
     },
   };
 }
 
 export type Kalkulyator = ReturnType<typeof createKalkulyator>;
+
+/** What the hisob was about: a Planirovka (its Boshlang'ich narx) or a Xonadon (its narx, #25). */
+export interface HisobJoyi {
+  planirovkaId?: number;
+  xonadonId?: number;
+}
 
 /**
  * Latest hisob of a Mijoz (for dojim #17 / Daraja #18): when, which

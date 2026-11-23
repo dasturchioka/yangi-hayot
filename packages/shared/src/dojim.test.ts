@@ -5,6 +5,7 @@ describe('dojim start parameter', () => {
   it('round-trips every screen a dojim button opens', () => {
     for (const p of [
       { dojimId: 7, ekran: { ekran: 'planirovka', planirovkaId: 12 } },
+      { dojimId: 7, ekran: { ekran: 'xonadon', xonadonId: 345 } },
       { dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3 } },
       { dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3, planirovkaId: 12 } },
       { dojimId: 7, ekran: { ekran: 'kalkulyator' } },
