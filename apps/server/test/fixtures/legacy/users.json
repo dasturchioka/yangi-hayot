@@ -1,0 +1,5 @@
+[
+  {"user_id": 1001, "first_name": "Aziz", "last_name": "Karimov", "username": "aziz_k", "lang": "uz", "phone": "+998 90 123-45-67", "first_source": "src_insta_oct", "last_source": "src_tg_ads", "city": "tashkent", "blocked": false, "amo_contact_id": 5550001, "created_at": "2026-09-01T10:00:00+05:00"},
+  {"user_id": 1002, "first_name": "Ольга", "lang": "ru", "phone": "901112233", "blocked": true, "created_at": "2026-09-05T12:00:00+05:00"},
+  {"user_id": 1003, "first_name": "Bobur", "lang": "uz", "first_source": "src_fb", "city": ["navoiy", "tashkent"], "created_at": 1788940800}
+]

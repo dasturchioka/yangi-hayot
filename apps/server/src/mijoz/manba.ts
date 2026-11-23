@@ -1,6 +1,9 @@
 /** Manba of a Mijoz who came without a `src_` tag. */
 export const DIRECT_MANBA = "Telegram (to'g'ridan-to'g'ri)";
 
+/** Manba of a Mijoz who came through another Mijoz's «Ulashish» link (#16). */
+export const SHARED_MANBA = 'mijoz ulashdi';
+
 /** `src_<nomi>`: Latin letters, digits, `_`; whole parameter ≤ 64 chars (Telegram limit). */
 const SOURCE_TAG = /^src_([A-Za-z0-9_]+)$/;
 

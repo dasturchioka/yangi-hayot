@@ -3,7 +3,7 @@ import type { Lang } from '@yh/shared';
 /** The parts of Telegram.WebApp we use. Full API: https://core.telegram.org/bots/webapps */
 interface TelegramWebApp {
   initData: string;
-  initDataUnsafe: { user?: { language_code?: string } };
+  initDataUnsafe: { user?: { language_code?: string }; start_param?: string };
   ready(): void;
   expand(): void;
   openLink?(url: string): void;
@@ -66,4 +66,24 @@ export function setBackButton(onBack: (() => void) | null): () => void {
   bb.show();
   bb.onClick(onBack);
   return () => bb.offClick(onBack);
+}
+
+/**
+ * The launch's `startapp` parameter. Direct links (`t.me/<bot>/<app>?startapp=`)
+ * put it in initData (signed, also seen by the server); the bot's web_app
+ * buttons (#7) pass it as `?startapp=` in the page URL instead.
+ */
+export function getStartParam(): string {
+  const fromInitData = webApp()?.initDataUnsafe.start_param;
+  if (fromInitData) return fromInitData;
+  const q = new URLSearchParams(window.location.search);
+  return q.get('startapp') ?? q.get('tgWebAppStartParam') ?? '';
+}
+
+/** Opens Telegram's «send to chat» picker with this link and text. */
+export function shareToChat(url: string, text: string): void {
+  const share = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  const w = webApp();
+  if (w?.openTelegramLink) w.openTelegramLink(share);
+  else window.open(share, '_blank', 'noopener');
 }

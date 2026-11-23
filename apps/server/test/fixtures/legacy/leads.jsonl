@@ -1,0 +1,6 @@
+{"id":"L-1","user_id":1001,"name":"Aziz Karimov","phone":"+998901234567","type":"form","project":"Jozibali Maskan","source":"src_tg_ads","amo_lead_id":7770001,"amo_contact_id":5550001,"created_at":"2026-10-01T09:30:00+05:00"}
+{"id":"L-2","user_id":1001,"name":"Aziz","phone":"+998901234567","type":"booking","project":"Jozibali Maskan","amo_lead_id":7770001,"amo_contact_id":5550001,"created_at":"2026-10-03T11:00:00+05:00"}
+
+{"id":"L-3","user_id":1002,"name":"Ольга","phone":"+998 (90) 111-22-33","type":"quiz","project":"Sayhun","created_at":"2026-10-04T15:00:00+05:00"}
+{"user_id":1004,"first_name":"Dilnoza","lang":"ru","phone":"998935554433","type":"calc","source":"src_navoiy_billboard","project":"Gulzor","amo_lead_id":7770009,"amo_contact_id":5550009,"ts":1791190800}
+{"id":"L-5","user_id":1004,"type":"manager","created_at":"2026-10-06T10:00:00+05:00"}

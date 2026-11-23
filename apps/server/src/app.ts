@@ -14,14 +14,19 @@ import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { miniAppRoutes } from './routes/mini-app';
+import { sevimlilarRoutes } from './routes/sevimlilar';
+import { createSevimlilar } from './sevimlilar/sevimlilar';
+import { createUlashish } from './ulashish/ulashish';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
 export interface AppDeps {
   /**
    * botApiSecret: shared secret apps/bot sends on /internal/bot/*.
    * aiApiKey: Bearer key of the AI-menejer for /ai/*; unset → /ai/* rejects everything.
+   * miniAppLink: direct Mini App link (`https://t.me/<bot>/<app>`) «Ulashish» links are built on;
+   *   unset → POST /api/ulashish answers 503.
    */
-  config: { botToken: string; botApiSecret: string; aiApiKey?: string };
+  config: { botToken: string; botApiSecret: string; aiApiKey?: string; miniAppLink?: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -36,9 +41,11 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   });
 
   const katalog = createKatalog({ db: deps.db, clock: deps.clock });
+  const sevimlilar = createSevimlilar({ db: deps.db, katalog });
+  const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
   app.get('/health', async () => ({ ok: true }));
-  app.register((scope) => miniAppRoutes(scope, deps), { prefix: '/api' });
+  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish }), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
   app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
   app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
@@ -49,6 +56,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await katalogRoutes(scope, katalog);
     },
     { prefix: '/api/katalog' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await sevimlilarRoutes(scope, { db: deps.db, clock: deps.clock, sevimlilar });
+    },
+    { prefix: '/api' },
   );
   app.register(
     async (scope) => {

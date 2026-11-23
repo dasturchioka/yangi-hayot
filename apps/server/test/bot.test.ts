@@ -145,6 +145,7 @@ describe('Mini App and bot share the Mijoz', () => {
     expect(await me(aziz)).toEqual({
       mijoz: { telegramId: '700000001', name: 'Aziz Karimov', lang: 'ru' },
       manba: { first: 'tiktok', last: 'tiktok' },
+      start: null,
     });
   });
 
