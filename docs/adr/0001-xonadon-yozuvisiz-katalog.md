@@ -1,4 +1,4 @@
-# Katalog xonadon yozuvisiz: Loyiha → Blok → Planirovka (sonlar bilan)
+# [Superseded by 0003] Katalog xonadon yozuvisiz: Loyiha → Blok → Planirovka (sonlar bilan)
 
 TZ v3.0 «korpus → xonadon» modelini va «qavat × xonadon» shaxmatkasini (UF-1) ko'zda tutgan edi. Mijoz 2026-11 da talab qildi: «Xonadonlar planirovka bo'yicha bo'linishi kerak. Qavat va xonadon raqami kerak emas». Shuning uchun katalogda xonadon alohida yozuv emas: har bir Planirovka bo'sh / bron / sotilgan sonini saqlaydi (yig'indisi = jami). Planirovka holati shu sonlardan chiqariladi, narx esa Planirovkaning qo'lda kiritiladigan «… so'mdan» narxi bo'ladi.
 
