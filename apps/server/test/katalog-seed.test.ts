@@ -64,4 +64,30 @@ describe('Starting Katalog (seed)', () => {
     expect(planirovka.chizma).toMatch(/^\/media\/chizma\/.+\.svg$/);
     expect(bizHaqimizda.portfolio.map((p: { nomi: string }) => p.nomi)).toEqual(['Kamalak', 'Nur', 'Qizilqum', 'Tarobiy']);
   });
+
+  it('DEMO seed: Bloklar are real-looking shaxmatkas — every floor filled, own prices, mixed holat, one Blok of about 200', async () => {
+    await seedKatalog(t.db, DEMO_LOYIHALAR);
+
+    const { loyihalar } = (await get('/api/katalog/loyihalar')).json();
+    const sizes: number[] = [];
+    for (const card of loyihalar) {
+      const { loyiha } = (await get(`/api/katalog/loyihalar/${card.id}`)).json();
+      for (const b of loyiha.bloklar) {
+        const { xonadonlar } = (await get(`/api/katalog/bloklar/${b.id}/xonadonlar`)).json();
+        type X = { qavat: number; raqam: number; narx: number | null; holat: string };
+        const qavatlar = new Set(xonadonlar.map((x: X) => x.qavat));
+        sizes.push(xonadonlar.length);
+        expect([...qavatlar].sort((a, z) => (a as number) - (z as number)), `${card.slug} ${b.nomi}`).toEqual(
+          Array.from({ length: loyiha.qavatlarSoni }, (_, i) => i + 1),
+        );
+        expect(new Set(xonadonlar.map((x: X) => x.raqam)).size).toBe(xonadonlar.length);
+        expect(xonadonlar.every((x: X) => x.narx !== null && x.narx > 0)).toBe(true);
+        expect(new Set(xonadonlar.map((x: X) => x.narx)).size, 'prices differ by floor').toBeGreaterThan(1);
+      }
+    }
+    const holatlar = (await t.db.query('SELECT holat, count(*)::int AS n FROM xonadon GROUP BY holat')).rows;
+    expect(holatlar.map((r) => r.holat).sort()).toEqual(['bosh', 'bron', 'sotilgan']);
+    expect(Math.max(...sizes)).toBeGreaterThanOrEqual(190);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(220);
+  });
 });

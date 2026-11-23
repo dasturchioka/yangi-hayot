@@ -1,6 +1,7 @@
 import vm from 'node:vm';
 import type pg from 'pg';
-import { moslashtirSonlar } from '../xonadon/joylash';
+import type { XonadonHolati } from '@yh/shared';
+import { appendXonadonlar, insertXonadonlar } from '../xonadon/joylash';
 import type { Lokal } from '../katalog/seed';
 import {
   DEFAULT_BLOK,
@@ -54,7 +55,7 @@ function matchingBracket(s: string, open: number): number {
 export interface KatalogImportReport {
   source: {
     loyihalar: number;
-    /** Distinct Planirovkalar the Xonadonlar collapse into (identical Xonadonlar share one). */
+    /** Distinct Planirovkalar the Xonadonlar are grouped into (same Blok, xonalar, maydon, name, drawing). */
     planirovkalar: number;
     xonadonlar: number;
     rejected: { where: string; reason: string }[];
@@ -74,10 +75,15 @@ interface Group {
   nomi: Lokal | null;
   chizma: string | null;
   video: string | null;
+  xonadonlar: OldXonadon[];
+}
+
+interface OldXonadon {
+  holat: XonadonHolati;
   narx: number | null;
-  bosh: number;
-  bron: number;
-  sotilgan: number;
+  /** Both known → this exact place; else numbered at the end of the Blok. */
+  joy: { qavat: number; raqam: number } | null;
+  where: string;
 }
 
 interface LoyihaDraft {
@@ -91,10 +97,12 @@ interface LoyihaDraft {
 }
 
 /**
- * Moves the old catalog in: each Loyiha (found by slug or name, else
- * created) and each old Xonadon as a Planirovka in its Blok. Xonadonlar with
- * identical Blok, xonalar, maydon, name, drawing and price become one
- * Planirovka whose bo'sh / bron / sotilgan counts add up.
+ * Moves the old catalog in (ADR 0003): each Loyiha (found by slug or name,
+ * else created) and each old Xonadon as a Xonadon (its holat and price) of a
+ * Planirovka in its Blok. Xonadonlar with identical Blok, xonalar, maydon,
+ * name and drawing share one Planirovka, whose qo'lda narx is their lowest
+ * price. A Xonadon with a floor and a number keeps them; the others are
+ * numbered in order at the end of the Blok. The same place twice is rejected.
  *
  * Re-running is safe: each Planirovka is remembered in `legacy_planirovka`
  * by that key and never written again (admin edits are kept).
@@ -130,6 +138,7 @@ export async function importLegacyKatalog(
     };
     const list = pick(p, LOYIHA_FIELDS.xonadonlar) ?? [];
     if (!Array.isArray(list)) return void rejected.push({ where, reason: 'apartments is not an array' });
+    const joylar = new Map<string, number>();
     list.forEach((x, j) => {
       const xw = `${where} ${nomi} apartments[${j}]`;
       const xonalar = Number(pick(x, XONADON_FIELDS.xonalar));
@@ -140,22 +149,33 @@ export async function importLegacyKatalog(
       const xHolat = rawHolat === undefined ? 'bosh' : XONADON_HOLATI[String(rawHolat).trim().toLowerCase()];
       if (!xHolat) return void rejected.push({ where: xw, reason: `unknown status "${String(rawHolat)}"` });
       const narx = price(x, maydon);
+      const qavat = Number(pick(x, XONADON_FIELDS.qavat));
+      const raqam = Number(pick(x, XONADON_FIELDS.raqam));
+      const blokNomi = text(pick(x, XONADON_FIELDS.blok)) ?? DEFAULT_BLOK;
+      let joy: OldXonadon['joy'] = null;
+      if (Number.isInteger(qavat) && Number.isInteger(raqam) && raqam > 0 && qavat >= -5 && qavat <= 200) {
+        joy = { qavat, raqam };
+        const key = `${blokNomi.toLowerCase()}|${qavat}|${raqam}`;
+        const first = joylar.get(key);
+        if (first !== undefined)
+          return void rejected.push({ where: xw, reason: `same block, floor and number as apartments[${first}]` });
+        joylar.set(key, j);
+      } else if (pick(x, XONADON_FIELDS.qavat) !== undefined || pick(x, XONADON_FIELDS.raqam) !== undefined) {
+        warnings.push(`${xw}: floor / number unusable, numbered at the end of Blok ${blokNomi}`);
+      }
       const g: Group = {
         key: '',
-        blok: text(pick(x, XONADON_FIELDS.blok)) ?? DEFAULT_BLOK,
+        blok: blokNomi,
         xonalar,
         maydon: Math.round(maydon * 100) / 100,
         nomi: lokal(pick(x, XONADON_FIELDS.nomi)),
         chizma: text(pick(x, XONADON_FIELDS.chizma)) ?? null,
         video: text(pick(x, XONADON_FIELDS.video)) ?? null,
-        narx,
-        bosh: 0,
-        bron: 0,
-        sotilgan: 0,
+        xonadonlar: [],
       };
-      g.key = [draft.slug, g.blok, g.xonalar, g.maydon, g.nomi?.uz ?? '', g.chizma ?? '', g.narx ?? ''].join('|');
+      g.key = [draft.slug, g.blok, g.xonalar, g.maydon, g.nomi?.uz ?? '', g.chizma ?? ''].join('|');
       const existing = draft.groups.get(g.key) ?? g;
-      existing[xHolat]++;
+      existing.xonadonlar.push({ holat: xHolat, narx, joy, where: xw });
       draft.groups.set(g.key, existing);
       xonadonlar++;
     });
@@ -186,10 +206,13 @@ export async function importLegacyKatalog(
       }
       loyihaIds.push(loyihaId);
 
+      // Placed Xonadonlar first, so the numbered-at-the-end ones come after every known number.
+      const oxiriga: { blokId: number; planirovkaId: number; x: OldXonadon }[] = [];
       for (const g of d.groups.values()) {
         keys.push(g.key);
         const seen = await client.query('SELECT 1 FROM legacy_planirovka WHERE legacy_key = $1', [g.key]);
         if (seen.rowCount) continue;
+        const narxlar = g.xonadonlar.flatMap((x) => (x.narx === null ? [] : [x.narx]));
         const blok = await client.query<{ id: number }>(
           `INSERT INTO blok (loyiha_id, nomi, tartib)
            VALUES ($1, $2, (SELECT count(*) FROM blok WHERE loyiha_id = $1))
@@ -201,16 +224,45 @@ export async function importLegacyKatalog(
                                    tartib, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7,
                    (SELECT count(*) FROM planirovka WHERE blok_id = $1), $8, $8) RETURNING id`,
-          [blok.rows[0]!.id, g.xonalar, g.maydon, g.nomi ? JSON.stringify(g.nomi) : null, g.chizma, g.video, g.narx, now],
+          [
+            blok.rows[0]!.id,
+            g.xonalar,
+            g.maydon,
+            g.nomi ? JSON.stringify(g.nomi) : null,
+            g.chizma,
+            g.video,
+            narxlar.length ? Math.min(...narxlar) : null,
+            now,
+          ],
         );
-        // TODO(#24): old apartments become Xonadonlar with their own qavat / raqam
-        await moslashtirSonlar(client, pl.rows[0]!.id, g, now);
+        const blokId = blok.rows[0]!.id;
+        const planirovkaId = pl.rows[0]!.id;
+        for (const x of g.xonadonlar) {
+          if (!x.joy) {
+            oxiriga.push({ blokId, planirovkaId, x });
+            continue;
+          }
+          const taken = await client.query('SELECT 1 FROM xonadon WHERE blok_id = $1 AND qavat = $2 AND raqam = $3', [
+            blokId,
+            x.joy.qavat,
+            x.joy.raqam,
+          ]);
+          if (taken.rowCount) {
+            rejected.push({ where: x.where, reason: 'its block, floor and number are taken in the database' });
+            continue;
+          }
+          await insertXonadonlar(client, [{ blokId, planirovkaId, ...x.joy, holat: x.holat, narx: x.narx }], now);
+        }
         await client.query('INSERT INTO legacy_planirovka (legacy_key, planirovka_id, imported_at) VALUES ($1, $2, $3)', [
           g.key,
           pl.rows[0]!.id,
           now,
         ]);
         added.planirovkalar++;
+      }
+      for (const blokId of new Set(oxiriga.map((o) => o.blokId))) {
+        const list = oxiriga.filter((o) => o.blokId === blokId);
+        await appendXonadonlar(client, blokId, list.map((o) => ({ planirovkaId: o.planirovkaId, holat: o.x.holat, narx: o.x.narx })), now);
       }
     }
 

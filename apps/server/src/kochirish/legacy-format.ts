@@ -107,6 +107,9 @@ export const XONADON_FIELDS = {
   /** «m² uchun … dan» (TZ 0.4): multiplied by the area. */
   narxM2: ['pricePerM2', 'price_m2', 'price_per_m2', 'm2Price'],
   holat: ['status', 'state'],
+  /** Floor and number of the Xonadon; without both it is numbered at the end of its Blok. */
+  qavat: ['floor', 'qavat', 'etaj', 'storey'],
+  raqam: ['number', 'num', 'raqam', 'flat_number', 'apartment_number'],
 } as const;
 
 /** Old project status → Loyiha holati. Unknown → 'sotuvda' and a warning. */

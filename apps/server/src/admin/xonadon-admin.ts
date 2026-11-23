@@ -79,7 +79,6 @@ async function boshKuzat<T>(c: pg.PoolClient, at: Date, planirovkaIds: number[],
   return out;
 }
 
-
 async function checkPlanirovka(c: pg.PoolClient, blokId: number, planirovkaId: number) {
   const { rowCount } = await c.query('SELECT 1 FROM planirovka WHERE id = $1 AND blok_id = $2', [planirovkaId, blokId]);
   if (!rowCount) throw new KatalogAdminError('planirovka_boshqa_blokda', 400);
@@ -117,32 +116,43 @@ export async function listBlokXonadonlari(db: pg.Pool, blokId: number): Promise<
 
 // ---- writes ----
 
+export type XonadonCreateInput = Omit<AdminXonadonInput, 'narx' | 'holat'> &
+  Partial<Pick<AdminXonadonInput, 'narx' | 'holat'>>;
+
 export async function createXonadon(
   db: pg.Pool,
   by: Muallif,
   blokId: number,
-  input: Omit<AdminXonadonInput, 'narx' | 'holat'> & Partial<Pick<AdminXonadonInput, 'narx' | 'holat'>>,
+  input: XonadonCreateInput,
 ): Promise<AdminXonadonDto> {
-  return tx(db, async (c) => {
-    await blokOf(c, blokId);
-    await checkPlanirovka(c, blokId, input.planirovkaId);
-    const x: AdminXonadonInput = { narx: null, holat: 'bosh', ...input };
-    const { rows } = await c.query<XonadonRow>(
-      `INSERT INTO xonadon (blok_id, planirovka_id, qavat, raqam, narx, holat, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $7) RETURNING *`,
-      [blokId, x.planirovkaId, x.qavat, x.raqam, x.narx, x.holat, by.at],
-    );
-    const dto = xonadonDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
-    await yozJurnal(c, by, {
-      obyekt: 'xonadon',
-      obyektId: dto.id,
-      amal: 'yaratildi',
-      ...(await tavsif(c, blokId, x)),
-      oldin: null,
-      keyin: fields(dto),
-    });
-    return dto;
+  return tx(db, (c) => createXonadonIn(c, by, blokId, input));
+}
+
+/** `createXonadon` inside the caller's transaction (import). */
+export async function createXonadonIn(
+  c: pg.PoolClient,
+  by: Muallif,
+  blokId: number,
+  input: XonadonCreateInput,
+): Promise<AdminXonadonDto> {
+  await blokOf(c, blokId);
+  await checkPlanirovka(c, blokId, input.planirovkaId);
+  const x: AdminXonadonInput = { narx: null, holat: 'bosh', ...input };
+  const { rows } = await c.query<XonadonRow>(
+    `INSERT INTO xonadon (blok_id, planirovka_id, qavat, raqam, narx, holat, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $7) RETURNING *`,
+    [blokId, x.planirovkaId, x.qavat, x.raqam, x.narx, x.holat, by.at],
+  );
+  const dto = xonadonDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
+  await yozJurnal(c, by, {
+    obyekt: 'xonadon',
+    obyektId: dto.id,
+    amal: 'yaratildi',
+    ...(await tavsif(c, blokId, x)),
+    oldin: null,
+    keyin: fields(dto),
   });
+  return dto;
 }
 
 /** Changes any fields (Administrator) or holat only (Menejer; the route checks). No-op edits write nothing. */
@@ -169,7 +179,8 @@ export async function setXonadonlarHolati(
   });
 }
 
-async function updateXonadonIn(
+/** `updateXonadon` inside the caller's transaction (import); fires the dojim hook like the form does. */
+export async function updateXonadonIn(
   c: pg.PoolClient,
   by: Muallif,
   id: number,

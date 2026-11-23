@@ -13,7 +13,7 @@ import {
   updateLoyiha,
   updatePlanirovka,
 } from '../admin/katalog-admin';
-import { importQil, ImportXatolari, shablon, tekshir } from '../admin/planirovka-import';
+import { importQil, ImportXatolari, shablon, tekshir } from '../admin/xonadon-import';
 import {
   createXonadon,
   deleteXonadon,
