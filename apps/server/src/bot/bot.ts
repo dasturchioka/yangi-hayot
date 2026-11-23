@@ -2,8 +2,9 @@ import { LANGS, type BotAction, type BotEvent, type BotIncomingMessage, type Bot
 import type pg from 'pg';
 import type { Clock } from '../clock';
 import { manbaFromStartParam } from '../mijoz/manba';
-import { chooseLang, ensureMijoz, setBotStep, type MijozRecord } from '../mijoz/mijoz';
+import { chooseLang, ensureMijoz, markBotUnblocked, setBotStep, type MijozRecord } from '../mijoz/mijoz';
 import { getSetting, isAdmin, setSetting, type WelcomeContent } from '../settings/settings';
+import { beginBroadcast, continueBroadcast, isBroadcastStep, onBroadcastCallback } from './broadcast';
 import { texts } from './texts';
 
 export interface BotDeps {
@@ -25,6 +26,8 @@ export async function handleBotEvent(deps: BotDeps, user: BotUser, event: BotEve
   const now = deps.clock.now();
   const manba = event.type === 'start' ? manbaFromStartParam(event.payload) : null;
   const mijoz = await ensureMijoz(deps.db, user, now, { manba });
+  // Any update from the Mijoz means the bot can reach them again.
+  if (mijoz.botBlocked) await markBotUnblocked(deps.db, mijoz.telegramId);
   const ctx: Ctx = { deps, mijoz, now };
 
   switch (event.type) {
@@ -46,6 +49,9 @@ async function onCommand(ctx: Ctx, name: string): Promise<BotAction[]> {
     case 'welcome':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginWelcomeEdit(ctx);
       return [fallbackReply(ctx)];
+    case 'broadcast':
+      if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginBroadcast(bcCtx(ctx));
+      return [fallbackReply(ctx)];
     default:
       return [fallbackReply(ctx)];
   }
@@ -55,6 +61,9 @@ async function onMessage(ctx: Ctx, message: BotIncomingMessage): Promise<BotActi
   if (message.kind === 'text' && RESTART_LABELS.includes(message.text ?? '')) return restart(ctx);
   if (ctx.mijoz.botStep === WELCOME_STEP_RU || ctx.mijoz.botStep === WELCOME_STEP_UZ) {
     return continueWelcomeEdit(ctx, message);
+  }
+  if (isBroadcastStep(ctx.mijoz.botStep) && (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId))) {
+    return continueBroadcast(bcCtx(ctx), message);
   }
   return [fallbackReply(ctx), ...(await toManagersGroup(ctx, message))];
 }
@@ -131,7 +140,14 @@ async function continueWelcomeEdit(ctx: Ctx, message: BotIncomingMessage): Promi
   return [{ type: 'send', chatId, text: t.welcomeSaved }, ...(await welcome(ctx, ctx.mijoz.lang))];
 }
 
+function bcCtx(ctx: Ctx) {
+  return { db: ctx.deps.db, mijoz: ctx.mijoz, now: ctx.now };
+}
+
 async function onCallback(ctx: Ctx, data: string): Promise<BotAction[]> {
+  if (data.startsWith('bc:')) {
+    return (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) ? onBroadcastCallback(bcCtx(ctx), data) : [];
+  }
   const lang = /^lang:(\w+)$/.exec(data)?.[1] as Lang | undefined;
   if (lang && LANGS.includes(lang)) {
     await chooseLang(ctx.deps.db, ctx.mijoz.telegramId, lang, ctx.now);

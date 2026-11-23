@@ -4,8 +4,8 @@ import type { Migration } from './index';
  * Admin-panel (#5): login accounts with a role, their sessions and the jurnal
  * of catalog changes (kim, qachon, nima edi, nima bo'ldi).
  */
-export const m0004_t5_admin: Migration = {
-  name: '0004_t5_admin',
+export const m0005_t5_admin: Migration = {
+  name: '0005_t5_admin',
   sql: `
     CREATE TABLE admin_user (
       id             serial PRIMARY KEY,

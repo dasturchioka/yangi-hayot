@@ -3,13 +3,16 @@ import type pg from 'pg';
 import type { Crm } from './adapters/crm/crm';
 import type { Messenger } from './adapters/messenger/messenger';
 import type { Clock } from './clock';
+import { onlyRol, requireAdmin } from './auth/admin-auth';
 import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminKatalogRoutes } from './routes/admin-katalog';
+import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
+import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { miniAppRoutes } from './routes/mini-app';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
@@ -28,7 +31,7 @@ export interface AppDeps {
 export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const app = Fastify({
     logger: opts.logger
-      ? { redact: ['req.headers.authorization'] } // initData and the bot secret must not reach the logs
+      ? { redact: ['req.headers.authorization', 'req.headers.cookie'] } // initData, the bot secret and admin sessions must not reach the logs
       : false,
   });
 
@@ -42,6 +45,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      scope.addHook('preSerialization', katalogQiziqishHook(deps, katalog));
       await katalogRoutes(scope, katalog);
     },
     { prefix: '/api/katalog' },
@@ -52,6 +56,14 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await katalogRoutes(scope, katalog);
     },
     { prefix: '/ai/katalog' },
+  );
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
+      await adminRassilkaRoutes(scope, deps);
+    },
+    { prefix: '/admin/api' },
   );
 
   return app;

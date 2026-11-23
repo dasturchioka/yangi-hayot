@@ -96,6 +96,19 @@ describe('Katalog in the admin-panel', () => {
     expect(await counts('bron', 'bosh', 1)).toEqual([4, 0, 6, 10]);
   });
 
+  it("shows who changed each Planirovka last («Oxirgi o'zgarish»)", async () => {
+    const { loyiha, planirovka } = await createKatalog();
+    const menejer = await adminLogin(t, 'menejer', { nomi: 'Dilnoza' });
+    t.clock.advance({ hours: 2 });
+    await call('POST', `/planirovkalar/${planirovka.id}/kochirish`, menejer, { dan: 'bosh', ga: 'bron', soni: 1 });
+
+    const tree = (await call('GET', `/loyihalar/${loyiha.id}`, admin)).json().loyiha;
+    expect(tree.bloklar[0].planirovkalar[0].oxirgiOzgarish).toEqual({
+      nomi: 'Dilnoza',
+      at: t.clock.now().toISOString(),
+    });
+  });
+
   it('refuses to move more Xonadonlar than there are', async () => {
     const { planirovka } = await createKatalog({ bosh: 1, bron: 0, sotilgan: 0 });
 

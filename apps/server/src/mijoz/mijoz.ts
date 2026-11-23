@@ -21,6 +21,8 @@ export interface MijozRecord extends Mijoz {
   /** Unfinished bot step (e.g. editing /welcome), cleared by /restart. */
   botStep: string | null;
   botStepData: unknown;
+  /** The last Rassilka got 403 from Telegram; left out of Rassilkalar until they write to the bot again. */
+  botBlocked: boolean;
 }
 
 /** Language for a Mijoz seen for the first time: Uzbek Telegram → UZ, otherwise RU. */
@@ -28,7 +30,7 @@ export function langFromTelegram(languageCode: string | undefined): Lang {
   return languageCode?.toLowerCase().startsWith('uz') ? 'uz' : 'ru';
 }
 
-const COLUMNS = `telegram_id, name, lang, username, lang_chosen, first_source, last_source, bot_step, bot_step_data`;
+const COLUMNS = `telegram_id, name, lang, username, lang_chosen, first_source, last_source, bot_step, bot_step_data, bot_blocked`;
 
 interface Row {
   telegram_id: string;
@@ -40,6 +42,7 @@ interface Row {
   last_source: string;
   bot_step: string | null;
   bot_step_data: unknown;
+  bot_blocked: boolean;
 }
 
 function toRecord(row: Row): MijozRecord {
@@ -53,6 +56,7 @@ function toRecord(row: Row): MijozRecord {
     lastManba: row.last_source,
     botStep: row.bot_step,
     botStepData: row.bot_step_data,
+    botBlocked: row.bot_blocked,
   };
 }
 
@@ -108,4 +112,9 @@ export async function setBotStep(
     step === null || data === undefined ? null : JSON.stringify(data),
     now,
   ]);
+}
+
+/** The Mijoz wrote to the bot again after blocking it: include them in Rassilkalar again. */
+export async function markBotUnblocked(db: pg.Pool, telegramId: string): Promise<void> {
+  await db.query('UPDATE mijoz SET bot_blocked = false WHERE telegram_id = $1', [telegramId]);
 }

@@ -93,7 +93,7 @@ function loyihaInput(r: LoyihaRow): AdminLoyihaInput {
   };
 }
 
-function planirovkaDto(r: PlanirovkaRow): AdminPlanirovkaDto {
+function planirovkaDto(r: PlanirovkaRow, oxirgiOzgarish: AdminPlanirovkaDto['oxirgiOzgarish'] = null): AdminPlanirovkaDto {
   return {
     id: r.id,
     blokId: r.blok_id,
@@ -109,6 +109,7 @@ function planirovkaDto(r: PlanirovkaRow): AdminPlanirovkaDto {
     sotilgan: r.sotilgan,
     jami: r.bosh + r.bron + r.sotilgan,
     holat: planirovkaHolati(r),
+    oxirgiOzgarish,
   };
 }
 
@@ -217,13 +218,23 @@ export async function getLoyiha(db: pg.Pool, id: number): Promise<AdminLoyihaDto
   if (!l) return null;
   const bloklar = (await db.query<BlokRow>('SELECT * FROM blok WHERE loyiha_id = $1 ORDER BY tartib, nomi, id', [id]))
     .rows;
-  const planirovkalar = (
+  const planirovkaRows = (
     await db.query<PlanirovkaRow>(
       `SELECT p.* FROM planirovka p JOIN blok b ON b.id = p.blok_id
         WHERE b.loyiha_id = $1 ORDER BY p.xonalar, p.maydon, p.tartib, p.id`,
       [id],
     )
-  ).rows.map(planirovkaDto);
+  ).rows;
+  const oxirgi = new Map(
+    (
+      await db.query<{ obyekt_id: number; admin_nomi: string; at: Date }>(
+        `SELECT DISTINCT ON (obyekt_id) obyekt_id, admin_nomi, at FROM jurnal
+          WHERE loyiha_id = $1 AND obyekt = 'planirovka' ORDER BY obyekt_id, id DESC`,
+        [id],
+      )
+    ).rows.map((r) => [r.obyekt_id, { nomi: r.admin_nomi, at: r.at.toISOString() }]),
+  );
+  const planirovkalar = planirovkaRows.map((r) => planirovkaDto(r, oxirgi.get(r.id) ?? null));
   return {
     id: l.id,
     ...loyihaInput(l),
@@ -400,7 +411,7 @@ export async function createPlanirovka(
         by.at,
       ],
     );
-    const p = planirovkaDto(rows[0]!);
+    const p = planirovkaDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
     await yozJurnal(c, by, {
       obyekt: 'planirovka',
       obyektId: p.id,
@@ -461,6 +472,7 @@ async function changePlanirovka(
       ...merged,
       jami: merged.bosh + merged.bron + merged.sotilgan,
       holat: planirovkaHolati(merged),
+      oxirgiOzgarish: { nomi: by.admin.nomi, at: by.at.toISOString() },
     };
     const d = farq(planirovkaFields(before), planirovkaFields(after));
     if (!d) return before;

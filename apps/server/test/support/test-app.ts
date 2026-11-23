@@ -43,7 +43,11 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
   const app = buildApp({
-    config: { botToken: TEST_BOT_TOKEN, botApiSecret: TEST_BOT_API_SECRET, aiApiKey: TEST_AI_API_KEY },
+    config: {
+      botToken: TEST_BOT_TOKEN,
+      botApiSecret: TEST_BOT_API_SECRET,
+      aiApiKey: TEST_AI_API_KEY,
+    },
     db,
     clock,
     crm,

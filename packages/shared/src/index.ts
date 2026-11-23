@@ -205,6 +205,8 @@ export interface AdminPlanirovkaDto extends AdminPlanirovkaInput, XonadonSonlari
   id: number;
   blokId: number;
   holat: PlanirovkaHolati;
+  /** Latest jurnal row of this Planirovka («Oxirgi o'zgarish»): who and when; null if none. */
+  oxirgiOzgarish: { nomi: string; at: string } | null;
 }
 
 export interface AdminBlokDto {
