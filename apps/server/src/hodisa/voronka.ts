@@ -14,22 +14,21 @@ import type { HodisaTuri } from './hodisa';
  * days, optionally for one Manba and / or one Loyiha. Read from `hodisa`
  * only — never amoCRM.
  *
- * A step may gather several event types: «ko'rdi» is a Planirovka opening
- * today and will also take Xonadon openings (ADR 0003, #25 adds the type
- * here). `loyihasiz` steps carry no Loyiha, so under a Loyiha filter they
+ * A step may gather several event types: «ko'rdi» is a Planirovka or a
+ * Xonadon opening (ADR 0003, #23). `loyihasiz` steps carry no Loyiha, so under a Loyiha filter they
  * have no figure (null) rather than a misleading 0.
  */
 export const QADAMLAR: { kalit: VoronkaQadami; nomi: string; turlar: HodisaTuri[]; loyihasiz?: true }[] = [
   { kalit: 'bot_kirdi', nomi: 'Botga kirdi', turlar: ['bot_kirdi'], loyihasiz: true },
-  { kalit: 'korildi', nomi: "Planirovka / Xonadon ko'rdi", turlar: ['planirovka_korildi'] },
+  { kalit: 'korildi', nomi: "Planirovka / Xonadon ko'rdi", turlar: ['planirovka_korildi', 'xonadon_korildi'] },
   { kalit: 'ariza', nomi: 'Ariza qoldirdi', turlar: ['ariza'] },
   { kalit: 'yozilish', nomi: "Ko'rishga yozildi", turlar: ['yozilish'] },
   { kalit: 'keldi', nomi: 'Keldi', turlar: ['keldi'] },
 ];
 if (QADAMLAR.map((q) => q.kalit).join() !== VORONKA_QADAMLARI.join()) throw new Error('QADAMLAR out of order');
 
-/** Event types whose rows are «the Mijoz opened a Planirovka» (most viewed list). */
-const PLANIROVKA_KORISH: HodisaTuri[] = ['planirovka_korildi'];
+/** Event types whose rows are «the Mijoz opened a Planirovka» (most viewed list): a Xonadon opening shows its Planirovka. */
+const PLANIROVKA_KORISH: HodisaTuri[] = ['planirovka_korildi', 'xonadon_korildi'];
 
 const ENG_KOP_MAX = 10;
 

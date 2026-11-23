@@ -4,7 +4,7 @@ import { signInitData, tmaAuth } from './support/init-data';
 import { blok, seedLoyiha } from './support/katalog';
 import { createTestApp, type TestApp } from './support/test-app';
 
-// Filtrlar (#10): shahar, Loyiha, Blok, xonalar, narx, maydon, «Faqat bo'sh». No qavat (ADR 0001).
+// Filtrlar (#10): shahar, Loyiha, Blok, xonalar, narx, maydon, «Faqat bo'sh». Qavat: test/shaxmatka.test.ts (#23).
 
 const aziz = { id: 700000010, first_name: 'Aziz', language_code: 'uz' };
 
@@ -117,7 +117,7 @@ describe('Planirovkalar filtri', () => {
     expect(await found('shahar=toshkent&xonalar=2,3&faqatBosh=1')).toEqual(['Jozibali B 2x60', 'Sayhun A 2x58']);
   });
 
-  it('has no qavat filter and rejects nonsense', async () => {
+  it('rejects unknown keys and nonsense', async () => {
     await seedKatalog();
     expect((await get('/api/katalog/planirovkalar?qavat=7')).statusCode).toBe(400);
     expect((await get('/api/katalog/planirovkalar?xonalar=abc')).statusCode).toBe(400);

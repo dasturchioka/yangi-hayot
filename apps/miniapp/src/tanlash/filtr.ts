@@ -2,7 +2,7 @@ import { SHAHARLAR, type ByudjetOraligi, type PlanirovkaFiltr } from '@yh/shared
 import type { Translate } from '../i18n';
 
 /**
- * Filter (#10) ⇄ query string, the same names the server reads on
+ * Filter (#10, qavat #23) ⇄ query string, the same names the server reads on
  * GET /api/katalog/planirovkalar. Also the screen's URL, so Back and links keep it.
  */
 export function filtrQuery(f: PlanirovkaFiltr): string {
@@ -15,6 +15,8 @@ export function filtrQuery(f: PlanirovkaFiltr): string {
   if (f.narxGacha !== undefined) q.set('narxGacha', String(f.narxGacha));
   if (f.maydonDan !== undefined) q.set('maydonDan', String(f.maydonDan));
   if (f.maydonGacha !== undefined) q.set('maydonGacha', String(f.maydonGacha));
+  if (f.qavatDan !== undefined) q.set('qavatDan', String(f.qavatDan));
+  if (f.qavatGacha !== undefined) q.set('qavatGacha', String(f.qavatGacha));
   if (f.faqatBosh) q.set('faqatBosh', '1');
   return q.toString();
 }
@@ -42,6 +44,10 @@ export function parseFiltr(q: URLSearchParams): PlanirovkaFiltr {
     const v = num(k);
     if (v !== undefined) f[k] = v;
   }
+  for (const k of ['qavatDan', 'qavatGacha'] as const) {
+    const v = Number(q.get(k) ?? '');
+    if (q.get(k) && Number.isInteger(v) && v >= -5 && v <= 200) f[k] = v;
+  }
   if (q.get('faqatBosh') === '1') f.faqatBosh = true;
   return f;
 }
@@ -55,6 +61,7 @@ export function filtrSoni(f: PlanirovkaFiltr): number {
     f.xonalar?.length,
     f.narxDan !== undefined || f.narxGacha !== undefined,
     f.maydonDan !== undefined || f.maydonGacha !== undefined,
+    f.qavatDan !== undefined || f.qavatGacha !== undefined,
     f.faqatBosh,
   ].filter(Boolean).length;
 }

@@ -13,6 +13,7 @@ import { m0012_t15_hodisa_hisobot } from './0012_t15_hodisa_hisobot';
 import { m0013_t18_skoring } from './0013_t18_skoring';
 import { m0014_t17_dojim } from './0014_t17_dojim';
 import { m0016_t22_xonadon } from './0016_t22_xonadon';
+import { m0017_t23_xonadon_korildi } from './0017_t23_xonadon_korildi';
 
 export interface Migration {
   /** Unique, sortable: `NNNN_short_name`. */
@@ -37,4 +38,5 @@ export const migrations: Migration[] = [
   m0013_t18_skoring,
   m0014_t17_dojim,
   m0016_t22_xonadon,
+  m0017_t23_xonadon_korildi,
 ];

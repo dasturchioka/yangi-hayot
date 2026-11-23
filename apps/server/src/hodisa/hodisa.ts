@@ -4,16 +4,16 @@ import type { DavomatHodisa } from '../yozilish/yozilish';
 /**
  * Analitika events (TZ «Analitika», #15; the funnel #20 reads them):
  *
- *   bot_kirdi → planirovka_korildi → ariza → yozilish → keldi
+ *   bot_kirdi → planirovka_korildi | xonadon_korildi → ariza → yozilish → keldi
  *
  * One row per fact in `hodisa`, each with the Mijoz, the Manba it is
  * credited to and the Loyiha when there is one. Only the bot database —
  * amoCRM is never read for analytics.
  *
- * Manba per event: bot_kirdi / planirovka_korildi — the Mijoz's last Manba
+ * Manba per event: bot_kirdi / planirovka_korildi / xonadon_korildi — the Mijoz's last Manba
  * at that moment; ariza — `ariza.manba`; yozilish / keldi — their Ariza's.
  */
-export type HodisaTuri = 'bot_kirdi' | 'planirovka_korildi' | 'ariza' | 'yozilish' | 'keldi';
+export type HodisaTuri = 'bot_kirdi' | 'planirovka_korildi' | 'xonadon_korildi' | 'ariza' | 'yozilish' | 'keldi';
 
 export const VORONKA: HodisaTuri[] = ['bot_kirdi', 'planirovka_korildi', 'ariza', 'yozilish', 'keldi'];
 
@@ -34,6 +34,17 @@ export async function planirovkaKorildi(db: pg.Pool, mijozId: string, planirovka
        FROM mijoz m, planirovka p JOIN blok b ON b.id = p.blok_id
       WHERE m.telegram_id = $1 AND p.id = $2`,
     [mijozId, planirovkaId, at],
+  );
+}
+
+/** The Mijoz opened a Xonadon kartochkasi (#23); it also counts as a view of its Planirovka. */
+export async function xonadonKorildi(db: pg.Pool, mijozId: string, xonadonId: number, at: Date): Promise<void> {
+  await db.query(
+    `INSERT INTO hodisa (tur, mijoz_id, manba, loyiha_id, planirovka_id, xonadon_id, at)
+     SELECT 'xonadon_korildi', m.telegram_id, m.last_source, b.loyiha_id, x.planirovka_id, x.id, $3
+       FROM mijoz m, xonadon x JOIN blok b ON b.id = x.blok_id
+      WHERE m.telegram_id = $1 AND x.id = $2`,
+    [mijozId, xonadonId, at],
   );
 }
 
@@ -102,7 +113,8 @@ export async function hodisaSonlari(db: pg.Pool, dan: Date, gacha: Date): Promis
        FROM hodisa WHERE at >= $1 AND at < $2 GROUP BY tur`,
     [dan, gacha],
   );
-  const out = Object.fromEntries(VORONKA.map((t) => [t, { jami: 0, mijozlar: 0 }])) as Record<HodisaTuri, HodisaSoni>;
+  const turlar: HodisaTuri[] = [...VORONKA, 'xonadon_korildi'];
+  const out = Object.fromEntries(turlar.map((t) => [t, { jami: 0, mijozlar: 0 }])) as Record<HodisaTuri, HodisaSoni>;
   for (const r of rows) out[r.tur] = { jami: r.jami, mijozlar: r.mijozlar };
   return out;
 }

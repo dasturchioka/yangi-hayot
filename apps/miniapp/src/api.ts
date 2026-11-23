@@ -17,6 +17,8 @@ import type {
   LoyihalarResponse,
   MeResponse,
   PlanirovkaResponse,
+  ShaxmatkaResponse,
+  XonadonResponse,
   SevimlilarResponse,
   TaklifResponse,
   TaqqoslashResponse,
@@ -81,6 +83,10 @@ export const api = {
   loyihalar: (lang: Lang) => cachedGet<LoyihalarResponse>(`/katalog/loyihalar?lang=${lang}`),
   loyiha: (id: number, lang: Lang) => cachedGet<LoyihaResponse>(`/katalog/loyihalar/${id}?lang=${lang}`),
   planirovka: (id: number, lang: Lang) => cachedGet<PlanirovkaResponse>(`/katalog/planirovkalar/${id}?lang=${lang}`),
+  /** Shaxmatka of a Blok (#23): one compact answer for the whole grid. */
+  shaxmatka: (blokId: number) => cachedGet<ShaxmatkaResponse>(`/katalog/bloklar/${blokId}/shaxmatka`),
+  /** Xonadon kartochkasi with its Planirovka (chizma, video). */
+  xonadon: (id: number, lang: Lang) => cachedGet<XonadonResponse>(`/katalog/xonadonlar/${id}?lang=${lang}`),
   /** Own Arizalar + name/phone to prefill forms. */
   arizalar: () => apiGet<ArizalarResponse>('/arizalar'),
   /** 400 = bad phone/context, 429 = too many Arizalar. */

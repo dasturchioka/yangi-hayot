@@ -46,17 +46,31 @@ function oyVariantlari(max: number): number[] {
  * stavka; annuitet / differensial). Computes live with the shared pure module
  * under the admin settings; the server recomputes on «Hisobni menejerga yuborish».
  */
-export function KalkulyatorScreen({ planirovkaId }: { planirovkaId?: number }) {
+export function KalkulyatorScreen({ planirovkaId, xonadonId }: { planirovkaId?: number; xonadonId?: number }) {
   const load = useLoad('kalkulyator', () => api.kalkulyator());
-  return <Loaded load={load}>{({ sozlama }) => <Kalkulyator sozlama={sozlama} planirovkaId={planirovkaId} />}</Loaded>;
+  return (
+    <Loaded load={load}>
+      {({ sozlama }) => <Kalkulyator sozlama={sozlama} planirovkaId={planirovkaId} xonadonId={xonadonId} />}
+    </Loaded>
+  );
 }
 
-function Kalkulyator({ sozlama, planirovkaId }: { sozlama: KalkulyatorSozlamalari; planirovkaId?: number }) {
+function Kalkulyator({
+  sozlama,
+  planirovkaId,
+  xonadonId,
+}: {
+  sozlama: KalkulyatorSozlamalari;
+  planirovkaId?: number;
+  /** From a Xonadon kartochkasi (#23): its own narx goes in instead of the Planirovka's Boshlang'ich narx. */
+  xonadonId?: number;
+}) {
   const t = useT();
   const lang = useLang();
   const [rejim, setRejim] = useState<Rejim>(sozlama.muddatli.yoqilgan ? 'muddatli' : 'ipoteka');
   const [narx, setNarx] = useState<number | null>(null);
   const [fromPlanirovka, setFromPlanirovka] = useState(false);
+  const [fromXonadon, setFromXonadon] = useState<string | null>(null);
   const [boshlangich, setBoshlangich] = useState<Boshlangich | null>(null);
   const [oylar, setOylar] = useState(sozlama.muddatli.maxMuddatOy);
   const [bankId, setBankId] = useState<string | undefined>(sozlama.banklar[0]?.id);
@@ -65,9 +79,26 @@ function Kalkulyator({ sozlama, planirovkaId }: { sozlama: KalkulyatorSozlamalar
   const [yillar, setYillar] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
 
+  // From a Xonadon: its own narx goes in (the Mijoz may change it).
+  useEffect(() => {
+    if (!xonadonId) return;
+    let live = true;
+    api.xonadon(xonadonId, lang).then(
+      ({ xonadon }) => {
+        if (!live || xonadon.narx === null) return;
+        setNarx((n) => n ?? xonadon.narx);
+        setFromXonadon(`${xonadon.blokNomi}-${xonadon.raqam}`);
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [xonadonId, lang]);
+
   // From a Planirovka: its Boshlang'ich narx goes in (the Mijoz may change it).
   useEffect(() => {
-    if (!planirovkaId) return;
+    if (!planirovkaId || xonadonId) return;
     let live = true;
     api.planirovka(planirovkaId, lang).then(
       ({ planirovka }) => {
@@ -80,7 +111,7 @@ function Kalkulyator({ sozlama, planirovkaId }: { sozlama: KalkulyatorSozlamalar
     return () => {
       live = false;
     };
-  }, [planirovkaId, lang]);
+  }, [planirovkaId, xonadonId, lang]);
 
   // Limits of the current mode.
   const ch =
@@ -145,10 +176,15 @@ function Kalkulyator({ sozlama, planirovkaId }: { sozlama: KalkulyatorSozlamalar
         </div>
       )}
 
-      <NarxField narx={narx} hint={fromPlanirovka ? t('kalk.narxHint') : null} onChange={(n) => {
-        setNarx(n);
-        setFromPlanirovka(false);
-      }} />
+      <NarxField
+        narx={narx}
+        hint={fromXonadon ? t('kalk.xonadonHint', { nomi: fromXonadon }) : fromPlanirovka ? t('kalk.narxHint') : null}
+        onChange={(n) => {
+          setNarx(n);
+          setFromPlanirovka(false);
+          setFromXonadon(null);
+        }}
+      />
 
       {rejim === 'ipoteka' && (
         <fieldset className="kalk-group kalk-enter">

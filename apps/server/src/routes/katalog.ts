@@ -8,6 +8,8 @@ import {
   type PlanirovkalarResponse,
   type BlokXonadonlarResponse,
   type XonadonResponse,
+  type XonadonlarResponse,
+  type ShaxmatkaResponse,
 } from '@yh/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -22,7 +24,8 @@ const ListQuery = z.object({
 const LangQuery = z.object({ lang: z.enum(LANGS).default('uz') });
 const Son = z.coerce.number().nonnegative().finite();
 const Id = z.coerce.number().int().positive();
-/** Filter (#10). Strict: unknown keys (e.g. qavat, ADR 0001) → 400. */
+const Qavat = z.coerce.number().int().min(-5).max(200);
+/** Filter (#10; qavat #23). Strict: unknown keys → 400. */
 const FiltrQuery = z
   .object({
     lang: z.enum(LANGS).default('uz'),
@@ -38,6 +41,8 @@ const FiltrQuery = z
     narxGacha: Son.optional(),
     maydonDan: Son.optional(),
     maydonGacha: Son.optional(),
+    qavatDan: Qavat.optional(),
+    qavatGacha: Qavat.optional(),
     faqatBosh: z.enum(['0', '1', 'true', 'false']).transform((v) => v === '1' || v === 'true').optional(),
   })
   .strict();
@@ -96,10 +101,27 @@ export async function katalogRoutes(app: FastifyInstance, katalog: Katalog, deps
     return out ?? reply.code(404).send({ error: 'not_found' });
   });
 
+  /** Xonadonlar matching the filter: the shaxmatka highlights them; the AI-menejer finds homes by floor (#23). */
+  app.get('/xonadonlar', async (req, reply): Promise<XonadonlarResponse | void> => {
+    const q = FiltrQuery.safeParse(req.query);
+    if (!q.success) return reply.code(400).send({ error: 'bad_request' });
+    const { lang: _lang, loyiha, blok, ...rest } = q.data;
+    return { xonadonlar: await katalog.xonadonlar({ ...rest, loyihaId: loyiha, blokId: blok }) };
+  });
+
+  /** Shaxmatka of a Blok, compact (#23): what the Mini App grid draws. */
+  app.get('/bloklar/:id/shaxmatka', async (req, reply): Promise<ShaxmatkaResponse | void> => {
+    const p = IdParams.safeParse(req.params);
+    const out = p.success ? await katalog.shaxmatka(p.data.id) : null;
+    return out ?? reply.code(404).send({ error: 'not_found' });
+  });
+
+  /** Xonadon kartochkasi: the Xonadon and its Planirovka (chizma, video, nomi) in one answer. */
   app.get('/xonadonlar/:id', async (req, reply): Promise<XonadonResponse | void> => {
     const p = IdParams.safeParse(req.params);
-    const xonadon = p.success ? await katalog.xonadon(p.data.id) : null;
+    const q = LangQuery.safeParse(req.query);
+    const xonadon = p.success && q.success ? await katalog.xonadon(p.data.id) : null;
     if (!xonadon) return reply.code(404).send({ error: 'not_found' });
-    return { xonadon };
+    return { xonadon, planirovka: (await katalog.planirovka(xonadon.planirovkaId, q.data!.lang))! };
   });
 }

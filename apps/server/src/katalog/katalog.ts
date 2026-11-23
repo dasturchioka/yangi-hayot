@@ -13,7 +13,10 @@ import type {
   PlanirovkaHolati,
   Shahar,
   VideoDto,
+  XonadonFiltrMaydonlari,
+  ShaxmatkaResponse,
 } from '@yh/shared';
+import { xonadonMos } from '@yh/shared';
 import type pg from 'pg';
 import type { Clock } from '../clock';
 import type { InfratuzilmaInput, Lokal } from './seed';
@@ -42,6 +45,10 @@ export interface Katalog {
   blokXonadonlari(blokId: number): Promise<BlokXonadonlarResponse | null>;
   /** null when no such Xonadon in a Sotuvdagi Loyiha. Sotilgan ones are returned. */
   xonadon(id: number): Promise<XonadonDto | null>;
+  /** Xonadonlar matching the filter (`xonadonMos`), by Loyiha, Blok, qavat, raqam (#23). */
+  xonadonlar(filtr: PlanirovkaFiltr): Promise<XonadonDto[]>;
+  /** Compact shaxmatka of a Blok (#23); null when no such Blok in a Sotuvdagi Loyiha. */
+  shaxmatka(blokId: number): Promise<ShaxmatkaResponse | null>;
   invalidate(): void;
 }
 
@@ -121,6 +128,7 @@ interface XonadonRow {
 interface Snapshot {
   loadedAt: number;
   xonadonlarOf: Map<number, XonadonRow[]>;
+  xonadonlarOfPlanirovka: Map<number, XonadonRow[]>;
   xonadonById: Map<number, XonadonRow>;
   loyihalar: LoyihaRow[];
   bloklarOf: Map<number, BlokRow[]>;
@@ -164,6 +172,7 @@ async function loadSnapshot(db: pg.Pool, now: number): Promise<Snapshot> {
   const s: Snapshot = {
     loadedAt: now,
     xonadonlarOf: new Map(),
+    xonadonlarOfPlanirovka: new Map(),
     xonadonById: new Map(xonadonlar.map((x) => [x.id, x])),
     loyihalar,
     bloklarOf: new Map(),
@@ -174,8 +183,32 @@ async function loadSnapshot(db: pg.Pool, now: number): Promise<Snapshot> {
   };
   for (const b of bloklar) push(s.bloklarOf, b.loyiha_id, b);
   for (const p of planirovkalar) push(s.planirovkalarOf, p.blok_id, p);
-  for (const x of xonadonlar) push(s.xonadonlarOf, x.blok_id, x);
+  for (const x of xonadonlar) {
+    push(s.xonadonlarOf, x.blok_id, x);
+    push(s.xonadonlarOfPlanirovka, x.planirovka_id, x);
+  }
   return s;
+}
+
+/** The Xonadon's own narx, else its Planirovka's qo'lda narx (null → «Narx so'rov bo'yicha»). */
+function xonadonNarxi(s: Snapshot, x: XonadonRow): number | null {
+  const narx = x.narx ?? s.planirovkaById.get(x.planirovka_id)!.qolda_narx;
+  return narx === null ? null : Number(narx);
+}
+
+function mosMaydonlari(s: Snapshot, x: XonadonRow): XonadonFiltrMaydonlari {
+  const blok = s.blokById.get(x.blok_id)!;
+  const p = s.planirovkaById.get(x.planirovka_id)!;
+  return {
+    shahar: s.loyihaById.get(blok.loyiha_id)!.shahar,
+    loyihaId: blok.loyiha_id,
+    blokId: blok.id,
+    xonalar: p.xonalar,
+    maydon: Number(p.maydon),
+    narx: xonadonNarxi(s, x),
+    qavat: x.qavat,
+    holat: x.holat,
+  };
 }
 
 function push<K, V>(m: Map<K, V[]>, k: K, v: V) {
@@ -222,7 +255,6 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
   function xonadonDto(s: Snapshot, x: XonadonRow): XonadonDto {
     const blok = s.blokById.get(x.blok_id)!;
     const p = s.planirovkaById.get(x.planirovka_id)!;
-    const narx = x.narx ?? p.qolda_narx;
     return {
       id: x.id,
       loyihaId: blok.loyiha_id,
@@ -233,7 +265,7 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
       raqam: x.raqam,
       xonalar: p.xonalar,
       maydon: Number(p.maydon),
-      narx: narx === null ? null : Number(narx),
+      narx: xonadonNarxi(s, x),
       holat: x.holat,
     };
   }
@@ -328,6 +360,10 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
         const maydon = Number(p.maydon);
         if (f.maydonDan !== undefined && maydon < f.maydonDan) return false;
         if (f.maydonGacha !== undefined && maydon > f.maydonGacha) return false;
+        if (f.qavatDan !== undefined || f.qavatGacha !== undefined) {
+          // A floor is a Xonadon fact: some Xonadon of the Planirovka must match as a whole (ADR 0003).
+          return (s.xonadonlarOfPlanirovka.get(p.id) ?? []).some((x) => xonadonMos(mosMaydonlari(s, x), f));
+        }
         if (f.faqatBosh && planirovkaHolati(p) !== 'sotuvda') return false;
         return true;
       };
@@ -345,6 +381,7 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
       const ps = loyihalar.flatMap((l) => planirovkalarOfLoyiha(s, l.id));
       const narxlar = ps.filter((p) => p.boshlangich_narx !== null).map((p) => Number(p.boshlangich_narx));
       const maydonlar = ps.map((p) => Number(p.maydon));
+      const qavatlar = ps.flatMap((p) => (s.xonadonlarOfPlanirovka.get(p.id) ?? []).map((x) => x.qavat));
       const bounds = (xs: number[]) => (xs.length ? { min: Math.min(...xs), max: Math.max(...xs) } : null);
       return {
         loyihalar: loyihalar.map((l) => ({
@@ -355,6 +392,7 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
         })),
         narx: bounds(narxlar),
         maydon: bounds(maydonlar),
+        qavat: bounds(qavatlar),
       };
     },
 
@@ -373,6 +411,38 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
       const s = await current();
       const x = s.xonadonById.get(id);
       return x ? xonadonDto(s, x) : null;
+    },
+
+    async xonadonlar(f) {
+      const s = await current();
+      return s.loyihalar
+        .flatMap((l) => s.bloklarOf.get(l.id) ?? [])
+        .flatMap((b) => s.xonadonlarOf.get(b.id) ?? [])
+        .filter((x) => xonadonMos(mosMaydonlari(s, x), f))
+        .map((x) => xonadonDto(s, x));
+    },
+
+    async shaxmatka(blokId) {
+      const s = await current();
+      const blok = s.blokById.get(blokId);
+      if (!blok) return null;
+      const loyiha = s.loyihaById.get(blok.loyiha_id)!;
+      const xonadonlar = s.xonadonlarOf.get(blokId) ?? [];
+      const used = new Set(xonadonlar.map((x) => x.planirovka_id));
+      return {
+        blok: { id: blok.id, nomi: blok.nomi, loyihaId: loyiha.id, loyihaNomi: loyiha.nomi, shahar: loyiha.shahar },
+        planirovkalar: (s.planirovkalarOf.get(blokId) ?? [])
+          .filter((p) => used.has(p.id))
+          .map((p) => ({ id: p.id, xonalar: p.xonalar, maydon: Number(p.maydon) })),
+        xonadonlar: xonadonlar.map((x) => ({
+          id: x.id,
+          qavat: x.qavat,
+          raqam: x.raqam,
+          planirovkaId: x.planirovka_id,
+          narx: xonadonNarxi(s, x),
+          holat: x.holat,
+        })),
+      };
     },
 
     invalidate() {

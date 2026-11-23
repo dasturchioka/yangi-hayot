@@ -1,4 +1,4 @@
-import { parseDojimParam, parseUlashishParam, type DojimEkran, type StartDto } from '@yh/shared';
+import { parseDojimParam, parseUlashishParam, parseXonadonParam, type DojimEkran, type StartDto } from '@yh/shared';
 import { navigate, parseRoute, type Route } from './router';
 import { getStartParam } from './telegram';
 
@@ -32,7 +32,7 @@ function dojimRoute(e: DojimEkran): Route {
  * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka; the bot's
  * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form; `kalkulyator` (#12) → the calculator;
  * «Ko'rishga yozilish» button `booking` (#7, #11) → the booking screen;
- * dojim buttons `dj<id>_…` (#17) → Planirovka, booking or calculator.
+ * dojim buttons `dj<id>_…` (#17) → Planirovka, booking or calculator; `xn<id>` (#23) → that Xonadon kartochkasi.
  */
 export function openStartScreen(fromServer: StartDto | null): void {
   if (opened) return;
@@ -40,6 +40,12 @@ export function openStartScreen(fromServer: StartDto | null): void {
   if (param === 'ariza' || param === 'kalkulyator' || param === 'booking') {
     opened = true;
     if (parseRoute(window.location.hash).name === 'bosh') navigate({ name: param === 'booking' ? 'yozilish' : param });
+    return;
+  }
+  const xonadonId = parseXonadonParam(param);
+  if (xonadonId) {
+    opened = true;
+    if (parseRoute(window.location.hash).name === 'bosh') navigate({ name: 'xonadon', id: xonadonId });
     return;
   }
   const dojim = parseDojimParam(param);

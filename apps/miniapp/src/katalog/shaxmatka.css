@@ -1,0 +1,237 @@
+/* ---------------------------------------------------------------- Shaxmatka (#23, UF-1)
+ * Extends the kit: cells take the kit's holat pairs (Bo'sh / Bron / Sotilgan
+ * bg + fg), the «barg» corner at cell scale, the kit's chip and segmented
+ * controls. Sotilgan also carries a hatch so holat never rests on colour alone.
+ */
+
+.shx-korinish {
+  margin-top: var(--yh-space-4);
+}
+
+/* Xonalar quick toggles + filter button: one line at 360px, no page scroll */
+.shx-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.shx-xonalar {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.shx-xona {
+  height: 40px;
+  border: 0;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--yh-ease-out),
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.shx-xona:active {
+  transform: scale(0.95);
+}
+.shx-xona.active {
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.shx-toolbar .filtr-button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  display: grid;
+  place-items: center;
+}
+
+/* Legend / match count: one quiet line above the grid */
+.shx-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--yh-space-4) var(--yh-space-12);
+  min-height: 22px;
+  font: var(--yh-caption);
+  color: var(--yh-ink-2);
+}
+.shx-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.shx-legend-item b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--yh-ink);
+}
+.shx-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 5px 2px 5px 2px;
+}
+.shx-mos {
+  font-weight: 600;
+  color: var(--yh-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The grid box: the only thing on the screen that scrolls sideways */
+.shx-scroll {
+  margin: 0 calc(-1 * var(--yh-space-20));
+  padding: var(--yh-space-4) var(--yh-space-20) var(--yh-space-8) 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  isolation: isolate; /* the pinned floor numbers stay under the sticky bottom bar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--yh-line) transparent;
+}
+.shx-scroll[data-more] {
+  mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+}
+.shx-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: max-content;
+  min-width: 100%;
+}
+.shx-row {
+  display: flex;
+  gap: 4px;
+}
+/* Floor number pinned at the left edge while the cells scroll under it */
+.shx-qavat {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center end;
+  width: calc(var(--yh-space-20) + 24px);
+  padding-right: 8px;
+  background: var(--yh-bg);
+  color: var(--yh-muted);
+  font: var(--yh-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.shx-cell {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 54px;
+  height: 48px;
+  border-radius: 10px 3px 10px 3px;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition:
+    transform 140ms var(--yh-ease-out),
+    opacity 200ms ease,
+    box-shadow 200ms ease;
+}
+.shx-cell-xona {
+  font: 600 14px/17px var(--yh-font);
+}
+.shx-cell-m2 {
+  font: 400 11px/13px var(--yh-font);
+  opacity: 0.85;
+}
+.shx-cell.bosh {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+.shx-cell.bron {
+  background: var(--yh-status-reserved-bg);
+  color: var(--yh-status-reserved-fg);
+}
+.shx-cell.sotilgan,
+.shx-swatch.sotilgan {
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 5px, rgb(85 96 91 / 0.09) 5px 6px),
+    var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
+}
+.shx-swatch.bosh {
+  background: var(--yh-status-free-bg);
+  box-shadow: inset 0 0 0 1px rgb(10 107 46 / 0.25);
+}
+.shx-swatch.bron {
+  background: var(--yh-status-reserved-bg);
+  box-shadow: inset 0 0 0 1px rgb(138 26 105 / 0.2);
+}
+.shx-cell.sotilgan {
+  cursor: default;
+}
+a.shx-cell:active {
+  transform: scale(0.93);
+}
+/* Filter: matches get the primary ring, the rest step back */
+.shx-cell.mos {
+  box-shadow: inset 0 0 0 2px var(--yh-primary);
+}
+.shx-cell.xira {
+  opacity: 0.3;
+}
+.shx-cell.sotilgan.xira {
+  opacity: 0.4;
+}
+
+.shx-hint {
+  margin: 0;
+}
+
+/* Row link: Planirovka → its Xonadonlar, Xonadon → Planirovka / siblings */
+.shx-link {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  min-height: 52px;
+  padding: 0 var(--yh-space-12) 0 var(--yh-space-12);
+  border-radius: 14px;
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  text-decoration: none;
+  transition: transform 160ms var(--yh-ease-out);
+}
+.shx-link > svg:first-child {
+  flex: none;
+  color: var(--yh-primary);
+}
+.shx-link span {
+  flex: 1;
+  min-width: 0;
+}
+.shx-link > svg:last-child {
+  flex: none;
+  color: var(--yh-muted);
+}
+.shx-link:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shx-cell,
+  .shx-xona,
+  .shx-link {
+    transition: opacity 200ms ease, box-shadow 200ms ease;
+  }
+  a.shx-cell:active,
+  .shx-xona:active,
+  .shx-link:active {
+    transform: none;
+  }
+}

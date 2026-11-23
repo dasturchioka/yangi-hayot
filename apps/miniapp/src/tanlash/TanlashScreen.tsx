@@ -83,7 +83,7 @@ export function TanlashScreen({ route }: { route: TanlashRoute }) {
         </div>
       )}
 
-      {route.sheet && <FiltrSheet initial={filtr} />}
+      {route.sheet && <FiltrSheet initial={filtr} onApply={(f) => replaceRoute({ name: 'tanlash', filtr: f })} />}
     </>
   );
 }
@@ -104,14 +104,17 @@ function KvizQabul() {
   );
 }
 
-function FiltrChips({
+export function FiltrChips({
   filtr,
   variantlar,
   onChange,
+  lead,
 }: {
   filtr: PlanirovkaFiltr;
   variantlar: FiltrVariantlariResponse | null;
   onChange: (f: PlanirovkaFiltr) => void;
+  /** A chip of the caller's own before these (the shaxmatka's Planirovka). */
+  lead?: ReactNode;
 }) {
   const t = useT();
   const loyiha = variantlar?.loyihalar.find((l) => l.id === filtr.loyihaId);
@@ -140,10 +143,22 @@ function FiltrChips({
       }),
       remove: () => without('maydonDan', 'maydonGacha'),
     });
+  if (filtr.qavatDan !== undefined || filtr.qavatGacha !== undefined)
+    chips.push({
+      key: 'qavat',
+      label:
+        filtr.qavatGacha === undefined
+          ? t('filtr.qavatDan', { n: filtr.qavatDan! })
+          : filtr.qavatDan === undefined
+            ? t('filtr.qavatGacha', { n: filtr.qavatGacha })
+            : t('filtr.qavatChip', { n: `${filtr.qavatDan}–${filtr.qavatGacha}` }),
+      remove: () => without('qavatDan', 'qavatGacha'),
+    });
   if (filtr.faqatBosh) chips.push({ key: 'bosh', label: t('filtr.boshChip'), remove: () => without('faqatBosh') });
 
   return (
     <div className="chips filtr-chips">
+      {lead}
       {chips.map((c) => (
         <button key={c.key} className="chip chip-remove" onClick={c.remove} aria-label={t('filtr.remove', { nomi: c.label })}>
           {c.label}
@@ -158,16 +173,35 @@ function FiltrChips({
 
 const MLN = 1_000_000;
 
-/** «Xonadon tanlash» bottom sheet (kit p.7, without «Qavat»). Shows how many match before applying. */
-function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
+type Bounds = { min: number; max: number } | null;
+
+/**
+ * «Xonadon tanlash» bottom sheet (kit p.7). Shows how many match before applying.
+ *
+ * `blok` = inside one Blok's shaxmatka (#23): no shahar / Loyiha / Blok
+ * choice, the caller counts matching Xonadonlar itself (instant, no request)
+ * and gives the Blok's own narx / maydon / qavat bounds.
+ */
+export function FiltrSheet({
+  initial,
+  onApply,
+  blok,
+}: {
+  initial: PlanirovkaFiltr;
+  onApply: (f: PlanirovkaFiltr) => void;
+  blok?: { count: (f: PlanirovkaFiltr) => number; narx: Bounds; maydon: Bounds; qavat: Bounds };
+}) {
   const t = useT();
   const lang = useLang();
   const titleId = useId();
   const [draft, setDraft] = useState<PlanirovkaFiltr>(initial);
   const [closing, setClosing] = useState(false);
   const variantlar = useLoad(`filtr:${draft.shahar ?? ''}`, () => api.filtr(draft.shahar));
-  const v = variantlar.kind === 'ready' ? variantlar.data : null;
-  const count = useCount(draft, lang);
+  const v = blok ?? (variantlar.kind === 'ready' ? variantlar.data : null);
+  const serverCount = useCount(draft, lang, !blok);
+  const count = blok ? blok.count(draft) : serverCount;
+  const fixed: PlanirovkaFiltr = blok ? { shahar: initial.shahar, loyihaId: initial.loyihaId, blokId: initial.blokId } : {};
+  for (const k of Object.keys(fixed) as (keyof PlanirovkaFiltr)[]) if (fixed[k] === undefined) delete fixed[k];
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -190,7 +224,7 @@ function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
     window.setTimeout(() => window.history.back(), 180);
   }
 
-  const loyihalar = v?.loyihalar ?? [];
+  const loyihalar = blok ? [] : (variantlar.kind === 'ready' ? variantlar.data.loyihalar : []);
   const loyiha = loyihalar.find((l) => l.id === draft.loyihaId);
   const xonalar = draft.xonalar ?? [];
 
@@ -204,12 +238,12 @@ function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
             <h2 className="h2" id={titleId}>
               {t('filtr.title')}
             </h2>
-            <button className="link-button" onClick={() => setDraft({})} disabled={filtrSoni(draft) === 0}>
+            <button className="link-button" onClick={() => setDraft(fixed)} disabled={filtrSoni(draft) === filtrSoni(fixed)}>
               {t('filtr.clear')}
             </button>
           </div>
 
-          <Section label={t('filtr.shahar')}>
+          {!blok && <Section label={t('filtr.shahar')}>
             <div className="segmented" role="radiogroup">
               {SHAHARLAR.map((s) => (
                 <button
@@ -223,7 +257,7 @@ function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
                 </button>
               ))}
             </div>
-          </Section>
+          </Section>}
 
           {loyihalar.length > 1 && (
             <Section label={t('filtr.loyiha')}>
@@ -312,6 +346,16 @@ function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
             />
           </Section>
 
+          <Section label={t('filtr.qavat')}>
+            <RangeField
+              bounds={v?.qavat ?? null}
+              dan={draft.qavatDan}
+              gacha={draft.qavatGacha}
+              integer
+              onChange={(dan, gacha) => set({ qavatDan: dan, qavatGacha: gacha })}
+            />
+          </Section>
+
           <label className="switch-row">
             <span>{t('filtr.faqatBosh')}</span>
             <input
@@ -329,14 +373,14 @@ function FiltrSheet({ initial }: { initial: PlanirovkaFiltr }) {
             className="button-primary"
             disabled={count === 0}
             aria-busy={count === null}
-            onClick={() => replaceRoute({ name: 'tanlash', filtr: draft })}
+            onClick={() => onApply(draft)}
           >
             {count === null ? (
               <span className="spinner" aria-hidden />
             ) : count === 0 ? (
-              t('filtr.none')
+              t(blok ? 'shaxmatka.filtr.none' : 'filtr.none')
             ) : (
-              t('filtr.show', { n: count })
+              t(blok ? 'shaxmatka.filtr.show' : 'filtr.show', { n: count })
             )}
           </button>
         </div>
@@ -355,10 +399,11 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Live count of matches for the draft, a beat after the last change; null while counting. */
-function useCount(f: PlanirovkaFiltr, lang: 'ru' | 'uz'): number | null {
+function useCount(f: PlanirovkaFiltr, lang: 'ru' | 'uz', enabled: boolean): number | null {
   const key = filtrQuery(f);
   const [count, setCount] = useState<{ key: string; n: number } | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     const timer = window.setTimeout(() => {
       api.planirovkalar(f, lang).then(
@@ -371,7 +416,7 @@ function useCount(f: PlanirovkaFiltr, lang: 'ru' | 'uz'): number | null {
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` identifies the filter
-  }, [key, lang]);
+  }, [key, lang, enabled]);
   // While recounting, the previous number stays (no flicker); null only before the first answer.
   return count ? count.n : null;
 }
@@ -386,16 +431,19 @@ function RangeField({
   gacha,
   onChange,
   slider = false,
+  integer = false,
 }: {
   bounds: { min: number; max: number } | null;
   dan: number | undefined;
   gacha: number | undefined;
   onChange: (dan: number | undefined, gacha: number | undefined) => void;
   slider?: boolean;
+  /** Whole numbers only (qavat). */
+  integer?: boolean;
 }) {
   const t = useT();
   const parse = (s: string) => {
-    const n = Number(s.replace(',', '.').replace(/[^\d.]/g, ''));
+    const n = integer ? parseInt(s.replace(/[^\d-]/g, ''), 10) : Number(s.replace(',', '.').replace(/[^\d.]/g, ''));
     return s.trim() === '' || !Number.isFinite(n) ? undefined : n;
   };
   const span = bounds ? Math.max(1, bounds.max - bounds.min) : 1;
@@ -410,7 +458,7 @@ function RangeField({
         <label className="input range-input">
           <span>{t('filtr.dan')}</span>
           <input
-            inputMode="decimal"
+            inputMode={integer ? 'numeric' : 'decimal'}
             value={fmt(dan)}
             placeholder={bounds ? String(bounds.min) : ''}
             onChange={(e) => onChange(parse(e.target.value), gacha)}
@@ -419,7 +467,7 @@ function RangeField({
         <label className="input range-input">
           <span>{t('filtr.gacha')}</span>
           <input
-            inputMode="decimal"
+            inputMode={integer ? 'numeric' : 'decimal'}
             value={fmt(gacha)}
             placeholder={bounds ? String(bounds.max) : ''}
             onChange={(e) => onChange(dan, parse(e.target.value))}

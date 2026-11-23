@@ -9,12 +9,20 @@ export type Route =
   /** «Loyihalar» tab: big Loyiha cards by city. */
   | { name: 'loyihalar' }
   | { name: 'loyiha'; id: number }
-  | { name: 'planirovkalar'; loyihaId: number }
+  /** Planirovkalar of a Loyiha, one Blok at a time (`blokId` absent = the first). */
+  | { name: 'planirovkalar'; loyihaId: number; blokId?: number }
+  /**
+   * Shaxmatka of a Blok (#23, UF-1): `filtr.blokId` names the Blok (absent = the first), the rest of the
+   * filter highlights matching cells; `planirovkaId` highlights one Planirovka's Xonadonlar; `sheet` = filter sheet open.
+   */
+  | { name: 'shaxmatka'; loyihaId: number; filtr: PlanirovkaFiltr; planirovkaId?: number; sheet?: boolean }
   | { name: 'planirovka'; id: number }
+  /** Xonadon kartochkasi (#23). */
+  | { name: 'xonadon'; id: number }
   | { name: 'sevimlilar' }
   | { name: 'taqqoslash'; ids: number[] }
-  /** To'lov kalkulyatori; from a Planirovka its Boshlang'ich narx is put in. */
-  | { name: 'kalkulyator'; planirovkaId?: number }
+  /** To'lov kalkulyatori; from a Planirovka its Boshlang'ich narx is put in, from a Xonadon its own narx. */
+  | { name: 'kalkulyator'; planirovkaId?: number; xonadonId?: number }
   | { name: 'sotibOlish' }
   | { name: 'bizHaqimizda' }
   /** «Do'stingni taklif qil» (#19). */
@@ -68,13 +76,31 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === 'mening') return { name: 'mening' };
   if (parts[0] === 'loyihalar') return { name: 'loyihalar' };
   if (parts[0] === 'loyiha' && id > 0) {
-    return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
+    const q = new URLSearchParams(query);
+    if (parts[2] === 'planirovkalar') {
+      const blokId = Number(q.get('blok')) || undefined;
+      return { name: 'planirovkalar', loyihaId: id, ...(blokId ? { blokId } : {}) };
+    }
+    if (parts[2] === 'shaxmatka') {
+      const planirovkaId = Number(q.get('planirovka')) || undefined;
+      return {
+        name: 'shaxmatka',
+        loyihaId: id,
+        filtr: parseFiltr(q),
+        ...(planirovkaId ? { planirovkaId } : {}),
+        ...(q.get('sheet') === '1' ? { sheet: true } : {}),
+      };
+    }
+    return { name: 'loyiha', id };
   }
   if (parts[0] === 'planirovka' && id > 0) return { name: 'planirovka', id };
+  if (parts[0] === 'xonadon' && id > 0) return { name: 'xonadon', id };
   if (parts[0] === 'sevimlilar') return { name: 'sevimlilar' };
   if (parts[0] === 'kalkulyator') {
-    const planirovkaId = Number(new URLSearchParams(query).get('planirovka')) || undefined;
-    return { name: 'kalkulyator', ...(planirovkaId ? { planirovkaId } : {}) };
+    const q = new URLSearchParams(query);
+    const planirovkaId = Number(q.get('planirovka')) || undefined;
+    const xonadonId = Number(q.get('xonadon')) || undefined;
+    return { name: 'kalkulyator', ...(planirovkaId ? { planirovkaId } : {}), ...(xonadonId ? { xonadonId } : {}) };
   }
   if (parts[0] === 'qanday-sotib-olish') return { name: 'sotibOlish' };
   if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
@@ -95,9 +121,18 @@ export function href(route: Route): string {
     case 'loyiha':
       return `#/loyiha/${route.id}`;
     case 'planirovkalar':
-      return `#/loyiha/${route.loyihaId}/planirovkalar`;
+      return `#/loyiha/${route.loyihaId}/planirovkalar${route.blokId ? `?blok=${route.blokId}` : ''}`;
+    case 'shaxmatka': {
+      const q = new URLSearchParams(filtrQuery(route.filtr));
+      if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      if (route.sheet) q.set('sheet', '1');
+      const qs = q.toString();
+      return `#/loyiha/${route.loyihaId}/shaxmatka${qs ? `?${qs}` : ''}`;
+    }
     case 'planirovka':
       return `#/planirovka/${route.id}`;
+    case 'xonadon':
+      return `#/xonadon/${route.id}`;
     case 'ariza': {
       const q = new URLSearchParams();
       if (route.loyihaId) q.set('loyiha', String(route.loyihaId));
@@ -118,8 +153,13 @@ export function href(route: Route): string {
       return `#/yozilish/${route.id}/kochirish`;
     case 'mening':
       return '#/mening';
-    case 'kalkulyator':
-      return route.planirovkaId ? `#/kalkulyator?planirovka=${route.planirovkaId}` : '#/kalkulyator';
+    case 'kalkulyator': {
+      const q = new URLSearchParams();
+      if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      if (route.xonadonId) q.set('xonadon', String(route.xonadonId));
+      const qs = q.toString();
+      return qs ? `#/kalkulyator?${qs}` : '#/kalkulyator';
+    }
     case 'sevimlilar':
       return '#/sevimlilar';
     case 'taqqoslash':

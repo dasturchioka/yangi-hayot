@@ -16,6 +16,7 @@ import {
   Images,
   Info,
   Landmark,
+  LayoutGrid,
   LayoutPanelLeft,
   MapPin,
   Phone,
@@ -66,6 +67,8 @@ export const ChevronDownIcon = icon(ChevronDown, 20);
 export const SearchIcon = icon(Search, 20);
 export const FiltrIcon = icon(SlidersHorizontal, 20);
 export const PlanIcon = icon(LayoutPanelLeft);
+/** Shaxmatka (#23). */
+export const GridIcon = icon(LayoutGrid, 20);
 export const ClockIcon = icon(Clock);
 export const SendIcon = icon(Send);
 export const DocIcon = icon(FileText, 20);

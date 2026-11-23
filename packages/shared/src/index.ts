@@ -10,6 +10,7 @@ export * from './kontent';
 export * from './skoring';
 import type { Daraja } from './skoring';
 export * from './dojim';
+export * from './shaxmatka';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -162,6 +163,13 @@ export interface BlokXonadonlarResponse {
 
 export interface XonadonResponse {
   xonadon: XonadonDto;
+  /** Its Planirovka: chizma, video, nomi, Loyiha nomi (#23). */
+  planirovka: PlanirovkaDto;
+}
+
+/** GET …/katalog/xonadonlar?<PlanirovkaFiltr> (#23). */
+export interface XonadonlarResponse {
+  xonadonlar: XonadonDto[];
 }
 
 // ---- Ariza (TZ 8-bo'lim) ----
@@ -571,9 +579,11 @@ export interface AdminDavomatRequest {
 export const XONALAR_VARIANTLARI = [1, 2, 3, 4] as const;
 
 /**
- * GET /api/katalog/planirovkalar?shahar=&loyiha=&blok=&xonalar=2,3&narxDan=&narxGacha=&maydonDan=&maydonGacha=&faqatBosh=1
- * No qavat (ADR 0001). Bounds are inclusive; narx in UZS; any narx bound leaves out «Narx so'rov bo'yicha».
- * «Faqat bo'sh» hides Band and Sotilgan; without it Sotilgan ones are listed (greyed in the UI).
+ * GET /api/katalog/planirovkalar?shahar=&loyiha=&blok=&xonalar=2,3&narxDan=&narxGacha=&maydonDan=&maydonGacha=&qavatDan=&qavatGacha=&faqatBosh=1
+ * (and GET /api/katalog/xonadonlar?… with the same fields, #23). Bounds are inclusive; narx in UZS; any
+ * narx bound leaves out «Narx so'rov bo'yicha». «Faqat bo'sh» hides Band and Sotilgan; without it
+ * Sotilgan ones are listed (greyed in the UI). With a qavat bound a Planirovka matches when one of its
+ * Xonadonlar matches (`xonadonMos`), narx then being that Xonadon's own (ADR 0003).
  */
 export interface PlanirovkaFiltr {
   shahar?: Shahar;
@@ -584,6 +594,8 @@ export interface PlanirovkaFiltr {
   narxGacha?: number;
   maydonDan?: number;
   maydonGacha?: number;
+  qavatDan?: number;
+  qavatGacha?: number;
   faqatBosh?: boolean;
 }
 
@@ -604,6 +616,8 @@ export interface FiltrVariantlariResponse {
   /** Boshlang'ich narx bounds over priced Planirovkalar; null when none has a price. */
   narx: { min: number; max: number } | null;
   maydon: { min: number; max: number } | null;
+  /** Lowest and highest qavat of the Xonadonlar (#23); null when there are none. */
+  qavat: { min: number; max: number } | null;
   /** Kviz budget answers: the Administrator's own, else 4 equal ranges from narx.min to narx.max. */
   byudjet: ByudjetOraligi[];
 }

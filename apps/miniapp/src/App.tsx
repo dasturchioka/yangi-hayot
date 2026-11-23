@@ -11,6 +11,7 @@ import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
 import { MeningScreen, YozilishKochirishScreen, YozilishKorishScreen, YozilishScreen } from './yozilish/screens';
 import { KvizScreen } from './kviz/KvizScreen';
 import { TanlashScreen } from './tanlash/TanlashScreen';
+import { ShaxmatkaScreen, XonadonScreen } from './katalog/shaxmatka';
 import { openStartScreen } from './start';
 import { TaklifScreen } from './taklif/TaklifScreen';
 import { getInitData, guessLang, setBackButton } from './telegram';
@@ -80,13 +81,23 @@ function Screen({ route }: { route: Route }) {
     case 'loyiha':
       return <LoyihaScreen key={route.id} id={route.id} />;
     case 'planirovkalar':
-      return <PlanirovkalarScreen key={route.loyihaId} loyihaId={route.loyihaId} />;
+      return <PlanirovkalarScreen key={route.loyihaId} loyihaId={route.loyihaId} blokId={route.blokId} />;
+    case 'shaxmatka':
+      return <ShaxmatkaScreen key={route.loyihaId} route={route} />;
     case 'planirovka':
       return <PlanirovkaScreen key={route.id} id={route.id} />;
+    case 'xonadon':
+      return <XonadonScreen key={route.id} id={route.id} />;
     case 'ariza':
       return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
     case 'kalkulyator':
-      return <KalkulyatorScreen key={route.planirovkaId ?? 0} planirovkaId={route.planirovkaId} />;
+      return (
+        <KalkulyatorScreen
+          key={`${route.planirovkaId ?? 0}:${route.xonadonId ?? 0}`}
+          planirovkaId={route.planirovkaId}
+          xonadonId={route.xonadonId}
+        />
+      );
     case 'sevimlilar':
       return <SevimlilarScreen />;
     case 'taqqoslash':

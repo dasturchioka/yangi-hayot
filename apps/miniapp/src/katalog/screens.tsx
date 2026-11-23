@@ -10,8 +10,9 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { useLang, useT, type MessageKey, type Translate } from '../i18n';
-import { InfraIcon, PhoneIcon, PhotoIcon, PinIcon, PlayIcon } from '../icons';
-import { href } from '../router';
+import { ChevronRightIcon, GridIcon, InfraIcon, PhoneIcon, PhotoIcon, PinIcon, PlayIcon } from '../icons';
+import { BlokHead, xonadonlarRoute } from './shaxmatka';
+import { href, replaceRoute, type Route } from '../router';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { VideoYozilishLink, YozilishButton } from '../kontent/cta';
 import '../yozilish/yozilish.css';
@@ -332,7 +333,7 @@ function Loyiha({ l }: { l: LoyihaDto }) {
       <div className="sticky-actions actions-split">
         <YozilishButton loyihaId={l.id} label="yozilish.qisqa" />
         {hasPlanirovkalar ? (
-          <a className="button-primary" href={href({ name: 'planirovkalar', loyihaId: l.id })}>
+          <a className="button-primary" href={href(xonadonlarRoute(l.id))}>
             {t('loyiha.xonadonlar', { n: l.boshXonadonlar })}
           </a>
         ) : (
@@ -354,11 +355,10 @@ function Stat({ n, label, accent = false }: { n: number; label: string; accent?:
 
 // ---------------------------------------------------------------- Planirovkalar of a Loyiha
 
-export function PlanirovkalarScreen({ loyihaId }: { loyihaId: number }) {
+export function PlanirovkalarScreen({ loyihaId, blokId }: { loyihaId: number; blokId?: number }) {
   const t = useT();
   const lang = useLang();
   const load = useLoad(`loyiha:${loyihaId}:${lang}`, () => api.loyiha(loyihaId, lang));
-  const [blokId, setBlokId] = useState<number | null>(null);
 
   return (
     <Loaded load={load}>
@@ -367,27 +367,12 @@ export function PlanirovkalarScreen({ loyihaId }: { loyihaId: number }) {
         const blok = bloklar.find((b) => b.id === blokId) ?? bloklar[0];
         return (
           <>
-            <div className="screen-head">
-              <p className="caption muted">{loyiha.nomi}</p>
-              <h1 className="h1">{t('loyiha.xonadonlar', { n: loyiha.boshXonadonlar })}</h1>
-            </div>
-            {/* Blok row; a «Shaxmatka | Planirovkalar» view switch (#22–#25) belongs right under it. */}
-            {bloklar.length > 1 && (
-              <div className="chips" role="tablist">
-                {bloklar.map((b) => (
-                  <button
-                    key={b.id}
-                    role="tab"
-                    aria-selected={b === blok}
-                    className={b === blok ? 'chip active' : 'chip'}
-                    onClick={() => setBlokId(b.id)}
-                  >
-                    {t('blok.nomi', { nomi: b.nomi })}
-                    <span className="chip-count">{b.boshXonadonlar}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <BlokHead
+              loyiha={loyiha}
+              blokId={blok?.id}
+              view="planirovkalar"
+              onBlok={(id) => replaceRoute({ name: 'planirovkalar', loyihaId, blokId: id })}
+            />
             {!blok && <p className="muted">{t('loyiha.noPlanirovkalar')}</p>}
             <div className="plan-groups" key={blok?.id}>
               {blok?.guruhlar.map((g) => (
@@ -423,7 +408,7 @@ export function PlanirovkaScreen({ id }: { id: number }) {
   );
 }
 
-const mln = (n: number) =>
+export const mln = (n: number) =>
   new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n / 1_000_000).replace('.', ',');
 
 function Planirovka({ p }: { p: PlanirovkaDto }) {
@@ -476,9 +461,17 @@ function Planirovka({ p }: { p: PlanirovkaDto }) {
         </div>
       </div>
 
+      <a className="shx-link" href={href({ name: 'shaxmatka', loyihaId: p.loyihaId, filtr: { blokId: p.blokId }, planirovkaId: p.id })}>
+        <GridIcon />
+        <span>{t('planirovka.xonadonlari')}</span>
+        <ChevronRightIcon />
+      </a>
+
       {p.holat === 'band' && <p className="note note-band">{t('holat.bandHint')}</p>}
 
-      {!sold && sozlama && <OylikCard p={p} sozlama={sozlama} />}
+      {!sold && sozlama && (
+        <OylikCard narx={p.boshlangichNarx} sozlama={sozlama} hisoblash={{ name: 'kalkulyator', planirovkaId: p.id }} />
+      )}
 
       {p.video && (
         <>
@@ -505,9 +498,9 @@ function Planirovka({ p }: { p: PlanirovkaDto }) {
 }
 
 /** Dark card (kit p.9): a typical monthly payment for this narx, «Hisoblash» opens the calculator with it. */
-function OylikCard({ p, sozlama }: { p: PlanirovkaDto; sozlama: KalkulyatorSozlamalari }) {
+export function OylikCard({ narx, sozlama, hisoblash }: { narx: number | null; sozlama: KalkulyatorSozlamalari; hisoblash: Route }) {
   const t = useT();
-  const oylik = namunaviyOylik(p.boshlangichNarx, sozlama);
+  const oylik = namunaviyOylik(narx, sozlama);
   if (oylik === null) return null;
   const bank = sozlama.banklar[0];
   const sharti = sozlama.muddatli.yoqilgan
@@ -519,7 +512,7 @@ function OylikCard({ p, sozlama }: { p: PlanirovkaDto; sozlama: KalkulyatorSozla
         <span className="caption">{sharti}</span>
         <span className="oylik-card-sum">{t('planirovka.oylik', { narx: t('narx.som', { narx: t('narx.mln', { n: mln(oylik) }) }) })}</span>
       </span>
-      <a className="oylik-card-button" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
+      <a className="oylik-card-button" href={href(hisoblash)}>
         {t('kalk.hisoblash')}
       </a>
     </div>
