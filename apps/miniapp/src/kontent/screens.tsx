@@ -27,6 +27,20 @@ export function KontentLinks() {
   const t = useT();
   return (
     <nav className="kontent-links">
+      <a className="kontent-link" href={href({ name: 'yozilish' })}>
+        <span>
+          <span className="title">{t('kontent.yozilish')}</span>
+          <span className="caption muted">{t('yozilish.menuHint')}</span>
+        </span>
+        <ArrowIcon />
+      </a>
+      <a className="kontent-link" href={href({ name: 'mening' })}>
+        <span>
+          <span className="title">{t('mening.title')}</span>
+          <span className="caption muted">{t('mening.hint')}</span>
+        </span>
+        <ArrowIcon />
+      </a>
       <a className="kontent-link" href={href({ name: 'sotibOlish' })}>
         <span>
           <span className="title">{t('kontent.sotibOlish')}</span>

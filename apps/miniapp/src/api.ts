@@ -21,6 +21,11 @@ import type {
   TaklifResponse,
   TaqqoslashResponse,
   UlashishResponse,
+  YozilishKochirishRequest,
+  YozilishlarResponse,
+  YozilishRequest,
+  YozilishResponse,
+  YozilishSlotlarResponse,
 } from '@yh/shared';
 import { filtrQuery } from './tanlash/filtr';
 import { getInitData } from './telegram';
@@ -92,6 +97,16 @@ export const api = {
   /** Last kviz step: 400 = bad answers/phone, 429 = too many Arizalar. */
   kviz: (body: KvizRequest) => apiSend<KvizResponse>('POST', '/kviz', body),
   /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
+  /** Booking calendar: always fresh (today's slots disappear as time passes). */
+  yozilishSlotlar: () => apiGet<YozilishSlotlarResponse>('/yozilish/slotlar'),
+  /** 201 new, 200 = the same booking again (double tap); 409 slot gone; 400 bad phone / Loyiha; 429 too many. */
+  yozil: (body: YozilishRequest, lang: Lang) => apiSend<YozilishResponse>('POST', `/yozilishlar?lang=${lang}`, body),
+  yozilishlar: (lang: Lang) => apiGet<YozilishlarResponse>(`/yozilishlar?lang=${lang}`),
+  yozilish: (id: number, lang: Lang) => apiGet<YozilishResponse>(`/yozilishlar/${id}?lang=${lang}`),
+  /** 409 {error: slot | otgan | bekor}. */
+  kochir: (id: number, body: YozilishKochirishRequest, lang: Lang) =>
+    apiSend<YozilishResponse>('POST', `/yozilishlar/${id}/kochirish?lang=${lang}`, body),
+  bekor: (id: number, lang: Lang) => apiSend<YozilishResponse>('POST', `/yozilishlar/${id}/bekor?lang=${lang}`),
   kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
   /** Muddatli to'lov terms and banks: changed by admins, so cached like the katalog. */
   kalkulyator: () => cachedGet<KalkulyatorResponse>('/kalkulyator'),

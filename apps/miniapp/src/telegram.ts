@@ -9,7 +9,11 @@ interface TelegramWebApp {
   openLink?(url: string): void;
   openTelegramLink?(url: string): void;
   showAlert?(message: string): void;
-  HapticFeedback?: { notificationOccurred(type: 'error' | 'success' | 'warning'): void };
+  showConfirm?(message: string, cb: (ok: boolean) => void): void;
+  HapticFeedback?: {
+    selectionChanged(): void;
+    notificationOccurred(type: 'error' | 'success' | 'warning'): void;
+  };
   BackButton?: {
     show(): void;
     hide(): void;
@@ -54,6 +58,22 @@ export function showAlert(message: string): void {
   const w = webApp();
   if (w?.showAlert) w.showAlert(message);
   else window.alert(message);
+}
+
+/** Telegram's native confirm dialog (browser confirm outside Telegram). */
+export function confirmDialog(message: string): Promise<boolean> {
+  const w = webApp();
+  if (w?.showConfirm) return new Promise((resolve) => w.showConfirm!(message, resolve));
+  return Promise.resolve(window.confirm(message));
+}
+
+/** A light tick when a choice changes (day, time); silent outside Telegram. */
+export function hapticSelect(): void {
+  webApp()?.HapticFeedback?.selectionChanged();
+}
+
+export function hapticNotify(type: 'error' | 'success' | 'warning'): void {
+  webApp()?.HapticFeedback?.notificationOccurred(type);
 }
 
 /** Shows Telegram's native back button while `onBack` is set. */

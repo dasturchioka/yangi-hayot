@@ -161,6 +161,10 @@ export class AmoCrm implements Crm {
     };
   }
 
+  async renameBitim(bitimId: string, name: string): Promise<void> {
+    await this.#request('PATCH', `/api/v4/leads/${bitimId}`, { name: name.slice(0, 255) });
+  }
+
   async addNote(bitimId: string, text: string): Promise<void> {
     await this.#request('POST', `/api/v4/leads/${bitimId}/notes`, [{ note_type: 'common', params: { text } }]);
   }

@@ -8,6 +8,8 @@ import { useLoad } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
 import { KontentLinks } from '../kontent/screens';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
+import { VideoYozilishLink, YozilishButton } from '../kontent/cta';
+import '../yozilish/yozilish.css';
 import { KvizKirish } from '../kviz/KvizScreen';
 import { TanlashQidiruv } from '../tanlash/TanlashScreen';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
@@ -158,6 +160,7 @@ function Loyiha({ l }: { l: LoyihaDto }) {
 
       <p className="price">{formatNarx(t, l.boshlangichNarx)}</p>
       <VideoButton video={l.video} />
+      {l.video && <VideoYozilishLink loyihaId={l.id} />}
 
       {(l.infratuzilma.length > 0 || l.tavsif) && (
         <>
@@ -213,7 +216,8 @@ function Loyiha({ l }: { l: LoyihaDto }) {
 
       {!hasPlanirovkalar && <p className="muted">{t('loyiha.noPlanirovkalar')}</p>}
 
-      <div className="sticky-actions">
+      <div className="sticky-actions actions-pair">
+        <YozilishButton loyihaId={l.id} label="yozilish.qisqa" />
         {hasPlanirovkalar ? (
           <a className="button-primary" href={href({ name: 'planirovkalar', loyihaId: l.id })}>
             {t('loyiha.xonadonlar', { n: l.boshXonadonlar })}
@@ -312,12 +316,17 @@ export function PlanirovkaScreen({ id }: { id: number }) {
           <p className="price">{formatNarx(t, p.boshlangichNarx)}</p>
           {p.holat === 'band' && <p className="note note-band">{t('holat.bandHint')}</p>}
           <VideoButton video={p.video} />
+          {p.video && p.holat !== 'sotilgan' && <VideoYozilishLink loyihaId={p.loyihaId} planirovkaId={p.id} />}
           {p.holat !== 'sotilgan' && (
-            <div className="sticky-actions actions-split">
-              <a className="button-secondary" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
-                {t('kalk.hisoblash')}
-              </a>
-              <ArizaButton planirovkaId={p.id} />
+            <div className="sticky-actions actions-stack">
+              {/* Main step from a Planirovka is seeing it (kit p.9); calculating and an Ariza sit above as equals */}
+              <div className="actions-pair">
+                <a className="button-secondary" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
+                  {t('kalk.hisoblash')}
+                </a>
+                <ArizaButton planirovkaId={p.id} primary={false} />
+              </div>
+              <YozilishButton primary loyihaId={p.loyihaId} planirovkaId={p.id} />
             </div>
           )}
         </>

@@ -17,6 +17,9 @@ export interface Crm {
   /** Creates a Bitim in the first stage of the bot pipeline. */
   createBitim(input: NewCrmBitim): Promise<CrmBitim>;
 
+  /** Renames a Bitim (a moved booking keeps «Ko'rish: <loyiha>, <sana> <vaqt> — <ism>» current). */
+  renameBitim(bitimId: string, name: string): Promise<void>;
+
   addNote(bitimId: string, text: string): Promise<void>;
   /** Adds tags (`bot_form`, `bot_quiz`, …, Manba, Daraja) to a Bitim. */
   addTags(bitimId: string, tags: string[]): Promise<void>;

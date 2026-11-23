@@ -18,6 +18,14 @@ export type Route =
   | { name: 'taklif' }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
   | { name: 'ariza'; loyihaId?: number; planirovkaId?: number }
+  /** «Ko'rishga yozilish» (#11): Loyiha → kun → vaqt → ism, telefon. Without a Loyiha the Mijoz picks one. */
+  | { name: 'yozilish'; loyihaId?: number; planirovkaId?: number }
+  /** One own booking: confirmation («yangi» right after booking), «Xarita», «Ko'chirish», «Bekor qilish». */
+  | { name: 'yozilishKorish'; id: number; yangi?: 'yozildi' | 'kochirildi' }
+  /** Pick a new day and time for an own booking. */
+  | { name: 'yozilishKochirish'; id: number }
+  /** «Mening arizalarim va yozilishlarim». */
+  | { name: 'mening' }
   /** Filtered Planirovkalar (#10); `sheet` = filter sheet open (so Back closes it); `kviz` = just finished the kviz. */
   | { name: 'tanlash'; filtr: PlanirovkaFiltr; sheet?: boolean; kviz?: boolean }
   /** «Xonadon tanlash» kvizi, step 1…N (each step its own history entry: Back = previous question). */
@@ -43,6 +51,18 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'kviz') return { name: 'kviz', qadam: Math.max(1, Number(parts[1]) || 1) };
   const id = Number(parts[1]);
+  if (parts[0] === 'yozilish') {
+    if (id > 0 && parts[2] === 'kochirish') return { name: 'yozilishKochirish', id };
+    const q = new URLSearchParams(query);
+    if (id > 0) {
+      const yangi = q.get('yangi');
+      return { name: 'yozilishKorish', id, ...(yangi === 'yozildi' || yangi === 'kochirildi' ? { yangi } : {}) };
+    }
+    const loyihaId = Number(q.get('loyiha')) || undefined;
+    const planirovkaId = Number(q.get('planirovka')) || undefined;
+    return { name: 'yozilish', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
+  }
+  if (parts[0] === 'mening') return { name: 'mening' };
   if (parts[0] === 'loyiha' && id > 0) {
     return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
   }
@@ -79,6 +99,19 @@ export function href(route: Route): string {
       const qs = q.toString();
       return qs ? `#/ariza?${qs}` : '#/ariza';
     }
+    case 'yozilish': {
+      const q = new URLSearchParams();
+      if (route.loyihaId) q.set('loyiha', String(route.loyihaId));
+      if (route.planirovkaId) q.set('planirovka', String(route.planirovkaId));
+      const qs = q.toString();
+      return qs ? `#/yozilish?${qs}` : '#/yozilish';
+    }
+    case 'yozilishKorish':
+      return `#/yozilish/${route.id}${route.yangi ? `?yangi=${route.yangi}` : ''}`;
+    case 'yozilishKochirish':
+      return `#/yozilish/${route.id}/kochirish`;
+    case 'mening':
+      return '#/mening';
     case 'kalkulyator':
       return route.planirovkaId ? `#/kalkulyator?planirovka=${route.planirovkaId}` : '#/kalkulyator';
     case 'sevimlilar':
@@ -107,7 +140,7 @@ export function navigate(route: Route): void {
   window.location.hash = href(route);
 }
 
-/** Replaces the current history entry (no new Back step). */
+/** Replaces the current history entry (no new Back step): a finished form must not come back on Back. */
 export function replaceRoute(route: Route): void {
   window.location.replace(href(route));
 }

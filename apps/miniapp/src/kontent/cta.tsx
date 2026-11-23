@@ -1,4 +1,4 @@
-import { useT } from '../i18n';
+import { useT, type MessageKey } from '../i18n';
 import { href } from '../router';
 import { showAlert } from '../telegram';
 
@@ -19,15 +19,36 @@ export function HisoblashButton({ primary = false }: { primary?: boolean }) {
   );
 }
 
-/** TODO(#11): open «Ko'rishga yozilish» (no Loyiha context from here → Mijoz picks it). */
-export function YozilishButton({ primary = false }: { primary?: boolean }) {
+/**
+ * Opens «Ko'rishga yozilish» (#11). Without a Loyiha (menu, «Qanday sotib olish»)
+ * the Mijoz picks one on the booking screen.
+ */
+export function YozilishButton({
+  primary = false,
+  loyihaId,
+  planirovkaId,
+  label = 'kontent.yozilish',
+}: {
+  primary?: boolean;
+  loyihaId?: number;
+  planirovkaId?: number;
+  /** A shorter label where two buttons share the bottom bar. */
+  label?: MessageKey;
+}) {
   const t = useT();
   return (
-    <button
-      className={primary ? 'button-primary' : 'button-secondary'}
-      onClick={() => showAlert(t('kontent.yozilishSoon'))}
-    >
-      {t('kontent.yozilish')}
-    </button>
+    <a className={primary ? 'button-primary' : 'button-secondary'} href={href({ name: 'yozilish', loyihaId, planirovkaId })}>
+      {t(label)}
+    </a>
+  );
+}
+
+/** «Ko'rishga yozilish» right under a video (TZ 2-b.: «video ostida»): one quiet line, not another big button. */
+export function VideoYozilishLink({ loyihaId, planirovkaId }: { loyihaId: number; planirovkaId?: number }) {
+  const t = useT();
+  return (
+    <a className="yz-link yz-video-link" href={href({ name: 'yozilish', loyihaId, planirovkaId })}>
+      {t('yozilish.video')}
+    </a>
   );
 }

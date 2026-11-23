@@ -49,6 +49,19 @@ export interface LocalDateTime {
   isoWeekday: number;
 }
 
+/** The instant of a Tashkent wall-clock date (`YYYY-MM-DD`) and time (`HH:mm`). */
+export function tashkentInstant(date: string, time: string): Date {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  const [h, min] = time.split(':').map(Number) as [number, number];
+  return new Date(Date.UTC(y, m - 1, d, h - 5, min)); // UTC+5, no DST
+}
+
+/** `YYYY-MM-DD` plus `days` calendar days. */
+export function addDays(date: string, days: number): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 /** Wall-clock date and time of an instant in Tashkent. */
 export function toTashkent(instant: Date): LocalDateTime {
   const parts = Object.fromEntries(
