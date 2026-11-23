@@ -1,4 +1,4 @@
-import type { BotMedia, Lang } from '@yh/shared';
+import type { BotMedia, Lang, YozilishSozlamalari } from '@yh/shared';
 import type pg from 'pg';
 import type { WorkingHours } from '../ariza/working-hours';
 
@@ -23,6 +23,8 @@ export interface Settings {
   crmTaskDue: { minutes: number; workingHours: WorkingHours };
   /** Set when admins were alerted about an amoCRM auth error; cleared by the next successful delivery. */
   crmAuthAlertedAt: string | null;
+  /** Ko'rishga yozilish: showing weekdays, slots, holidays (#11; admin «Ko'rish kunlari va vaqtlari»). */
+  yozilish: YozilishSozlamalari;
 }
 
 const DEFAULTS: Settings = {
@@ -32,6 +34,13 @@ const DEFAULTS: Settings = {
   // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
   crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
   crmAuthAlertedAt: null,
+  // TZ 2-b.: nearest 14 days, hourly 9:00–18:00 (last slot starts at 17:00), every day except holidays.
+  yozilish: {
+    haftaKunlari: [1, 2, 3, 4, 5, 6, 7],
+    vaqtlar: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+    bayramlar: [],
+    kunlarSoni: 14,
+  },
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {

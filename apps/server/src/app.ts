@@ -19,6 +19,7 @@ import { katalogRoutes } from './routes/katalog';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
+import { yozilishRoutes } from './routes/yozilish';
 import { createSevimlilar } from './sevimlilar/sevimlilar';
 import { createUlashish } from './ulashish/ulashish';
 
@@ -87,6 +88,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       await sevimlilarRoutes(scope, { db: deps.db, clock: deps.clock, sevimlilar });
+    },
+    { prefix: '/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await yozilishRoutes(scope, { db: deps.db, clock: deps.clock });
     },
     { prefix: '/api' },
   );
