@@ -184,6 +184,57 @@ Javob kerak: **8-kungacha**.
 
 Javob kerak: **15-kungacha**.
 
+### S15. Manba: belgisiz qayta kirish
+TZ 1-b.: «birinchi manba o'zgarmaydi, oxirgisi yangilanadi». Mijoz avval `src_` havolasi bilan kirgan, keyin belgisiz /start bosgan holat TZ'da yo'q.
+
+- **a) (tavsiya)** Oxirgi manba eski belgida qoladi — reklama ta'siri yo'qolmaydi.
+- b) Oxirgi manba «Telegram (to'g'ridan-to'g'ri)» ga o'zgaradi.
+
+> **Default:** a.
+
+Javob kerak: **15-kungacha**.
+
+### S16. Admin-panel: huquqlar va katalog
+1. Menejer o'zgarishlar jurnalini ko'ra oladimi? **Default:** ha (faqat o'qish).
+2. Loyiha, Blok, Planirovkani o'chirish kerakmi? TZ faqat yaratish va tahrirlashni aytadi. **Default:** o'chirish yo'q.
+3. Rasm va chizmalar admin'ga fayl sifatida yuklanadimi? **Default:** havola (URL) bilan kiritiladi; faylni yuklash — o'zgartirish so'rovi.
+4. Excel importi:
+   - Planirovka Blok + xonalar + maydon + nomi bo'yicha topiladi; maydon o'zgarsa — yangi Planirovka.
+   - Faylda yo'q Planirovkalar o'chirilmaydi.
+   - Faylda yangi Blok nomi bo'lsa, Blok yaratiladi.
+   - Menejer import orqali jami va narxni o'zgartira oladi (formada jami — faqat Administrator).
+   - Nomi bitta ustun — RU va UZ uchun bir xil.
+   - Faqat .xlsx va CSV; eski .xls qabul qilinmaydi.
+
+   **Default:** hammasi yuqoridagidek. 4-banddagi Menejer huquqini Administratorga cheklash mumkin.
+
+Javob kerak: **15-kungacha**.
+
+### S17. Ko'rishga yozilish
+1. Yakshanba ko'rsatuv kunimi? TZ 2-b. — cheklovsiz; UI kit yakshanbani kulrang qilgan. **Default:** hamma 7 kun; admin'da o'chiriladi.
+2. «Keldi / kelmadi» belgisi amoCRM bitimiga izoh bo'lib yozilsinmi? **Default:** yo'q (faqat bot bazasi, hisobot va dojim uchun).
+3. Kontakt formasida UI kitdagi «Telegram'dan olish» tugmasi kerakmi? **Default:** yo'q — telefon oxirgi arizadan o'zi to'ldiriladi.
+4. Ish vaqti (vazifa muddati uchun): **Default:** du–sh 9:00–19:00 (M11 bilan tasdiqlanadi).
+
+Javob kerak: **15-kungacha**.
+
+### S18. «Menejer kerak» va AI arizalari
+8-bo'lim jadvalida `bot_ai` va `bot_human` bor. AI-menejer — alohida shartnoma (8-b.). Hozir mijozning matnli xabari faqat menejerlar guruhiga boradi, amoCRM'da Ariza bo'lmaydi.
+
+- **a) (tavsiya)** Zaxira javobga «Menejer bilan bog'lanish» tugmasi qo'shiladi → `bot_human` Ariza, «Bog'lanish» vazifasi. +0,25 kishi-kun.
+- b) Ikkalasi ham AI-menejer shartnomasiga qoladi.
+
+> **Default:** b.
+
+Javob kerak: **15-kungacha**.
+
+### S19. Rassilka va taklif
+1. Mini App'ni ochgan, lekin botni ishga tushirmagan Mijoz auditoriyaga kiradimi? Telegram unga xabar yubormaydi, hisobotda «botni bloklagan» bo'ladi. **Default:** kiradi, birinchi rassilkadan keyin chiqariladi.
+2. Rassilka mediasi admin'da havola yoki Telegram file_id bilan kiritiladi (botda — oddiy yuborish). **Default:** shunday.
+3. Taklif ekranidagi bonus matni (UI kitdan) — M15 kelguncha vaqtinchalik va faqat kodda o'zgaradi. Admin'dan tahrirlash kerakmi? **Default:** yo'q.
+
+Javob kerak: **15-kungacha**.
+
 ---
 
 ## 4. TZ javob beradigan joylar (savol berilmaydi)
