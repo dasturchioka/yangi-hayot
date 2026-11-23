@@ -178,6 +178,8 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
   const [qavatlar, setQavatlar] = useState(loyiha?.qavatlarSoni?.toString() ?? '');
   const [xarita, setXarita] = useState(loyiha?.xarita ? `${loyiha.xarita.lat}, ${loyiha.xarita.lng}` : '');
   const [tartib, setTartib] = useState(String(loyiha?.tartib ?? 0));
+  const [korsatuv, setKorsatuv] = useState<LokalDto>(loyiha?.korsatuvManzili ?? emptyLokal);
+  const [masul, setMasul] = useState(loyiha?.crmMasulId ?? '');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -185,6 +187,7 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
     e.preventDefault();
     const coords = xarita.trim() ? xarita.split(',').map((s) => Number(s.trim())) : null;
     if (coords && (coords.length !== 2 || coords.some(Number.isNaN))) return setError('Xarita: "41.31, 69.27" ko\'rinishida');
+    if (masul.trim() && !/^[0-9]{1,12}$/.test(masul.trim())) return setError("amoCRM mas'ul: foydalanuvchi ID raqami (faqat raqamlar)");
     const body = {
       nomi: nomi.trim(),
       shahar,
@@ -200,6 +203,8 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
       qavatlarSoni: qavatlar.trim() ? Number(qavatlar) : null,
       xarita: coords ? { lat: coords[0]!, lng: coords[1]! } : null,
       tartib: Number(tartib) || 0,
+      korsatuvManzili: lokalOrNull(korsatuv),
+      crmMasulId: masul.trim() || null,
     };
     try {
       const res = loyiha
@@ -261,6 +266,15 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
           <input inputMode="numeric" value={tartib} onChange={(e) => setTartib(e.target.value)} />
         </label>
       </div>
+      <LokalField
+        label="Ko'rsatuv manzili (bo'sh bo'lsa — Loyiha manzili; ko'rishga yozilganlarga shu ko'rsatiladi)"
+        value={korsatuv}
+        onChange={setKorsatuv}
+      />
+      <label className="field">
+        <span>amoCRM'dagi Loyiha mas'uli (foydalanuvchi ID). Yangi Bitim va «Uchrashuv» vazifasi shunga tushadi</span>
+        <input inputMode="numeric" value={masul} onChange={(e) => setMasul(e.target.value)} placeholder="Masalan, 8123456" />
+      </label>
       <label className="field">
         <span>Fotolar (har qatorda bitta havola yoki /media/... yo'l)</span>
         <textarea rows={3} value={fotolar} onChange={(e) => setFotolar(e.target.value)} />

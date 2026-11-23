@@ -50,6 +50,8 @@ const LoyihaFields = z.object({
     .array(z.object({ kategoriya: z.string().trim().min(1).max(40), nomi: Lokal, masofa: Lokal.nullable() }))
     .max(50),
   tartib: z.number().int(),
+  korsatuvManzili: Lokal.nullable(),
+  crmMasulId: z.string().regex(/^[0-9]{1,12}$/).nullable(),
 });
 const CreateLoyiha = LoyihaFields.partial()
   .required({ nomi: true, shahar: true, holat: true, manzil: true })
@@ -62,6 +64,8 @@ const CreateLoyiha = LoyihaFields.partial()
     xarita: null,
     infratuzilma: [],
     tartib: 0,
+    korsatuvManzili: null,
+    crmMasulId: null,
     ...v,
     slug: v.slug ?? slugify(v.nomi),
   }));

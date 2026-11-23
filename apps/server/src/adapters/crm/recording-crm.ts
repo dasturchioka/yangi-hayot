@@ -78,6 +78,11 @@ export class RecordingCrm implements Crm {
     return pickBitim(b);
   }
 
+  async renameBitim(bitimId: string, name: string): Promise<void> {
+    this.#enter('renameBitim', [bitimId, name]);
+    this.#bitim(bitimId).name = name;
+  }
+
   async addNote(bitimId: string, text: string): Promise<void> {
     this.#enter('addNote', [bitimId, text]);
     this.#bitim(bitimId).notes.push(text);

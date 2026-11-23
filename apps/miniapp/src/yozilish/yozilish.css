@@ -1,0 +1,448 @@
+/* ---- Ko'rishga yozilish (#11): UI kit p.11 (booking), p.12 (tasdiq), p.18 (profil) ---- */
+
+.yz-form,
+.yz-korish {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-20);
+}
+
+.yz-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+
+/* Kun: a strip of day tiles that runs to the screen edges and scrolls sideways */
+.yz-days {
+  display: flex;
+  gap: var(--yh-space-8);
+  margin: 0 calc(-1 * var(--yh-space-20));
+  padding: 2px var(--yh-space-20);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 var(--yh-space-20);
+  scrollbar-width: none;
+}
+.yz-days::-webkit-scrollbar {
+  display: none;
+}
+
+.yz-day,
+.yz-time,
+.yz-loyiha,
+.yz-chip-button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+  transition:
+    transform 140ms var(--yh-ease-out),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.yz-day {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 60px;
+  height: 72px;
+  scroll-snap-align: start;
+  border: 1.5px solid var(--yh-line);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font-family: var(--yh-font);
+}
+.yz-day-week {
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+  transition: color 160ms ease;
+}
+.yz-day-num {
+  font: var(--yh-h2);
+  font-variant-numeric: tabular-nums;
+}
+.yz-day[aria-checked='true'] {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.yz-day[aria-checked='true'] .yz-day-week {
+  color: var(--yh-status-free-bg);
+}
+/* Holiday, day off or nothing left today: visible so the calendar keeps its rhythm, but not pressable */
+.yz-day:disabled {
+  border-color: transparent;
+  background: var(--yh-surface);
+  color: var(--yh-muted);
+  cursor: default;
+}
+.yz-day:disabled .yz-day-num {
+  opacity: 0.55;
+}
+.yz-day-caption {
+  margin-top: calc(-1 * var(--yh-space-4));
+}
+
+/* Vaqt: four to a row, as in the kit */
+.yz-times {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--yh-space-8);
+}
+.yz-time {
+  height: 48px;
+  border: 1.5px solid var(--yh-line);
+  border-radius: 14px;
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+}
+/* The booking's current time while moving it */
+.yz-time[data-current] {
+  border-style: dashed;
+  border-color: var(--yh-primary);
+  color: var(--yh-primary);
+}
+.yz-time[aria-checked='true'] {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+.yz-day:active:not(:disabled),
+.yz-time:active,
+.yz-loyiha:active,
+.yz-chip-button:active {
+  transform: scale(0.96);
+}
+
+.yz-day:focus-visible,
+.yz-time:focus-visible,
+.yz-loyiha:focus-visible,
+.yz-chip-button:focus-visible,
+.yz-link:focus-visible,
+.yz-card-main:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+/* Loyiha step: the context card, made choosable */
+.yz-loyihalar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.yz-loyiha {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  width: 100%;
+  padding: var(--yh-space-8);
+  padding-right: var(--yh-space-12);
+  border: 1.5px solid transparent;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font-family: var(--yh-font);
+  text-align: left;
+}
+.yz-loyiha .ariza-kontekst-text {
+  flex: 1;
+}
+.yz-loyiha .caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.yz-loyiha-check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid color-mix(in srgb, var(--yh-muted) 40%, transparent);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  color: transparent;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.yz-loyiha[aria-checked='true'] {
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+}
+.yz-loyiha[aria-checked='true'] .yz-loyiha-check {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+.note-muted {
+  background: var(--yh-surface);
+  color: var(--yh-ink-2);
+}
+
+/* ---- Tasdiq: details card (kit p.12) ---- */
+
+.yz-details {
+  align-self: stretch;
+  margin: 0;
+  padding: var(--yh-space-4) var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+  text-align: left;
+}
+.yz-detail {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: 14px 0;
+}
+.yz-detail + .yz-detail {
+  border-top: 1px solid var(--yh-line);
+}
+.yz-detail > svg {
+  color: var(--yh-primary);
+}
+.yz-detail dt,
+.yz-detail dd {
+  margin: 0;
+}
+.yz-detail dd {
+  overflow-wrap: anywhere;
+}
+.yz-detail-value {
+  font-variant-numeric: tabular-nums;
+}
+.yz-detail-value[data-off] {
+  color: var(--yh-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.yz-link {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--yh-space-8);
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--yh-primary);
+  font: var(--yh-title);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 140ms var(--yh-ease-out);
+}
+.yz-link:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.yz-link-danger {
+  color: var(--yh-status-error-fg);
+}
+.yz-link:disabled {
+  color: var(--yh-muted);
+  cursor: default;
+}
+
+.yz-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+}
+.yz-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yh-space-8);
+}
+.yz-actions-row > .button-secondary {
+  flex: 1;
+}
+
+.ariza-done > .yz-details {
+  margin-top: var(--yh-space-12);
+  animation-delay: 150ms;
+}
+
+/* Holat of a booking */
+.yz-badge-faol,
+.yz-badge-keldi {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+.yz-badge-kelmadi {
+  background: var(--yh-status-error-bg);
+  color: var(--yh-status-error-fg);
+}
+.yz-badge-bekor,
+.yz-badge-otgan {
+  background: var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
+}
+.yz-badge-qabul {
+  background: var(--yh-bg);
+  color: var(--yh-ink-2);
+}
+
+/* ---- «Mening arizalarim va yozilishlarim» (kit p.18) ---- */
+
+.yz-me {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  margin-bottom: var(--yh-space-8);
+}
+.yz-me-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px 5px 18px 5px;
+  background: var(--yh-status-free-bg);
+  color: var(--yh-primary);
+  font: var(--yh-h2);
+}
+.yz-me-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+.yz-me-text .caption {
+  font-variant-numeric: tabular-nums;
+}
+
+.yz-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+  margin-top: var(--yh-space-12);
+}
+
+.yz-card {
+  padding: var(--yh-space-12) var(--yh-space-12) var(--yh-space-12) 18px;
+  border: 1.5px solid transparent;
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+/* Upcoming: the one that matters is lifted out of the list */
+.yz-card[data-holat='faol'] {
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+  box-shadow: var(--yh-shadow-card);
+}
+.yz-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+  padding: var(--yh-space-4) 0;
+  border-radius: 12px;
+}
+.yz-card-when {
+  font-variant-numeric: tabular-nums;
+}
+.yz-card:not([data-holat='faol']) .yz-card-when {
+  color: var(--yh-ink-2);
+}
+.yz-card-meta {
+  color: var(--yh-ink-2);
+}
+.yz-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--yh-space-8);
+  margin-top: var(--yh-space-12);
+}
+.yz-chip-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 var(--yh-space-8);
+  border: 0;
+  border-radius: 14px;
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-size: 15px;
+  text-align: center;
+}
+
+.yz-ariza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--yh-surface);
+}
+.yz-ariza-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.yz-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+
+/* Entry from a video: one quiet line under «Videoni ko'rish» */
+.yz-video-link {
+  align-self: center;
+}
+
+/* Two buttons side by side at the bottom (kit p.5, p.9): equal halves, one line each */
+.actions-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--yh-space-8);
+}
+.actions-pair > * {
+  padding: 0 var(--yh-space-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.actions-pair > .button-secondary {
+  height: var(--yh-button-h);
+}
+.actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.actions-stack .actions-pair > .button-secondary {
+  height: var(--yh-button-h-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yz-day,
+  .yz-time,
+  .yz-loyiha,
+  .yz-chip-button,
+  .yz-link {
+    transition: none;
+  }
+}

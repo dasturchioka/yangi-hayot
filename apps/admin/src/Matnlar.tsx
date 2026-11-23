@@ -11,6 +11,7 @@ import { adminApi, errorText } from './api';
 import { KalkulyatorForm } from './Kalkulyator';
 import { SkoringForm } from './Skoring';
 import './matnlar.css';
+import { YozilishSozlamalariForm } from './Yozilishlar';
 
 /**
  * «Matnlar va sozlamalar» (Administrator): Mini App texts in RU/UZ.
@@ -21,6 +22,8 @@ interface Tab {
   id: string;
   name: string;
   render: (k: AdminKontentResponse, onSaved: (k: AdminKontentResponse) => void) => ReactNode;
+  /** The tab loads and saves its own settings (does not need the Kontent). */
+  own?: () => ReactNode;
 }
 
 const TABS: Tab[] = [
@@ -38,6 +41,12 @@ const TABS: Tab[] = [
     id: 'kontaktlar',
     name: 'Kontaktlar',
     render: (k, onSaved) => <KontaktlarForm initial={k.kontaktlar} onSaved={onSaved} />,
+  },
+  {
+    id: 'korish-vaqtlari',
+    name: "Ko'rish kunlari va vaqtlari",
+    render: () => null,
+    own: () => <YozilishSozlamalariForm />,
   },
   {
     id: 'kalkulyator',
@@ -84,7 +93,11 @@ export function MatnlarScreen() {
       </div>
       {error && <p className="error">{error}</p>}
       {/* key: switching tabs drops unsaved edits of the previous tab on purpose — each tab saves on its own */}
-      {kontent && <div key={current.id}>{current.render(kontent, setKontent)}</div>}
+      {current.own ? (
+        <div key={current.id}>{current.own()}</div>
+      ) : (
+        kontent && <div key={current.id}>{current.render(kontent, setKontent)}</div>
+      )}
     </div>
   );
 }

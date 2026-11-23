@@ -69,6 +69,8 @@ export function errorText(e: unknown): string {
       login_taken: 'Bu login band',
       import_xatolar: "Faylda xato bor, import qilinmadi",
       cannot_demote_self: "O'zingizni o'chira yoki Menejer qila olmaysiz",
+      kelajak: "Ko'rish kuni hali kelmagan",
+      bekor: 'Mijoz bu yozilishni bekor qilgan',
     };
     return (code && known[code]) || `Xato (${e.status})`;
   }

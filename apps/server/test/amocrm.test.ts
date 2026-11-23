@@ -128,6 +128,21 @@ describe('AmoCrm adapter', () => {
     ]);
   });
 
+  it('moves a booking: new task deadline and Bitim name; cancels: completes the task with a result', async () => {
+    const { requests, fetchImpl } = fakeAmo(() => ({ status: 200, json: {} }));
+    const crm = amo(fetchImpl);
+
+    await crm.rescheduleTask('31', new Date('2026-11-26T10:00:00Z'));
+    await crm.renameBitim('42', "Ko'rish: Jozibali Maskan, 26.11.2026 15:00 — Aziz");
+    await crm.closeTask('31', 'Mijoz bekor qildi');
+
+    expect(requests.map((r) => [r.method, r.path, r.body])).toEqual([
+      ['PATCH', '/api/v4/tasks/31', { complete_till: 1795687200 }],
+      ['PATCH', '/api/v4/leads/42', { name: "Ko'rish: Jozibali Maskan, 26.11.2026 15:00 — Aziz" }],
+      ['PATCH', '/api/v4/tasks/31', { is_completed: true, result: { text: 'Mijoz bekor qildi' } }],
+    ]);
+  });
+
   it('maps 5xx / 429 / network errors to CrmUnavailableError and 401 / 403 to CrmAuthError', async () => {
     for (const [status, error] of [
       [503, CrmUnavailableError],

@@ -8,6 +8,7 @@ import { m0007_t5_admin } from './0007_t5_admin';
 import { m0008_t9_ariza } from './0008_t9_ariza';
 import { m0009_t19_taklif } from './0009_t19_taklif';
 import { m0010_t12_kalkulyator } from './0010_t12_kalkulyator';
+import { m0011_t11_yozilish } from './0011_t11_yozilish';
 import { m0012_t18_skoring } from './0012_t18_skoring';
 
 export interface Migration {
@@ -28,5 +29,6 @@ export const migrations: Migration[] = [
   m0008_t9_ariza,
   m0009_t19_taklif,
   m0010_t12_kalkulyator,
+  m0011_t11_yozilish,
   m0012_t18_skoring,
 ];

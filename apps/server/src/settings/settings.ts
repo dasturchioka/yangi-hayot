@@ -9,6 +9,7 @@ import {
   type Lang,
   type SkoringQoidalari,
   type SotibOlishKontent,
+  type YozilishSozlamalari,
 } from '@yh/shared';
 import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
@@ -41,6 +42,8 @@ export interface Settings {
   crmTaskDue: { minutes: number; workingHours: WorkingHours };
   /** Set when admins were alerted about an amoCRM auth error; cleared by the next successful delivery. */
   crmAuthAlertedAt: string | null;
+  /** Ko'rishga yozilish: showing weekdays, slots, holidays (#11; admin «Ko'rish kunlari va vaqtlari»). */
+  yozilish: YozilishSozlamalari;
   /** Kviz budget answers set by the Administrator (#10); null = automatic (kviz/byudjet.ts). */
   kvizByudjet: ByudjetOraligi[] | null;
   /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
@@ -59,6 +62,13 @@ const DEFAULTS: Settings = {
   // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
   crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
   crmAuthAlertedAt: null,
+  // TZ 2-b.: nearest 14 days, hourly 9:00–18:00 (last slot starts at 17:00), every day except holidays.
+  yozilish: {
+    haftaKunlari: [1, 2, 3, 4, 5, 6, 7],
+    vaqtlar: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+    bayramlar: [],
+    kunlarSoni: 14,
+  },
   kvizByudjet: null,
   kalkulyator: DEFAULT_KALKULYATOR,
   skoring: DEFAULT_SKORING,

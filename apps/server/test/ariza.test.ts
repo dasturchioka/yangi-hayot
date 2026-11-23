@@ -250,7 +250,7 @@ describe('amoCRM is down', () => {
     t.crm.recover();
     await retryFor(60);
     expect(attempts()).toBe(1 + (24 * 60) / 5);
-  });
+  }, 60_000); // ~300 job ticks (every job, incl. yozilish-crm): slow under a parallel run
 
   it('does not repeat steps that were already done (no second note or Bitim)', async () => {
     await postAriza({ name: 'Aziz', phone: '901234567' }); // first Ariza: all fine
@@ -373,6 +373,8 @@ describe('Ariza module (other entry points)', () => {
       contactId: t.crm.contacts[0]!.id,
       bitimId: bitim.id,
       taskId: t.crm.tasks[0]!.id,
+      bitimCreated: true,
+      status: 'sent',
     });
   });
 

@@ -161,6 +161,8 @@ export interface ArizaDto {
   createdAt: string;
   loyihaId: number | null;
   planirovkaId: number | null;
+  /** As it was when the Ariza was made; null without a Loyiha. */
+  loyihaNomi: string | null;
 }
 
 /** GET /api/arizalar — the Mijoz's own Arizalar (newest first) and the contact to prefill forms with. */
@@ -221,6 +223,10 @@ export interface AdminLoyihaInput {
   xarita: { lat: number; lng: number } | null;
   infratuzilma: AdminInfratuzilmaDto[];
   tartib: number;
+  /** Where showings happen (yozilish confirmation, CRM note); null = the Loyiha's address. */
+  korsatuvManzili: LokalDto | null;
+  /** amoCRM user id of the Loyiha mas'ul: new Bitimlar and tasks go to them; null = CRM default. */
+  crmMasulId: string | null;
 }
 
 export interface AdminPlanirovkaInput {
@@ -382,6 +388,116 @@ export interface UlashishRequest {
 export interface UlashishResponse {
   /** `<MINIAPP_LINK>?startapp=pl<id>_u<n>`; opens that Planirovka in the Mini App. */
   url: string;
+}
+
+// ---- Ko'rishga yozilish (#11, TZ 2-b.) ----
+
+/** One day of the booking calendar (Tashkent). Closed days (holiday, day off, no time left today) have no vaqtlar. */
+export interface YozilishKunDto {
+  /** `YYYY-MM-DD`. */
+  sana: string;
+  /** 1 = Monday … 7 = Sunday. */
+  haftaKuni: number;
+  /** Free slot starts, `HH:mm`. Unlimited bookings per slot (TZ 2-b.). */
+  vaqtlar: string[];
+}
+
+/** GET /api/yozilish/slotlar — the nearest days (14 by default). */
+export interface YozilishSlotlarResponse {
+  kunlar: YozilishKunDto[];
+}
+
+/** POST /api/yozilishlar. */
+export interface YozilishRequest {
+  loyihaId: number;
+  planirovkaId?: number;
+  sana: string;
+  vaqt: string;
+  name: string;
+  /** Any common Uzbek format; stored as +998XXXXXXXXX. */
+  phone: string;
+}
+
+/** POST /api/yozilishlar/:id/kochirish. */
+export interface YozilishKochirishRequest {
+  sana: string;
+  vaqt: string;
+}
+
+/** faol = booked (maybe moved); bekor = cancelled by the Mijoz. */
+export type YozilishHolati = 'faol' | 'bekor';
+/** Set in the admin-panel after the visit time. */
+export const DAVOMATLAR = ['keldi', 'kelmadi'] as const;
+export type Davomat = (typeof DAVOMATLAR)[number];
+
+export interface YozilishDto {
+  id: number;
+  loyihaId: number;
+  loyihaNomi: string;
+  planirovka: { id: number; xonalar: number; maydon: number; blokNomi: string } | null;
+  /** Visit, Tashkent: `YYYY-MM-DD` and `HH:mm`; `at` = the same as an ISO instant. */
+  sana: string;
+  vaqt: string;
+  haftaKuni: number;
+  at: string;
+  holat: YozilishHolati;
+  davomat: Davomat | null;
+  /** Ko'rsatuv manzili (in the asked language): the Loyiha's showing address, else its address. */
+  manzil: string;
+  xarita: { lat: number; lng: number } | null;
+  /** Can still be moved / cancelled: faol, no davomat and the time has not passed. */
+  ozgartirsaBoladi: boolean;
+}
+
+export interface YozilishResponse {
+  yozilish: YozilishDto;
+}
+
+/** GET /api/yozilishlar — own bookings: upcoming first (soonest first), then past ones (newest first). */
+export interface YozilishlarResponse {
+  yozilishlar: YozilishDto[];
+}
+
+/** Admin «Ko'rish kunlari va vaqtlari» (UF-2). Defaults = TZ 2-b. */
+export interface YozilishSozlamalari {
+  /** Showing weekdays, 1 = Monday … 7 = Sunday. */
+  haftaKunlari: number[];
+  /** Slot starts, `HH:mm`, ascending. */
+  vaqtlar: string[];
+  /** Days without showings, `YYYY-MM-DD`. */
+  bayramlar: string[];
+  /** How many days ahead can be booked (today included). */
+  kunlarSoni: number;
+}
+
+/** One row of «Ko'rishga yozilishlar» in the admin-panel. */
+export interface AdminYozilishDto {
+  id: number;
+  arizaId: number;
+  sana: string;
+  vaqt: string;
+  at: string;
+  mijoz: { telegramId: string; name: string; phone: string | null; username: string | null };
+  loyiha: { id: number; nomi: string };
+  /** «A blok · 2 xona, 54 m²» or null. */
+  planirovka: string | null;
+  manba: string;
+  holat: YozilishHolati;
+  davomat: Davomat | null;
+  /** How many times the Mijoz moved it. */
+  kochirildi: number;
+  /** Who set the davomat and when. */
+  belgiladi: { nomi: string; at: string } | null;
+}
+
+/** GET /admin/api/yozilishlar?dan=&gacha= (Tashkent dates, inclusive). */
+export interface AdminYozilishlarResponse {
+  yozilishlar: AdminYozilishDto[];
+}
+
+/** PATCH /admin/api/yozilishlar/:id/davomat. null clears a mistaken mark. */
+export interface AdminDavomatRequest {
+  davomat: Davomat | null;
 }
 
 // ---- Filtrlar va «Xonadon tanlash» kvizi (#10) ----
