@@ -7,6 +7,13 @@ import type { Clock } from '../clock';
 import { arizaHodisasi } from '../hodisa/hodisa';
 import { SHARED_MANBA } from '../mijoz/manba';
 import { getSetting, setSetting } from '../settings/settings';
+import {
+  boshqaDarajalar,
+  issiqMuddat,
+  issiqVazifaniOl,
+  issiqVazifaniQaytar,
+  mijozDarajasi,
+} from '../skoring/skoring';
 import { taklifQilganLines } from '../taklif/taklif';
 import { knownCrmContact, knownPhone } from './legacy';
 import { arizaNote, type ArizaKontekst } from './note';
@@ -72,6 +79,11 @@ export interface ArizaDeps {
   crm: Crm;
   messenger: Messenger;
   log?: { warn(obj: object, msg: string): void; error(obj: object, msg: string): void };
+  /**
+   * Lead skoringi (#18): recomputes the Mijoz's Daraja after the Ariza is
+   * stored; the delivery then writes it as a Bitim tag (issiq → 5-minute call).
+   */
+  skoring?: { arizaOldidan(telegramId: string): Promise<void> };
 }
 
 export interface Arizalar {
@@ -200,6 +212,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       if (phone) await db.query('UPDATE mijoz SET phone = $2 WHERE telegram_id = $1', [input.telegramId, phone]);
       const id = rows[0]!.id;
       await arizaHodisasi(db, id); // analytics (#15)
+      await deps.skoring?.arizaOldidan(input.telegramId);
       await deliver(id);
       return { id, duplicate: false };
     });
@@ -239,14 +252,20 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       }
 
       const turi = ARIZA_TURI[row.tur];
-      await crm.addTags(bitimId, [turi.tag, row.manba, ...row.tags]);
+      // Daraja (#18) is the Mijoz's current one, not the one at creation: a retry never brings back an old tag.
+      const daraja = await mijozDarajasi(db, row.mijoz_id);
+      await crm.addTags(bitimId, [turi.tag, row.manba, ...row.tags, ...(daraja ? [daraja] : [])]);
+      if (daraja) await crm.removeTags(bitimId, boshqaDarajalar(daraja));
       await crm.setManba(bitimId, row.manba);
       if (!row.crm_note_added) {
         await crm.addNote(bitimId, arizaNote(row));
         await db.query('UPDATE ariza SET crm_note_added = true WHERE id = $1', [id]);
       }
       if (!row.crm_task_id) {
-        const dueAt = row.task_due_at ?? (await defaultDueAt());
+        // An issiq Mijoz is called within 5 minutes (setting), and that call is the issiq task.
+        const issiqCall = daraja === 'issiq' && turi.task === 'call' && !row.task_due_at;
+        if (issiqCall) await issiqVazifaniOl(db, row.mijoz_id);
+        const dueAt = row.task_due_at ?? (issiqCall ? await issiqMuddat(db, clock.now()) : await defaultDueAt());
         const task = await crm.createTask({
           bitimId,
           kind: turi.task,
@@ -255,6 +274,21 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           responsibleUserId,
         });
         await db.query('UPDATE ariza SET crm_task_id = $2 WHERE id = $1', [id, task.id]);
+      }
+      if (daraja === 'issiq' && (await issiqVazifaniOl(db, row.mijoz_id))) {
+        // Became issiq with a booking / «Menejer kerak»: their own task is not a 5-minute call.
+        try {
+          await crm.createTask({
+            bitimId,
+            kind: 'call',
+            text: `${TASK_TEXT.call}: Issiq Mijoz — ${[row.name, row.phone].filter(Boolean).join(', ')}`,
+            dueAt: await issiqMuddat(db, clock.now()),
+            responsibleUserId,
+          });
+        } catch (error) {
+          await issiqVazifaniQaytar(db, row.mijoz_id);
+          throw error;
+        }
       }
 
       await db.query(

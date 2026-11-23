@@ -3,6 +3,7 @@ import type pg from 'pg';
 import { toTashkent, type Clock } from '../clock';
 import { kunlikHisobot, kunlikMatn } from '../hisobot/hisobot';
 import { botKirdi } from '../hodisa/hodisa';
+import { DOJIM_STOP_CALLBACK, toxtatDojim } from '../dojim/dojim';
 import { manbaFromStartParam } from '../mijoz/manba';
 import { chooseLang, ensureMijoz, markBotUnblocked, setBotStep, type MijozRecord } from '../mijoz/mijoz';
 import { getSetting, isAdmin, setSetting, type WelcomeContent } from '../settings/settings';
@@ -158,6 +159,11 @@ function bcCtx(ctx: Ctx) {
 async function onCallback(ctx: Ctx, data: string): Promise<BotAction[]> {
   if (data.startsWith('bc:')) {
     return (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) ? onBroadcastCallback(bcCtx(ctx), data) : [];
+  }
+  if (data === DOJIM_STOP_CALLBACK) {
+    await toxtatDojim(ctx.deps.db, ctx.mijoz.telegramId, ctx.now);
+    const t = texts(ctx.mijoz.lang);
+    return [{ type: 'send', chatId: ctx.mijoz.telegramId, text: t.dojimStopped, buttons: [[{ text: t.btnMenu, startapp: '' }]] }];
   }
   const lang = /^lang:(\w+)$/.exec(data)?.[1] as Lang | undefined;
   if (lang && LANGS.includes(lang)) {
