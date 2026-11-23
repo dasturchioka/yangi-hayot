@@ -8,6 +8,8 @@ import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
+import { hisobotJob } from './hisobot/jadval';
+import { davomatHodisasi } from './hodisa/hodisa';
 import { Jobs } from './jobs/jobs';
 import { createDojim } from './dojim/dojim';
 import { createKalkulyator } from './kalkulyator/kalkulyator';
@@ -15,6 +17,7 @@ import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminDojimRoutes } from './routes/admin-dojim';
 import { adminKatalogRoutes } from './routes/admin-katalog';
+import { adminHisobotRoutes } from './routes/admin-hisobot';
 import { adminKvizRoutes } from './routes/admin-kviz';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { adminTaklifRoutes } from './routes/admin-taklif';
@@ -22,7 +25,7 @@ import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { adminKalkulyatorRoutes, kalkulyatorRoutes } from './routes/kalkulyator';
-import { dojimKorishHook, katalogQiziqishHook } from './routes/katalog-qiziqish';
+import { katalogQiziqishHook } from './routes/katalog-qiziqish';
 import { kvizRoutes } from './routes/kviz';
 import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
 import { miniAppRoutes } from './routes/mini-app';
@@ -78,10 +81,12 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log });
   jobs.register('yozilish-crm', () => yozilishlar.syncCrm()); // after ariza-crm-retry: a move waits for its Ariza
   app.decorate('yozilishlar', yozilishlar);
+  yozilishlar.onDavomat((e) => davomatHodisasi(deps.db, e)); // funnel «keldi» (#15/#20)
+  jobs.register('hisobot', hisobotJob(deps)); // 19:30 daily, Monday weekly (#15)
   const dojim = createDojim({ ...deps, log: app.log });
   yozilishlar.onDavomat((e) => dojim.davomat(e));
   jobs.register('dojim', () => dojim.run());
-  const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar, dojim });
+  const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
@@ -103,7 +108,6 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       scope.addHook('preSerialization', katalogQiziqishHook(deps, katalog));
-      scope.addHook('preSerialization', dojimKorishHook(deps, dojim));
       await katalogRoutes(scope, katalog, deps);
     },
     { prefix: '/api/katalog' },
@@ -160,6 +164,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await adminKalkulyatorRoutes(scope, deps);
       await adminDojimRoutes(scope, deps);
       await adminTaklifRoutes(scope, taklif);
+      await adminHisobotRoutes(scope, deps);
     },
     { prefix: '/admin/api' },
   );

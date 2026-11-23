@@ -1,4 +1,3 @@
-import type { Dojim } from '../dojim/dojim';
 import {
   hisobla,
   kalkulyatorXatolari,
@@ -51,13 +50,7 @@ export function hisobIzohi(k: KalkulyatorKirish, n: KalkulyatorNatija): string[]
  * current settings (the client's numbers are never trusted), records each
  * hisob for dojim (#17) and Daraja (#18), and sends a bot_calc Ariza.
  */
-export function createKalkulyator(deps: {
-  db: pg.Pool;
-  clock: Clock;
-  arizalar: Arizalar;
-  /** Dojim (#17): a hisob counts as «hisobladi» (reminder in 24 h without an Ariza). */
-  dojim?: Pick<Dojim, 'faollik'>;
-}) {
+export function createKalkulyator(deps: { db: pg.Pool; clock: Clock; arizalar: Arizalar }) {
   const { db, clock, arizalar } = deps;
 
   async function compute(kirish: KalkulyatorKirish) {
@@ -87,7 +80,6 @@ export function createKalkulyator(deps: {
     async hisob(mijozId: string, kirish: KalkulyatorKirish, planirovkaId?: number): Promise<KalkulyatorNatija> {
       const natija = await compute(kirish);
       await record(mijozId, kirish, natija, planirovkaId, null);
-      await deps.dojim?.faollik(mijozId, planirovkaId ?? null, clock.now());
       return natija;
     },
 

@@ -22,7 +22,7 @@ Hajm: UF-1 2,5 kishi-kun edi, planirovkalar ekrani ~1 kishi-kun. **Bo'shagan haj
 - **a) (tavsiya)** Strategiyada va'da qilingan, lekin TZ'da yo'q funksiyaga yo'naltiramiz: ko'rish oldidan eslatma (S6).
 - b) Shartnoma narxidan chegiramiz.
 
-> **Default:** Shaxmatka Mini App'dan ham, admin'dan ham olib tashlanadi, o'rniga planirovkalar ekrani (S1-a). Bo'shagan hajm hisobdan chiqariladi. Asos: TZ 10-b., 4-band — yangi talab alohida baholanadi; TZ'da eslatma 12-b. bo'yicha hajmdan tashqari.
+> **Qaror (2026-11-23, ADR 0003):** Shaxmatka TZ UF-1 bo'yicha qoladi va Planirovkalar ekrani ham qoladi (gibrid). Hajm o'zgarmaydi.
 
 Javob kerak: **3-kungacha** (dizayn 1–7-kunlar, server 4–10-kunlar).
 
@@ -32,7 +32,7 @@ TZ UF-2: «Rollar: … menejer — xonadon statuslari», UF-1: «status: bo'sh /
 - **a) (tavsiya)** Faqat planirovka darajasida: har bir planirovkada «bo'sh / bron / sotilgan» soni. Menejer sonni o'zgartiradi, o'zgarishlar jurnali saqlanadi (UF-2). Raqam va qavat umuman kiritilmaydi.
 - b) Har bir xonadon admin'da ichki yozuv sifatida qoladi (ichki ID, status, narx), mijozga ko'rsatilmaydi. Excel'ni xonadonlar bo'yicha to'ldirish kerak bo'ladi.
 
-> **Default:** Faqat planirovka darajasida (S2-a): bo'sh / bron / sotilgan soni. Asos: talabdagi «qavat va xonadon raqami kerak emas». TZ'dan qoladi: UF-1 dagi uchta status, UF-2 dagi «Narx va status o'zgarishlari jurnali» va menejer roli.
+> **Qaror (2026-11-23, ADR 0003):** Har bir Xonadon alohida yozuv (qavat, raqam, narx, holat), mijozga ko'rinadi. Planirovka sonlari Xonadonlardan hisoblanadi. Excel Xonadonlar bo'yicha to'ldiriladi.
 
 Javob kerak: **3-kungacha**.
 
@@ -44,7 +44,7 @@ TZ 0.4: narx «xonadon uchun yoki «m² uchun … dan»»; «Narx maydoni majbur
 
 Shuningdek: narx **butun xonadon uchun** (misoldagi kabi «xx so'mdan») ko'rsatiladimi yoki **1 m² uchun** ham?
 
-> **Default:** Admin'da qo'lda kiritiladi, butun xonadon narxi «… so'mdan» (talabdagi misol). 1 m² narxi ko'rsatilmaydi. Maydon bo'sh bo'lsa, TZ 0.4: «Narx so'rov bo'yicha» va ariza tugmasi.
+> **Qaror (ADR 0003):** Bo'sh Xonadonlarning eng kichik narxi (S3-b); Xonadonlarda narx bo'lmasa — Planirovkaning qo'lda kiritilgan narxi; u ham bo'lmasa — «Narx so'rov bo'yicha».
 
 Javob kerak: **3-kungacha**.
 
@@ -181,6 +181,57 @@ Javob kerak: **8-kungacha**.
 5. «Arzonroq avval» saralash tugmasi yo'q: natijalar doim arzonidan boshlab chiqadi.
 
 > **Default:** 1–5 bandlar yuqorida yozilganidek qoladi.
+
+Javob kerak: **15-kungacha**.
+
+### S15. Manba: belgisiz qayta kirish
+TZ 1-b.: «birinchi manba o'zgarmaydi, oxirgisi yangilanadi». Mijoz avval `src_` havolasi bilan kirgan, keyin belgisiz /start bosgan holat TZ'da yo'q.
+
+- **a) (tavsiya)** Oxirgi manba eski belgida qoladi — reklama ta'siri yo'qolmaydi.
+- b) Oxirgi manba «Telegram (to'g'ridan-to'g'ri)» ga o'zgaradi.
+
+> **Default:** a.
+
+Javob kerak: **15-kungacha**.
+
+### S16. Admin-panel: huquqlar va katalog
+1. Menejer o'zgarishlar jurnalini ko'ra oladimi? **Default:** ha (faqat o'qish).
+2. Loyiha, Blok, Planirovkani o'chirish kerakmi? TZ faqat yaratish va tahrirlashni aytadi. **Default:** o'chirish yo'q.
+3. Rasm va chizmalar admin'ga fayl sifatida yuklanadimi? **Default:** havola (URL) bilan kiritiladi; faylni yuklash — o'zgartirish so'rovi.
+4. Excel importi:
+   - Planirovka Blok + xonalar + maydon + nomi bo'yicha topiladi; maydon o'zgarsa — yangi Planirovka.
+   - Faylda yo'q Planirovkalar o'chirilmaydi.
+   - Faylda yangi Blok nomi bo'lsa, Blok yaratiladi.
+   - Menejer import orqali jami va narxni o'zgartira oladi (formada jami — faqat Administrator).
+   - Nomi bitta ustun — RU va UZ uchun bir xil.
+   - Faqat .xlsx va CSV; eski .xls qabul qilinmaydi.
+
+   **Default:** hammasi yuqoridagidek. 4-banddagi Menejer huquqini Administratorga cheklash mumkin.
+
+Javob kerak: **15-kungacha**.
+
+### S17. Ko'rishga yozilish
+1. Yakshanba ko'rsatuv kunimi? TZ 2-b. — cheklovsiz; UI kit yakshanbani kulrang qilgan. **Default:** hamma 7 kun; admin'da o'chiriladi.
+2. «Keldi / kelmadi» belgisi amoCRM bitimiga izoh bo'lib yozilsinmi? **Default:** yo'q (faqat bot bazasi, hisobot va dojim uchun).
+3. Kontakt formasida UI kitdagi «Telegram'dan olish» tugmasi kerakmi? **Default:** yo'q — telefon oxirgi arizadan o'zi to'ldiriladi.
+4. Ish vaqti (vazifa muddati uchun): **Default:** du–sh 9:00–19:00 (M11 bilan tasdiqlanadi).
+
+Javob kerak: **15-kungacha**.
+
+### S18. «Menejer kerak» va AI arizalari
+8-bo'lim jadvalida `bot_ai` va `bot_human` bor. AI-menejer — alohida shartnoma (8-b.). Hozir mijozning matnli xabari faqat menejerlar guruhiga boradi, amoCRM'da Ariza bo'lmaydi.
+
+- **a) (tavsiya)** Zaxira javobga «Menejer bilan bog'lanish» tugmasi qo'shiladi → `bot_human` Ariza, «Bog'lanish» vazifasi. +0,25 kishi-kun.
+- b) Ikkalasi ham AI-menejer shartnomasiga qoladi.
+
+> **Default:** b.
+
+Javob kerak: **15-kungacha**.
+
+### S19. Rassilka va taklif
+1. Mini App'ni ochgan, lekin botni ishga tushirmagan Mijoz auditoriyaga kiradimi? Telegram unga xabar yubormaydi, hisobotda «botni bloklagan» bo'ladi. **Default:** kiradi, birinchi rassilkadan keyin chiqariladi.
+2. Rassilka mediasi admin'da havola yoki Telegram file_id bilan kiritiladi (botda — oddiy yuborish). **Default:** shunday.
+3. Taklif ekranidagi bonus matni (UI kitdan) — M15 kelguncha vaqtinchalik va faqat kodda o'zgaradi. Admin'dan tahrirlash kerakmi? **Default:** yo'q.
 
 Javob kerak: **15-kungacha**.
 

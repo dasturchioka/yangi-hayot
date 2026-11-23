@@ -3,6 +3,7 @@ import type pg from 'pg';
 import type { MessageButton, Messenger, OutgoingMessage } from '../adapters/messenger/messenger';
 import { fill, texts } from '../bot/texts';
 import { toTashkent, type Clock } from '../clock';
+import { belgilaDojim } from '../hodisa/hodisa';
 import { getSetting } from '../settings/settings';
 import type { DavomatHodisa } from '../yozilish/yozilish';
 
@@ -43,8 +44,6 @@ export interface DojimDeps {
 }
 
 export interface Dojim {
-  /** The Mijoz viewed a Planirovka or calculated (planirovkaId null: no Planirovka in the calculator). */
-  faollik(mijozId: string, planirovkaId: number | null, at: Date): Promise<void>;
   /** `yozilishlar.onDavomat` listener: plans «kelmadi» / «keldi», cancels the plan of a corrected mark. */
   davomat(e: DavomatHodisa): Promise<void>;
   /** «Yubormang»: no dojim for this Mijoz ever again. */
@@ -54,7 +53,7 @@ export interface Dojim {
    * «dojimdan kelgan yozilishlar»). Ignored unless that dojim was sent to this Mijoz.
    */
   yozilishgaBogla(mijozId: string, yozilishId: number, dojimId: number): Promise<void>;
-  /** Job: sends the due reminders. */
+  /** Job: plans «ko'rdi/hisobladi» reminders from the facts, then sends the due ones. */
   run(): Promise<void>;
 }
 
@@ -87,15 +86,6 @@ export async function toxtatDojim(db: pg.Pool, mijozId: string, at: Date): Promi
   );
 }
 
-/** #15 weekly report: ko'rishga yozilishlar made from a dojim button, created in [dan, gacha). */
-export async function dojimdanYozilishlar(db: pg.Pool, dan: Date, gacha: Date): Promise<number> {
-  const { rows } = await db.query<{ n: number }>(
-    `SELECT count(*)::int AS n FROM yozilish WHERE dojim_id IS NOT NULL AND created_at >= $1 AND created_at < $2`,
-    [dan, gacha],
-  );
-  return rows[0]!.n;
-}
-
 interface DueRow {
   id: number;
   mijoz_id: string;
@@ -123,6 +113,37 @@ type Reja = { ok: true; message: Omit<OutgoingMessage, 'chatId'> } | { ok: false
 
 export function createDojim(deps: DojimDeps): Dojim {
   const { db, clock, messenger } = deps;
+
+  /**
+   * «Ko'rdi yoki hisobladi»: the facts are #15's `hodisa` (planirovka_korildi,
+   * one row per opening) and #12's `kalkulyator_hisob`. 24 h after a Mijoz's
+   * latest such activity a `korish` dojim is planned for the Planirovka seen
+   * last — once per activity (a newer activity plans again; the 7-day rule
+   * decides whether it goes). Activities older than the stale window are ignored.
+   */
+  async function rejalaKorish(now: Date) {
+    const gacha = new Date(now.getTime() - KORISH_KUTISH_MS);
+    const dan = new Date(gacha.getTime() - ESKIRISH_MS);
+    await db.query(
+      `WITH faollik AS (
+         SELECT mijoz_id, planirovka_id, at FROM hodisa WHERE tur = 'planirovka_korildi' AND at > $1
+         UNION ALL
+         SELECT mijoz_id, planirovka_id, created_at FROM kalkulyator_hisob WHERE created_at > $1
+       ), oxirgi AS (
+         SELECT mijoz_id, max(at) AS at,
+                (array_agg(planirovka_id ORDER BY at DESC) FILTER (WHERE planirovka_id IS NOT NULL))[1] AS planirovka_id
+           FROM faollik GROUP BY mijoz_id
+       )
+       INSERT INTO dojim (mijoz_id, ssenariy, planirovka_id, hodisa_at, due_at, created_at)
+       SELECT o.mijoz_id, 'korish', o.planirovka_id, o.at, o.at + interval '24 hours', $3
+         FROM oxirgi o JOIN mijoz m ON m.telegram_id = o.mijoz_id
+        WHERE o.at <= $2 AND m.dojim_toxtatildi_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM dojim d WHERE d.mijoz_id = o.mijoz_id AND d.ssenariy = 'korish' AND d.hodisa_at >= o.at)
+       ON CONFLICT (mijoz_id) WHERE ssenariy = 'korish' AND holat = 'kutilmoqda'
+       DO UPDATE SET planirovka_id = EXCLUDED.planirovka_id, hodisa_at = EXCLUDED.hodisa_at, due_at = EXCLUDED.due_at`,
+      [dan, gacha, now],
+    );
+  }
 
   async function otkaz(id: number, sabab: string, now: Date) {
     await db.query(`UPDATE dojim SET holat = 'otkazildi', sabab = $2, hal_at = $3 WHERE id = $1`, [id, sabab, now]);
@@ -285,17 +306,6 @@ export function createDojim(deps: DojimDeps): Dojim {
   }
 
   return {
-    async faollik(mijozId, planirovkaId, at) {
-      await db.query(
-        `INSERT INTO dojim (mijoz_id, ssenariy, planirovka_id, hodisa_at, due_at, created_at)
-         SELECT telegram_id, 'korish', (SELECT id FROM planirovka WHERE id = $2), $3, $4, $3 FROM mijoz WHERE telegram_id = $1 AND dojim_toxtatildi_at IS NULL
-         ON CONFLICT (mijoz_id) WHERE ssenariy = 'korish' AND holat = 'kutilmoqda'
-         DO UPDATE SET planirovka_id = COALESCE(EXCLUDED.planirovka_id, dojim.planirovka_id),
-                       hodisa_at = EXCLUDED.hodisa_at, due_at = EXCLUDED.due_at`,
-        [mijozId, planirovkaId, at, new Date(at.getTime() + KORISH_KUTISH_MS)],
-      );
-    },
-
     async davomat(e) {
       await db.query(
         `UPDATE dojim SET holat = 'otkazildi', sabab = 'ozgardi', hal_at = $2
@@ -316,16 +326,18 @@ export function createDojim(deps: DojimDeps): Dojim {
     },
 
     async yozilishgaBogla(mijozId, yozilishId, dojimId) {
-      await db.query(
+      const bogla = await db.query(
         `UPDATE yozilish y SET dojim_id = d.id FROM dojim d
           WHERE y.id = $1 AND y.mijoz_id = $2 AND y.dojim_id IS NULL
             AND d.id = $3 AND d.mijoz_id = $2 AND d.holat = 'yuborildi'`,
         [yozilishId, mijozId, dojimId],
       );
+      if (bogla.rowCount) await belgilaDojim(db, yozilishId); // #15: «Dojimdan kelgan yozilishlar»
     },
 
     async run() {
       const now = clock.now();
+      await rejalaKorish(now);
       const soat = toTashkent(now).time;
       if (soat < YUBORISH_SOATLARI.dan || soat >= YUBORISH_SOATLARI.gacha) return;
       const { rows } = await db.query<DueRow>(

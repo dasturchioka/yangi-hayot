@@ -2,7 +2,7 @@ import { parseDojimParam } from '@yh/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { MessageButton, OutgoingMessage } from '../src/adapters/messenger/messenger';
 import { addDays, tashkentInstant, toTashkent } from '../src/clock';
-import { dojimdanYozilishlar } from '../src/dojim/dojim';
+import { dojimYozilishlari } from '../src/hodisa/hodisa';
 import { adminLogin } from './support/admin';
 import { botEvent, sends } from './support/bot';
 import { blok, seedLoyiha } from './support/katalog';
@@ -276,7 +276,7 @@ describe('dojim → ko\'rishga yozilish (hisobot)', () => {
     await yozil(aziz, loyihaId, '16:00', { planirovkaId, dojimId });
 
     const kecha = new Date(t.clock.now().getTime() - 86_400_000);
-    expect(await dojimdanYozilishlar(t.db, kecha, new Date(t.clock.now().getTime() + 1))).toBe(1);
+    expect(await dojimYozilishlari(t.db, kecha, new Date(t.clock.now().getTime() + 1))).toBe(1);
   });
 });
 

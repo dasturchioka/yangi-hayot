@@ -14,8 +14,8 @@ import type { Migration } from './index';
  * - `mijoz.dojim_toxtatildi_at`: «Yubormang» pressed; nothing is sent after it.
  * - `yozilish.dojim_id`: the booking was made from that dojim's button (#15 report).
  */
-export const m0013_t17_dojim: Migration = {
-  name: '0013_t17_dojim',
+export const m0014_t17_dojim: Migration = {
+  name: '0014_t17_dojim',
   sql: `
     ALTER TABLE mijoz ADD COLUMN dojim_toxtatildi_at timestamptz;
 
