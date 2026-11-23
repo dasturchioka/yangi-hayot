@@ -673,9 +673,162 @@ input.short {
   color: var(--yh-status-sold-fg);
 }
 
-.amal-fields {
+/* #24: one row = one Xonadon */
+.import-stats {
+  grid-template-columns: repeat(4, minmax(0, 160px));
+}
+
+.import-stats .stat {
+  align-content: start;
+}
+
+.import-missing td:last-child,
+.import-missing th:last-child {
+  width: 60%;
+}
+
+.import-filter {
+  padding: var(--yh-space-4) var(--yh-space-20) var(--yh-space-12);
+  overflow-x: auto;
+}
+
+.import-filter .tabs {
+  display: inline-flex;
+}
+
+.import-filter .tab {
+  white-space: nowrap;
+}
+
+.tab-count {
+  margin-left: var(--yh-space-4);
+  color: var(--yh-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab.active .tab-count {
+  color: var(--yh-primary);
+}
+
+.import-rows td {
+  vertical-align: top;
+}
+
+.import-rows .strong {
+  font-weight: 600;
+}
+
+.import-rows .changed {
+  color: var(--yh-primary);
+  font-weight: 600;
+}
+
+.import-rows .oldin {
+  position: relative;
   display: block;
-  margin-top: var(--yh-space-4);
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+  text-decoration-color: color-mix(in srgb, var(--yh-muted) 70%, transparent);
+}
+
+.import-rows .tag {
+  margin-left: var(--yh-space-8);
+  padding: 0 var(--yh-space-8);
+}
+
+.import-rows .arrow {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 var(--yh-space-4);
+  color: var(--yh-muted);
+}
+
+.badge.holat-bosh {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+
+.badge.holat-bron {
+  background: var(--yh-status-reserved-bg);
+  color: var(--yh-status-reserved-fg);
+}
+
+.badge.holat-sotilgan {
+  background: var(--yh-status-sold-bg);
+  color: var(--yh-status-sold-fg);
+}
+
+.c-qavat-inline {
+  display: none;
+  font-weight: 400;
+}
+
+/* Phone: each Xonadon row becomes a small card, so the change (narx, holat) is visible without scrolling. */
+@media (max-width: 600px) {
+  .table.import-changes thead {
+    display: none;
+  }
+  .table.import-changes,
+  .table.import-changes tbody {
+    display: block;
+  }
+  .table.import-changes tr {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--yh-space-8) var(--yh-space-12);
+    padding: var(--yh-space-12) var(--yh-space-20);
+    border-bottom: 1px solid var(--yh-line);
+  }
+  .table.import-changes td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .table.import-changes td.num {
+    text-align: left;
+  }
+  .table.import-changes .c-qator,
+  .table.import-changes .c-qavat {
+    display: none;
+  }
+  .table.import-changes .c-qavat-inline {
+    display: inline;
+  }
+  .table.import-changes .c-pl {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .table.import-changes .c-amal {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .table.import-changes .c-narx {
+    grid-row: 3;
+  }
+  .table.import-changes .c-holat {
+    grid-row: 3;
+    justify-self: end;
+  }
+}
+
+.import-more {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-12) var(--yh-space-20);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .card.success {
@@ -730,6 +883,11 @@ input.short {
     grid-template-columns: 1fr;
   }
   .import-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--yh-space-12);
+  }
+  .import .toolbar {
+    flex-wrap: wrap;
     gap: var(--yh-space-12);
   }
 }
