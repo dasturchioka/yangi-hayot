@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppDeps } from '../app';
 import { handleBotEvent } from '../bot/bot';
+import type { Skoring } from '../skoring/skoring';
 
 const BotUserSchema = z.object({
   id: z.number().int().positive(),
@@ -39,7 +40,7 @@ function sameSecret(a: string, b: string): boolean {
  * Internal API for apps/bot. Mounted under /internal/bot; every request must
  * carry `Authorization: Bearer <BOT_API_SECRET>`. Not for the Mini App.
  */
-export async function botInternalRoutes(app: FastifyInstance, deps: AppDeps) {
+export async function botInternalRoutes(app: FastifyInstance, deps: AppDeps & { skoring: Skoring }) {
   app.addHook('preHandler', async (req, reply) => {
     const header = req.headers.authorization ?? '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -52,6 +53,8 @@ export async function botInternalRoutes(app: FastifyInstance, deps: AppDeps) {
     const parsed = BotEventRequestSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
     const actions = await handleBotEvent(deps, parsed.data.user, parsed.data.event);
+    // /start of a known Mijoz on a new day is a re-entry (UF-4).
+    if (parsed.data.event.type === 'start') await deps.skoring.kirish(String(parsed.data.user.id));
     return { actions };
   });
 }

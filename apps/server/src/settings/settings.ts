@@ -1,14 +1,18 @@
 import {
   DEFAULT_KALKULYATOR,
+  DEFAULT_SKORING,
   type BizHaqimizdaKontent,
   type BotMedia,
+  type DojimSozlamalari,
   type ByudjetOraligi,
   type KalkulyatorSozlamalari,
   type KontaktlarKontent,
   type Lang,
+  type SkoringQoidalari,
   type SotibOlishKontent,
   type YozilishSozlamalari,
 } from '@yh/shared';
+import { DEFAULT_DOJIM } from '../dojim/defaults';
 import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
 import type { WorkingHours } from '../ariza/working-hours';
@@ -46,6 +50,15 @@ export interface Settings {
   kvizByudjet: ByudjetOraligi[] | null;
   /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
   kalkulyator: KalkulyatorSozlamalari;
+  /**
+   * Where the 19:30 daily and the Monday weekly report go (#15, TZ 4-b.):
+   * Telegram chat ids (the head of sales, a group). Empty = the managers group.
+   */
+  hisobot: { qabulQiluvchilar: string[] };
+  /** Ball qoidalari of the lead skoringi (UF-4, #18); the Administrator edits them. */
+  skoring: SkoringQoidalari;
+  /** Dojim texts RU/UZ and on/off per ssenariy (UF-3, #17; admin «Dojim»). */
+  dojim: DojimSozlamalari;
 }
 
 const DEFAULTS: Settings = {
@@ -67,6 +80,9 @@ const DEFAULTS: Settings = {
   },
   kvizByudjet: null,
   kalkulyator: DEFAULT_KALKULYATOR,
+  hisobot: { qabulQiluvchilar: [] },
+  skoring: DEFAULT_SKORING,
+  dojim: DEFAULT_DOJIM,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {

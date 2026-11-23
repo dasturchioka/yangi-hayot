@@ -120,6 +120,14 @@ describe('AmoCrm adapter', () => {
     ]);
   });
 
+  it('removes tags (another Daraja) from a Bitim', async () => {
+    const { requests, fetchImpl } = fakeAmo(() => ({ status: 200, json: {} }));
+    await amo(fetchImpl).removeTags('55', ['iliq', 'sovuq']);
+    expect(requests.map((r) => [r.method, r.path, r.body])).toEqual([
+      ['PATCH', '/api/v4/leads', [{ id: 55, tags_to_delete: [{ name: 'iliq' }, { name: 'sovuq' }] }]],
+    ]);
+  });
+
   it('moves a booking: new task deadline and Bitim name; cancels: completes the task with a result', async () => {
     const { requests, fetchImpl } = fakeAmo(() => ({ status: 200, json: {} }));
     const crm = amo(fetchImpl);

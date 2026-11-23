@@ -5,12 +5,13 @@ import type { AppDeps } from '../app';
 import { requireMiniAppUser } from '../auth/mini-app-auth';
 import { ensureMijoz } from '../mijoz/mijoz';
 import { taklifVisit, type Taklif } from '../taklif/taklif';
+import type { Skoring } from '../skoring/skoring';
 import type { Ulashish } from '../ulashish/ulashish';
 
 const UlashishBody = z.object({ planirovkaId: z.number().int().positive().max(2_147_483_647) });
 
 /** Mini App API: every route here requires valid initData. Mounted under /api. */
-export async function miniAppRoutes(app: FastifyInstance, deps: AppDeps & { ulashish: Ulashish; taklif: Taklif }) {
+export async function miniAppRoutes(app: FastifyInstance, deps: AppDeps & { ulashish: Ulashish; taklif: Taklif; skoring: Skoring }) {
   requireMiniAppUser(app, { botToken: deps.config.botToken, clock: deps.clock });
 
   /**
@@ -29,6 +30,7 @@ export async function miniAppRoutes(app: FastifyInstance, deps: AppDeps & { ulas
       ulashishId: visit.ulashishId,
       taklifQilganId: taklif?.taklifQilganId,
     });
+    await deps.skoring.kirish(m.telegramId); // a Mini App launch on a new day is a re-entry (UF-4)
     return {
       mijoz: { telegramId: m.telegramId, name: m.name, lang: m.lang },
       manba: { first: m.firstManba, last: m.lastManba },

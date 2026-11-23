@@ -7,6 +7,7 @@ import type {
 } from '@yh/shared';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { adminApi, errorText } from './api';
+import { DarajaChip } from './Skoring';
 import './yozilishlar.css';
 
 /** Today in Tashkent, `YYYY-MM-DD` (the server counts days the same way). */
@@ -189,7 +190,10 @@ function Row({ r, today, onChange }: { r: AdminYozilishDto; today: string; onCha
     <tr className={bekor ? 'yz-row is-bekor' : 'yz-row'} data-davomat={r.davomat ?? undefined}>
       <td className="yz-time">{r.vaqt}</td>
       <td>
-        <span className="yz-name">{r.mijoz.name}</span>
+        <span className="yz-name">
+          {r.mijoz.name}
+          {r.daraja && <DarajaChip daraja={r.daraja} inline />}
+        </span>
         <span className="yz-sub tabular">
           {formatPhone(r.mijoz.phone)}
           {r.mijoz.username ? ` · @${r.mijoz.username}` : ''}

@@ -24,6 +24,15 @@ describe('RecordingCrm', () => {
     expect(crm.callsOf('addTags')).toEqual([[bitim.id, ['bot_form']]]);
   });
 
+  it('removes tags from a Bitim', async () => {
+    const crm = new RecordingCrm();
+    const contact = await crm.createContact({ name: 'Aziz' });
+    const bitim = await crm.createBitim({ contactId: contact.id, name: 'Bitim' });
+    await crm.addTags(bitim.id, ['bot_form', 'iliq']);
+    await crm.removeTags(bitim.id, ['iliq', 'sovuq']);
+    expect(crm.bitimlar[0]!.tags).toEqual(['bot_form']);
+  });
+
   it('throws CrmUnavailableError while unavailable, records the attempt, and recovers', async () => {
     const crm = new RecordingCrm();
     crm.fail('unavailable');

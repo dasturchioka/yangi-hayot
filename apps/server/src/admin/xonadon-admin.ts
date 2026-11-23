@@ -1,5 +1,6 @@
 import type { AdminBlokXonadonlarResponse, AdminXonadonDto, AdminXonadonInput, XonadonHolati } from '@yh/shared';
 import type pg from 'pg';
+import { sevimliBandBoldi } from '../dojim/dojim';
 import { farq, yozJurnal, type Muallif } from './jurnal';
 import { blokOf, KatalogAdminError, planirovkalarOfBlok, tx } from './katalog-admin';
 
@@ -73,13 +74,11 @@ async function boshKuzat<T>(c: pg.PoolClient, at: Date, planirovkaIds: number[],
   const oldin = await Promise.all(ids.map((id) => boshOf(c, id)));
   const out = await write();
   for (const [i, id] of ids.entries()) {
-    if (oldin[i]! > 0 && (await boshOf(c, id)) === 0) await planirovkaBoshTugadi(c, id, at);
+    if (oldin[i]! > 0 && (await boshOf(c, id)) === 0) await sevimliBandBoldi(c, id, at);
   }
   return out;
 }
 
-/** Hook point for the dojim (#17 `sevimliBandBoldi`). */
-async function planirovkaBoshTugadi(_c: pg.PoolClient, _planirovkaId: number, _at: Date): Promise<void> {}
 
 async function checkPlanirovka(c: pg.PoolClient, blokId: number, planirovkaId: number) {
   const { rowCount } = await c.query('SELECT 1 FROM planirovka WHERE id = $1 AND blok_id = $2', [planirovkaId, blokId]);

@@ -8,6 +8,7 @@ import { KalkulyatorKirishError, type Kalkulyator } from '../kalkulyator/kalkuly
 import { manbaFromStartParam } from '../mijoz/manba';
 import { ensureMijoz } from '../mijoz/mijoz';
 import { getSetting, setSetting } from '../settings/settings';
+import type { Skoring } from '../skoring/skoring';
 
 const Foiz = z.number().min(0).max(100);
 const Som = z.number().int().min(0).max(1e13);
@@ -63,7 +64,7 @@ function kirishXatosi(reply: FastifyReply, error: unknown) {
 /** Mini App (initData scope): settings, «hisobladi» and «Hisobni menejerga yuborish». */
 export async function kalkulyatorRoutes(
   app: FastifyInstance,
-  deps: Pick<AppDeps, 'db' | 'clock'> & { kalkulyator: Kalkulyator },
+  deps: Pick<AppDeps, 'db' | 'clock'> & { kalkulyator: Kalkulyator; skoring: Skoring },
 ) {
   app.get('/kalkulyator', async (): Promise<KalkulyatorResponse> => ({
     sozlama: await getSetting(deps.db, 'kalkulyator'),
@@ -77,6 +78,7 @@ export async function kalkulyatorRoutes(
     });
     try {
       await deps.kalkulyator.hisob(mijoz.telegramId, body.data.kirish, body.data.planirovkaId);
+      await deps.skoring.harakat(mijoz.telegramId); // «hisobladi» counts for the Daraja (UF-4)
       return reply.code(204).send();
     } catch (error) {
       return kirishXatosi(reply, error);

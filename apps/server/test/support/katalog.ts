@@ -27,3 +27,13 @@ export function blok(nomi: string, planirovkalar: Partial<PlanirovkaInput>[]): B
 export function planirovka(p: Partial<PlanirovkaInput> = {}): PlanirovkaInput {
   return { xonalar: 2, maydon: 54, bosh: 1, ...p };
 }
+
+/** Id of one Xonadon of the Planirovka in that holat (lowest raqam), to change it through the admin API. */
+export async function xonadonOf(db: pg.Pool, planirovkaId: number, holat: 'bosh' | 'bron' | 'sotilgan'): Promise<number> {
+  const { rows } = await db.query<{ id: number }>(
+    'SELECT id FROM xonadon WHERE planirovka_id = $1 AND holat = $2 ORDER BY raqam LIMIT 1',
+    [planirovkaId, holat],
+  );
+  if (!rows[0]) throw new Error(`no ${holat} Xonadon in Planirovka ${planirovkaId}`);
+  return rows[0].id;
+}

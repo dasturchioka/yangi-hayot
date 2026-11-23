@@ -176,6 +176,13 @@ export class AmoCrm implements Crm {
     ]);
   }
 
+  async removeTags(bitimId: string, tags: string[]): Promise<void> {
+    if (tags.length === 0) return;
+    await this.#request('PATCH', '/api/v4/leads', [
+      { id: Number(bitimId), tags_to_delete: tags.map((name) => ({ name: name.slice(0, 255) })) },
+    ]);
+  }
+
   async setManba(bitimId: string, manba: string): Promise<void> {
     const fieldId = this.#c.manbaFieldId;
     if (!fieldId) return;

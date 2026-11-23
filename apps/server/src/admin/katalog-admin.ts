@@ -8,6 +8,7 @@ import type {
   LokalDto,
 } from '@yh/shared';
 import type pg from 'pg';
+import { sevimliBandBoldi } from '../dojim/dojim';
 import { planirovkaHolati } from '../katalog/katalog';
 import { moslashtirSonlar } from '../xonadon/joylash';
 import { farq, yozJurnal, type Muallif } from './jurnal';
@@ -532,6 +533,8 @@ async function changePlanirovkaIn(
   const d = farq(planirovkaFields(before), planirovkaFields(after));
   if (!d) return before;
   await c.query('UPDATE planirovka SET updated_at = $1 WHERE id = $2', [by.at, id]);
+  // Every bo'sh change of the Planirovka row path (count import) passes here: dojim «sevimli band bo'ldi» (#17).
+  if (before.bosh > 0 && after.bosh === 0) await sevimliBandBoldi(c, id, by.at);
   const where = await blokOf(c, row.blok_id);
   await yozJurnal(c, by, {
     obyekt: 'planirovka',

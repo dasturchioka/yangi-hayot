@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ArizaKontekstError, ArizaRateLimitError } from '../ariza/ariza';
 import { normalizePhone } from '../ariza/phone';
 import type { Clock } from '../clock';
+import type { Dojim } from '../dojim/dojim';
 import { manbaFromStartParam } from '../mijoz/manba';
 import { ensureMijoz } from '../mijoz/mijoz';
 import { getSetting } from '../settings/settings';
@@ -27,6 +28,8 @@ const CreateBody = z.object({
   vaqt: Vaqt,
   name: z.string().trim().min(1).max(100),
   phone: z.string().max(40),
+  /** The dojim whose button opened this Mini App launch (#17): the booking counts as «dojimdan». */
+  dojimId: Id.optional(),
 });
 const KochirishBody = z.object({ sana: Sana, vaqt: Vaqt });
 const IdParams = z.object({ id: z.coerce.number().int().positive().max(2_147_483_647) });
@@ -45,7 +48,7 @@ export function yozilishError(reply: FastifyReply, error: unknown) {
 /** Mini App: «Ko'rishga yozilish» (TZ 2-b.). Mounted under /api inside an initData scope. */
 export async function yozilishRoutes(
   app: FastifyInstance,
-  deps: { db: pg.Pool; clock: Clock; yozilishlar: Yozilishlar },
+  deps: { db: pg.Pool; clock: Clock; yozilishlar: Yozilishlar; dojim?: Pick<Dojim, 'yozilishgaBogla'> },
 ) {
   const { yozilishlar } = deps;
   const lang = (q: unknown): Lang => LangQuery.safeParse(q).data?.lang ?? 'uz';
@@ -63,7 +66,9 @@ export async function yozilishRoutes(
       manba: manbaFromStartParam(req.startParam),
     });
     try {
-      const { id, duplicate } = await yozilishlar.create({ ...body.data, telegramId: mijoz.telegramId, phone });
+      const { dojimId, ...input } = body.data;
+      const { id, duplicate } = await yozilishlar.create({ ...input, telegramId: mijoz.telegramId, phone });
+      if (dojimId) await deps.dojim?.yozilishgaBogla(mijoz.telegramId, id, dojimId);
       const res: YozilishResponse = { yozilish: (await yozilishlar.get(mijoz.telegramId, id, lang(req.query)))! };
       return reply.code(duplicate ? 200 : 201).send(res);
     } catch (error) {
