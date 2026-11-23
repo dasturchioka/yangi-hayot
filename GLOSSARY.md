@@ -54,6 +54,14 @@ _Avoid_: Lid, zayavka, so'rov
 amoCRM'dagi sotuv kartochkasi; bitta Mijozga botdan ko'pi bilan bitta ochiq Bitim.
 _Avoid_: Sdelka, deal, lid
 
+**Rassilka**:
+Administrator botdagi /broadcast yoki admin-paneldan auditoriyaga (hammasi, RU, UZ, Toshkentga qiziqish, Navoiyga qiziqish) yuboradigan bitta xabar: matn, ixtiyoriy foto/video va bitta tugma. Botni bloklagan Mijozlarga bormaydi.
+_Avoid_: Broadcast, mailing, xabarnoma
+
+**Shaharga qiziqish**:
+Mijoz shahar Loyihalarini ochgan, kvizda shu shaharni tanlagan yoki uning Loyihasiga Ariza qoldirgan; bitta Mijoz ikkala shaharga ham qiziqishi mumkin.
+_Avoid_: Segment, shahar tanlovi
+
 **Daraja**:
 Mijozning xaridga tayyorligi bahosi: issiq, iliq yoki sovuq. Mijozga tegishli; Bitim uni faqat nusxa sifatida ko'rsatadi.
 _Avoid_: Skor, lid turi

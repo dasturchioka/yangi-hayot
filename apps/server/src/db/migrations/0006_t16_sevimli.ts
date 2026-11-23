@@ -9,8 +9,8 @@ import type { Migration } from './index';
  * - `mijoz.last_ulashish_id`: the share link that last brought this Mijoz in
  *   (set together with last Manba «mijoz ulashdi»).
  */
-export const m0004_t16_sevimli: Migration = {
-  name: '0004_t16_sevimli',
+export const m0006_t16_sevimli: Migration = {
+  name: '0006_t16_sevimli',
   sql: `
     CREATE TABLE sevimli (
       mijoz_id      bigint  NOT NULL REFERENCES mijoz (telegram_id) ON DELETE CASCADE,
