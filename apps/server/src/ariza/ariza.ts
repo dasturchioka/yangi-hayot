@@ -35,6 +35,8 @@ export interface NewAriza {
   taskDueAt?: Date;
   /** Raw data kept with the Ariza (for reports); not sent to the CRM. */
   payload?: unknown;
+  /** Name of the Bitim if one has to be created (booking: «Ko'rish: …»). Default: «<ism> — <loyiha>». */
+  bitimNomi?: string;
 }
 
 export interface CreatedAriza {
@@ -80,7 +82,19 @@ export interface Arizalar {
   /** The Mijoz's own Arizalar, newest first. */
   ofMijoz(telegramId: string): Promise<ArizaDto[]>;
   /** CRM IDs of a delivered Ariza (booking reschedule / cancel need the Bitim and task). */
-  crmIds(id: number): Promise<{ contactId: string | null; bitimId: string | null; taskId: string | null } | null>;
+  crmIds(id: number): Promise<{
+    contactId: string | null;
+    bitimId: string | null;
+    taskId: string | null;
+    /** True when this Ariza created the Bitim (not added to an open one). */
+    bitimCreated: boolean;
+    status: 'pending' | 'sent' | 'failed';
+  } | null>;
+  /**
+   * A moved booking: the task deadline and the new-Bitim name used by a delivery
+   * that has not happened yet. Already delivered tasks are moved by the caller.
+   */
+  setTaskDue(id: number, dueAt: Date, bitimNomi?: string): Promise<void>;
   /** Job: retries every Ariza whose next attempt is due. */
   retryDue(): Promise<void>;
 }
@@ -98,6 +112,7 @@ interface Row {
   izoh: string[];
   tags: string[];
   task_due_at: Date | null;
+  crm_bitim_nomi: string | null;
   created_at: Date;
   crm_contact_id: string | null;
   crm_bitim_id: string | null;
@@ -151,8 +166,8 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
 
       const { rows } = await db.query<{ id: number }>(
         `INSERT INTO ariza (mijoz_id, tur, name, phone, lang, first_manba, manba, loyiha_id, planirovka_id,
-                            kontekst, izoh, tags, task_due_at, payload, created_at, crm_next_attempt_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                            kontekst, izoh, tags, task_due_at, payload, created_at, crm_next_attempt_at, crm_bitim_nomi)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
          RETURNING id`,
         [
           input.telegramId,
@@ -172,6 +187,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           now,
           // A lease: if the process dies before the attempt below, the retry job picks it up.
           new Date(now.getTime() + CRM_RETRY_EVERY_MS),
+          input.bitimNomi ?? null,
         ],
       );
       if (phone) await db.query('UPDATE mijoz SET phone = $2 WHERE telegram_id = $1', [input.telegramId, phone]);
@@ -206,12 +222,12 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
           open ??
           (await crm.createBitim({
             contactId,
-            name: bitimName(row),
+            name: row.crm_bitim_nomi ?? bitimName(row),
             responsibleUserId,
           }));
         bitimId = bitim.id;
         responsibleUserId = bitim.responsibleUserId ?? responsibleUserId;
-        await db.query('UPDATE ariza SET crm_bitim_id = $2 WHERE id = $1', [id, bitimId]);
+        await db.query('UPDATE ariza SET crm_bitim_id = $2, crm_bitim_created = $3 WHERE id = $1', [id, bitimId, !open]);
       }
 
       const turi = ARIZA_TURI[row.tur];
@@ -321,8 +337,9 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       created_at: Date;
       loyiha_id: number | null;
       planirovka_id: number | null;
+      loyiha_nomi: string | null;
     }>(
-      `SELECT id, tur, created_at, loyiha_id, planirovka_id FROM ariza
+      `SELECT id, tur, created_at, loyiha_id, planirovka_id, kontekst->'loyiha'->>'nomi' AS loyiha_nomi FROM ariza
         WHERE mijoz_id = $1 ORDER BY created_at DESC, id DESC`,
       [telegramId],
     );
@@ -332,19 +349,39 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       createdAt: r.created_at.toISOString(),
       loyihaId: r.loyiha_id,
       planirovkaId: r.planirovka_id,
+      loyihaNomi: r.loyiha_nomi,
     }));
   }
 
   async function crmIds(id: number) {
-    const { rows } = await db.query<{ crm_contact_id: string | null; crm_bitim_id: string | null; crm_task_id: string | null }>(
-      'SELECT crm_contact_id, crm_bitim_id, crm_task_id FROM ariza WHERE id = $1',
-      [id],
-    );
+    const { rows } = await db.query<{
+      crm_contact_id: string | null;
+      crm_bitim_id: string | null;
+      crm_task_id: string | null;
+      crm_bitim_created: boolean;
+      crm_status: 'pending' | 'sent' | 'failed';
+    }>('SELECT crm_contact_id, crm_bitim_id, crm_task_id, crm_bitim_created, crm_status FROM ariza WHERE id = $1', [id]);
     const r = rows[0];
-    return r ? { contactId: r.crm_contact_id, bitimId: r.crm_bitim_id, taskId: r.crm_task_id } : null;
+    return r
+      ? {
+          contactId: r.crm_contact_id,
+          bitimId: r.crm_bitim_id,
+          taskId: r.crm_task_id,
+          bitimCreated: r.crm_bitim_created,
+          status: r.crm_status,
+        }
+      : null;
   }
 
-  return { create, ofMijoz, crmIds, retryDue };
+  async function setTaskDue(id: number, dueAt: Date, bitimNomi?: string): Promise<void> {
+    await db.query('UPDATE ariza SET task_due_at = $2, crm_bitim_nomi = COALESCE($3, crm_bitim_nomi) WHERE id = $1', [
+      id,
+      dueAt,
+      bitimNomi ?? null,
+    ]);
+  }
+
+  return { create, ofMijoz, crmIds, setTaskDue, retryDue };
 }
 
 /** «mijoz ulashdi»: who shared the link that brought this Mijoz (#16), for the note. */

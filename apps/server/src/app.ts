@@ -21,6 +21,8 @@ import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
 import { yozilishRoutes } from './routes/yozilish';
+import { adminYozilishRoutes } from './routes/admin-yozilish';
+import { createYozilishlar, type Yozilishlar } from './yozilish/yozilish';
 import { createSevimlilar } from './sevimlilar/sevimlilar';
 import { createUlashish } from './ulashish/ulashish';
 
@@ -45,6 +47,8 @@ declare module 'fastify' {
     jobs: Jobs;
     /** Ariza module: every entry point (form, quiz, booking, calculator, AI) creates Arizalar here. */
     arizalar: Arizalar;
+    /** Ko'rishga yozilish (#11): `onDavomat` is the hook for dojim (#17) and the funnel (#20). */
+    yozilishlar: Yozilishlar;
   }
 }
 
@@ -62,6 +66,9 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   jobs.register('ariza-crm-retry', () => arizalar.retryDue());
   app.decorate('jobs', jobs);
   app.decorate('arizalar', arizalar);
+  const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log });
+  jobs.register('yozilish-crm', () => yozilishlar.syncCrm()); // after ariza-crm-retry: a move waits for its Ariza
+  app.decorate('yozilishlar', yozilishlar);
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
@@ -70,6 +77,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
   app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
   app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps); // both roles: yozilishlar are the Menejer's work too
+      await adminYozilishRoutes(scope, { db: deps.db, clock: deps.clock, yozilishlar });
+    },
+    { prefix: '/admin/api' },
+  );
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
@@ -96,7 +110,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       await kontentRoutes(scope, deps);
-      await yozilishRoutes(scope, { db: deps.db, clock: deps.clock });
+      await yozilishRoutes(scope, { db: deps.db, clock: deps.clock, yozilishlar });
     },
     { prefix: '/api' },
   );

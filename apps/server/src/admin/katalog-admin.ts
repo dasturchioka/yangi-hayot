@@ -51,6 +51,8 @@ interface LoyihaRow {
   lng: number | null;
   infratuzilma: AdminLoyihaInput['infratuzilma'];
   tartib: number;
+  korsatuv_manzili: LokalDto | null;
+  crm_responsible_id: string | null;
 }
 
 interface BlokRow {
@@ -90,6 +92,8 @@ function loyihaInput(r: LoyihaRow): AdminLoyihaInput {
     xarita: r.lat === null || r.lng === null ? null : { lat: r.lat, lng: r.lng },
     infratuzilma: r.infratuzilma.map((i) => ({ kategoriya: i.kategoriya, nomi: i.nomi, masofa: i.masofa ?? null })),
     tartib: r.tartib,
+    korsatuvManzili: r.korsatuv_manzili,
+    crmMasulId: r.crm_responsible_id,
   };
 }
 
@@ -129,6 +133,8 @@ function loyihaParams(i: AdminLoyihaInput) {
     i.xarita?.lng ?? null,
     JSON.stringify(i.infratuzilma),
     i.tartib,
+    i.korsatuvManzili ? JSON.stringify(i.korsatuvManzili) : null,
+    i.crmMasulId,
   ];
 }
 
@@ -256,8 +262,9 @@ export async function createLoyiha(db: pg.Pool, by: Muallif, input: AdminLoyihaI
   const id = await tx(db, async (c) => {
     const { rows } = await c.query<{ id: number }>(
       `INSERT INTO loyiha (slug, nomi, shahar, holat, manzil, qisqa_tavsif, tavsif, fotolar, video_url,
-                           qavatlar_soni, lat, lng, infratuzilma, tartib, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $15) RETURNING id`,
+                           qavatlar_soni, lat, lng, infratuzilma, tartib, korsatuv_manzili, crm_responsible_id,
+                           created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17) RETURNING id`,
       [...loyihaParams(input), by.at],
     );
     const id = rows[0]!.id;
@@ -291,8 +298,8 @@ export async function updateLoyiha(
     await c.query(
       `UPDATE loyiha SET slug = $1, nomi = $2, shahar = $3, holat = $4, manzil = $5, qisqa_tavsif = $6, tavsif = $7,
               fotolar = $8, video_url = $9, qavatlar_soni = $10, lat = $11, lng = $12, infratuzilma = $13,
-              tartib = $14, updated_at = $15
-        WHERE id = $16`,
+              tartib = $14, korsatuv_manzili = $15, crm_responsible_id = $16, updated_at = $17
+        WHERE id = $18`,
       [...loyihaParams(after), by.at, id],
     );
     await yozJurnal(c, by, { obyekt: 'loyiha', obyektId: id, loyihaId: id, amal: 'tahrirlandi', tavsif: after.nomi, ...d });

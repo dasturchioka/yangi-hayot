@@ -159,6 +159,8 @@ export interface ArizaDto {
   createdAt: string;
   loyihaId: number | null;
   planirovkaId: number | null;
+  /** As it was when the Ariza was made; null without a Loyiha. */
+  loyihaNomi: string | null;
 }
 
 /** GET /api/arizalar — the Mijoz's own Arizalar (newest first) and the contact to prefill forms with. */
@@ -219,6 +221,10 @@ export interface AdminLoyihaInput {
   xarita: { lat: number; lng: number } | null;
   infratuzilma: AdminInfratuzilmaDto[];
   tartib: number;
+  /** Where showings happen (yozilish confirmation, CRM note); null = the Loyiha's address. */
+  korsatuvManzili: LokalDto | null;
+  /** amoCRM user id of the Loyiha mas'ul: new Bitimlar and tasks go to them; null = CRM default. */
+  crmMasulId: string | null;
 }
 
 export interface AdminPlanirovkaInput {
