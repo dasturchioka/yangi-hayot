@@ -1,0 +1,62 @@
+/*
+ * UI kit «Yashil barg» — design tokens.
+ * Source: "Yangi Hayot — Mini App UI.pdf", pages 1–2. Use the variables, never raw values.
+ */
+:root {
+  /* Asosiy ranglar */
+  --yh-primary: #0a7a34; /* tugmalar, faol holat, havolalar */
+  --yh-primary-press: #086b2e; /* bosilgan tugma */
+  --yh-brand: #02dd37; /* faqat aksent; ustiga oq matn qo'yilmaydi */
+  --yh-ink: #0b3d2a; /* sarlavha va asosiy matn */
+  --yh-ink-2: #2c4a3d; /* tavsif matni */
+  --yh-muted: #4b5e55; /* izoh, ikkinchi darajali */
+  --yh-surface: #f3f7f4; /* kartochka foni, kiritish maydoni */
+  --yh-line: #e6eee9; /* ajratuvchi chiziqlar */
+  --yh-bg: #ffffff;
+  --yh-on-primary: #ffffff;
+
+  /* Planirovka / Xonadon holatlari: fon / matn */
+  --yh-status-free-bg: #e3f7e8; /* Bo'sh */
+  --yh-status-free-fg: #0a6b2e;
+  --yh-status-reserved-bg: #f6e4f0; /* Bron */
+  --yh-status-reserved-fg: #8a1a69;
+  --yh-status-sold-bg: #eef0ef; /* Sotilgan */
+  --yh-status-sold-fg: #55605b;
+  --yh-status-error-bg: #fde7e7; /* Xato / ogohlantirish */
+  --yh-status-error-fg: #b3171a;
+
+  /* Tipografiya · Onest: o'lcham / qator balandligi / qalinlik */
+  --yh-font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --yh-h1: 700 28px/34px var(--yh-font);
+  --yh-h2: 700 22px/28px var(--yh-font);
+  --yh-h3: 700 19px/24px var(--yh-font);
+  --yh-title: 600 16px/22px var(--yh-font);
+  --yh-body: 400 15px/22px var(--yh-font);
+  --yh-caption: 400 13px/18px var(--yh-font);
+  --yh-label: 600 12px/16px var(--yh-font); /* + text-transform: uppercase */
+  --yh-price: 700 22px/28px var(--yh-font); /* + font-variant-numeric: tabular-nums */
+
+  /* Oraliqlar (4px qadam) */
+  --yh-space-4: 4px; /* ikon va matn */
+  --yh-space-8: 8px; /* chiplar orasi */
+  --yh-space-12: 12px; /* kartochkalar orasi */
+  --yh-space-20: 20px; /* ekran cheti */
+  --yh-space-32: 32px; /* bo'limlar orasi */
+
+  /* Burchaklar */
+  --yh-radius-pill: 999px; /* chip, tab */
+  --yh-radius-control: 16px; /* tugma, input */
+  --yh-radius-card: 22px; /* kartochka */
+  --yh-radius-leaf: 22px 5px 22px 5px; /* «barg» — rasm */
+
+  /* O'lchamlar */
+  --yh-button-h: 52px; /* asosiy tugma, kiritish maydoni */
+  --yh-button-h-secondary: 48px;
+  --yh-icon-button: 40px;
+  --yh-tabbar-h: 64px; /* + xavfsiz zona */
+
+  /* Soya */
+  --yh-shadow-card: 0 4px 16px rgba(11, 61, 42, 0.06);
+  --yh-shadow-sticky: 0 -4px 16px rgba(11, 61, 42, 0.06);
+  --yh-shadow-sheet: 0 -8px 32px rgba(11, 61, 42, 0.12);
+}

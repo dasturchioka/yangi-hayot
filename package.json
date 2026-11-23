@@ -1,0 +1,16 @@
+{
+  "name": "yangi-hayot",
+  "private": true,
+  "packageManager": "pnpm@12.4.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev:server": "pnpm --filter @yh/server dev",
+    "dev:miniapp": "pnpm --filter @yh/miniapp dev",
+    "dev:admin": "pnpm --filter @yh/admin dev",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build"
+  }
+}

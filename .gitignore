@@ -7,6 +7,13 @@
 # Lokal muhit
 .env
 .env.*
+!.env.example
 node_modules/
 .DS_Store
 .scratch/
+
+# Build va test natijalari
+dist/
+coverage/
+*.log
+*.tsbuildinfo
