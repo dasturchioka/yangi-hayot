@@ -23,6 +23,7 @@ describe('GET /api/me', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       mijoz: { telegramId: '700000001', name: 'Aziz Karimov', lang: 'uz' },
+      manba: { first: "Telegram (to'g'ridan-to'g'ri)", last: "Telegram (to'g'ridan-to'g'ri)" },
     });
   });
 
@@ -34,7 +35,7 @@ describe('GET /api/me', () => {
       headers: tmaAuth(signInitData(olga, { authDate: t.clock.now() })),
     });
 
-    expect(res.json()).toEqual({ mijoz: { telegramId: '700000002', name: 'Ольга', lang: 'ru' } });
+    expect(res.json().mijoz).toEqual({ telegramId: '700000002', name: 'Ольга', lang: 'ru' });
   });
 
   it('rejects initData signed with another bot token', async () => {

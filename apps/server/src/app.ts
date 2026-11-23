@@ -3,11 +3,13 @@ import type pg from 'pg';
 import type { Crm } from './adapters/crm/crm';
 import type { Messenger } from './adapters/messenger/messenger';
 import type { Clock } from './clock';
+import { botInternalRoutes } from './routes/bot-internal';
 import { miniAppRoutes } from './routes/mini-app';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
 export interface AppDeps {
-  config: { botToken: string };
+  /** botApiSecret: shared secret apps/bot sends on /internal/bot/*. */
+  config: { botToken: string; botApiSecret: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -17,12 +19,13 @@ export interface AppDeps {
 export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const app = Fastify({
     logger: opts.logger
-      ? { redact: ['req.headers.authorization'] } // initData must not reach the logs
+      ? { redact: ['req.headers.authorization'] } // initData and the bot secret must not reach the logs
       : false,
   });
 
   app.get('/health', async () => ({ ok: true }));
   app.register((scope) => miniAppRoutes(scope, deps), { prefix: '/api' });
+  app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
 
   return app;
 }

@@ -6,6 +6,7 @@ import { FakeClock } from '../../src/clock';
 import { RecordingCrm } from '../../src/adapters/crm/recording-crm';
 import { RecordingMessenger } from '../../src/adapters/messenger/recording-messenger';
 import { TEMPLATE_DB, withDatabase } from './global-setup';
+import { TEST_BOT_API_SECRET } from './bot';
 import { TEST_BOT_TOKEN } from './init-data';
 
 /** Default fake "now": Monday 2026-11-23 10:00 in Tashkent (05:00 UTC). */
@@ -39,7 +40,7 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
   const app = buildApp({
-    config: { botToken: TEST_BOT_TOKEN },
+    config: { botToken: TEST_BOT_TOKEN, botApiSecret: TEST_BOT_API_SECRET },
     db,
     clock,
     crm,

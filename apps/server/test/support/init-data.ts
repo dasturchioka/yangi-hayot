@@ -16,6 +16,8 @@ export interface SignOptions {
   authDate?: Date;
   /** Token to sign with. Pass a different one to produce a forged initData. */
   botToken?: string;
+  /** Mini App start parameter (`startapp=`), e.g. `src_banner`. */
+  startParam?: string;
 }
 
 /**
@@ -29,6 +31,7 @@ export function signInitData(user: TelegramTestUser, opts: SignOptions = {}): st
     auth_date: String(authDate),
     query_id: 'AAH-test-query',
     user: JSON.stringify(user),
+    ...(opts.startParam !== undefined ? { start_param: opts.startParam } : {}),
   };
   const dataCheckString = Object.keys(fields)
     .sort()

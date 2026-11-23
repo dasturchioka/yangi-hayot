@@ -5,10 +5,12 @@ import { buildApp } from './app';
 import { systemClock } from './clock';
 import { loadConfig } from './config';
 import { migrate } from './db/migrate';
+import { seedSettings } from './settings/settings';
 
 const config = loadConfig(process.env);
 const db = new pg.Pool({ connectionString: config.databaseUrl });
 await migrate(db);
+await seedSettings(db, config.seed, systemClock.now());
 
 const app = buildApp(
   {
