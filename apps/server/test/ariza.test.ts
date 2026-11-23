@@ -35,7 +35,7 @@ describe('Ariza formasi → amoCRM', () => {
     expect(t.crm.bitimlar).toHaveLength(1);
     const bitim = t.crm.bitimlar[0]!;
     expect(bitim.contactId).toBe(t.crm.contacts[0]!.id);
-    expect(bitim.tags).toEqual(['bot_form', "Telegram (to'g'ridan-to'g'ri)"]);
+    expect(bitim.tags).toEqual(['bot_form', "Telegram (to'g'ridan-to'g'ri)", 'sovuq']); // + Daraja (#18)
     expect(bitim.manba).toBe("Telegram (to'g'ridan-to'g'ri)");
     expect(bitim.notes).toHaveLength(1);
     expect(bitim.notes[0]).toContain('+998901234567');
@@ -121,7 +121,7 @@ describe("note, mas'ul, Manba", () => {
     const bitim = t.crm.bitimlar[0]!;
     expect(bitim.responsibleUserId).toBe('4242');
     expect(t.crm.tasks[0]!.responsibleUserId).toBe('4242');
-    expect(bitim.tags).toEqual(['bot_form', 'insta']);
+    expect(bitim.tags).toEqual(['bot_form', 'insta', 'sovuq']);
     expect(bitim.manba).toBe('insta');
     const note = bitim.notes[0]!;
     expect(note).toContain('Loyiha: Jozibali Maskan');
@@ -360,12 +360,12 @@ describe('Ariza module (other entry points)', () => {
       name: 'Aziz',
       phone: '+998901234567',
       izoh: ['Sana: 25.11.2026, 11:00'],
-      tags: ['issiq'],
+      tags: ['aksiya'],
       taskDueAt: visitAt,
     });
 
     const bitim = t.crm.bitimlar[0]!;
-    expect(bitim.tags).toEqual(['bot_visit', "Telegram (to'g'ridan-to'g'ri)", 'issiq']);
+    expect(bitim.tags).toEqual(['bot_visit', "Telegram (to'g'ridan-to'g'ri)", 'aksiya', 'iliq']); // yozilish → iliq (#18)
     expect(bitim.notes[0]).toContain("Ko'rishga yozilish");
     expect(bitim.notes[0]).toContain('Sana: 25.11.2026, 11:00');
     expect(t.crm.tasks).toEqual([expect.objectContaining({ kind: 'meeting', dueAt: visitAt })]);

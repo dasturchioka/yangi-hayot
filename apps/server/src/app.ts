@@ -26,6 +26,8 @@ import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
 import { createSevimlilar } from './sevimlilar/sevimlilar';
+import { adminSkoringRoutes } from './routes/admin-skoring';
+import { createSkoring, type Skoring } from './skoring/skoring';
 import { createTaklif } from './taklif/taklif';
 import { createUlashish } from './ulashish/ulashish';
 
@@ -51,6 +53,8 @@ declare module 'fastify' {
     jobs: Jobs;
     /** Ariza module: every entry point (form, quiz, booking, calculator, AI) creates Arizalar here. */
     arizalar: Arizalar;
+    /** Lead skoringi (#18): `harakat(telegramId)` after any action that may change the Daraja. */
+    skoring: Skoring;
   }
 }
 
@@ -63,11 +67,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
 
   const katalog = createKatalog({ db: deps.db, clock: deps.clock });
   const jobs = new Jobs((name, err) => app.log.error({ err, job: name }, 'job failed'));
-  const arizalar = createArizalar({ ...deps, log: app.log });
+  const skoring = createSkoring({ ...deps, log: app.log });
+  const arizalar = createArizalar({ ...deps, log: app.log, skoring });
   jobs.register('ariza-legacy', async () => void (await foldLegacyArizalar(deps.db)));
   jobs.register('ariza-crm-retry', () => arizalar.retryDue());
   app.decorate('jobs', jobs);
   app.decorate('arizalar', arizalar);
+  app.decorate('skoring', skoring);
   const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
@@ -75,8 +81,8 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const taklif = createTaklif({ db: deps.db, miniAppLink: deps.config.miniAppLink, crmBaseUrl: deps.config.crmBaseUrl });
 
   app.get('/health', async () => ({ ok: true }));
-  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish, taklif }), { prefix: '/api' });
-  app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
+  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish, taklif, skoring }), { prefix: '/api' });
+  app.register((scope) => botInternalRoutes(scope, { ...deps, skoring }), { prefix: '/internal/bot' });
   app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
   app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
   app.register(
@@ -137,6 +143,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await adminRassilkaRoutes(scope, deps);
       await adminKalkulyatorRoutes(scope, deps);
       await adminTaklifRoutes(scope, taklif);
+      await adminSkoringRoutes(scope, deps);
     },
     { prefix: '/admin/api' },
   );
@@ -151,7 +158,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
-      await kalkulyatorRoutes(scope, { ...deps, kalkulyator });
+      await kalkulyatorRoutes(scope, { ...deps, kalkulyator, skoring });
     },
     { prefix: '/api' },
   );

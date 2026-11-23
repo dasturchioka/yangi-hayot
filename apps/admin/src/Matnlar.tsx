@@ -9,6 +9,7 @@ import {
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
 import { KalkulyatorForm } from './Kalkulyator';
+import { SkoringForm } from './Skoring';
 import './matnlar.css';
 
 /**
@@ -43,6 +44,12 @@ const TABS: Tab[] = [
     name: "Muddatli to'lov va ipoteka",
     // Own settings key (GET/PUT /admin/api/kalkulyator), not part of Kontent.
     render: () => <KalkulyatorForm />,
+  },
+  {
+    id: 'skoring',
+    name: 'Ball qoidalari',
+    // Lead skoringi (UF-4, #18): own settings key (GET/PUT /admin/api/skoring).
+    render: () => <SkoringForm />,
   },
 ];
 
@@ -104,10 +111,13 @@ export function Form({
   children,
   onSubmit,
   state,
+  savedText = 'Saqlandi — Mini App’da ko‘rinadi',
 }: {
   children: ReactNode;
   onSubmit: () => void;
   state: ReturnType<typeof useSave>['state'];
+  /** Shown after a successful save. */
+  savedText?: string;
 }) {
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -118,7 +128,7 @@ export function Form({
       {children}
       <div className="save-bar">
         <span className="save-status" role="status">
-          {state.kind === 'saved' && 'Saqlandi — Mini App’da ko‘rinadi'}
+          {state.kind === 'saved' && savedText}
           {state.kind === 'error' && <span className="save-error">{state.text}</span>}
         </span>
         <button className="primary" type="submit" disabled={state.kind === 'saving'}>

@@ -120,6 +120,14 @@ describe('AmoCrm adapter', () => {
     ]);
   });
 
+  it('removes tags (another Daraja) from a Bitim', async () => {
+    const { requests, fetchImpl } = fakeAmo(() => ({ status: 200, json: {} }));
+    await amo(fetchImpl).removeTags('55', ['iliq', 'sovuq']);
+    expect(requests.map((r) => [r.method, r.path, r.body])).toEqual([
+      ['PATCH', '/api/v4/leads', [{ id: 55, tags_to_delete: [{ name: 'iliq' }, { name: 'sovuq' }] }]],
+    ]);
+  });
+
   it('maps 5xx / 429 / network errors to CrmUnavailableError and 401 / 403 to CrmAuthError', async () => {
     for (const [status, error] of [
       [503, CrmUnavailableError],

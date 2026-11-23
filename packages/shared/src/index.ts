@@ -7,6 +7,7 @@ export * from './bot';
 export * from './start';
 export * from './kalkulyator';
 export * from './kontent';
+export * from './skoring';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;

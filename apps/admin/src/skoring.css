@@ -1,0 +1,294 @@
+/* ---- «Ball qoidalari» (UF-4, #18) ---- */
+.skoring {
+  /* Daraja colours: chip = pale fill + dark text (≥ 5:1), zone/dot = mid tone. */
+  --daraja-issiq: #e8875a;
+  --daraja-issiq-bg: #fdeadf;
+  --daraja-issiq-fg: #9a360b;
+  --daraja-iliq: #e6bf55;
+  --daraja-iliq-bg: #fbf1d3;
+  --daraja-iliq-fg: #6e5108;
+  --daraja-sovuq: #9fc1d8;
+  --daraja-sovuq-bg: #e7f0f6;
+  --daraja-sovuq-fg: #285677;
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--yh-space-20);
+  align-items: start;
+}
+
+/* ---- rule rows ---- */
+.ball-group {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.ball-group + .ball-group {
+  margin-top: var(--yh-space-12);
+}
+/* Two groups side by side keep each label close to its number. */
+.ball-cols {
+  columns: 280px 2; /* one column when the card is narrow */
+  column-gap: var(--yh-space-32);
+}
+.ball-cols .ball-group {
+  break-inside: avoid;
+}
+.ball-group legend {
+  padding: 0 0 var(--yh-space-4);
+  font: var(--yh-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--yh-muted);
+}
+.ball-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--yh-space-12);
+  align-items: center;
+  min-height: 52px;
+  padding: var(--yh-space-4) 0;
+  border-bottom: 1px solid var(--yh-line);
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  cursor: text;
+}
+.ball-row:last-child {
+  border-bottom: 0;
+}
+.ball-label {
+  display: grid;
+  gap: 2px;
+}
+.ball-input {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.ball-input input,
+.chegara-fields input {
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  background: var(--yh-surface);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: var(--yh-space-8) var(--yh-space-12);
+}
+.ball-input input {
+  width: 84px;
+  text-align: right;
+}
+.ball-input input:focus-visible,
+.chegara-fields input:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: -1px;
+  background: var(--yh-bg);
+}
+.ball-input input:invalid,
+.chegara-fields input:invalid,
+.chegara-fields input[aria-invalid='true'] {
+  color: var(--yh-status-error-fg);
+  background: var(--yh-status-error-bg);
+}
+.ball-unit {
+  width: 28px;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+
+/* ---- thresholds ---- */
+.chegara-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--yh-space-12);
+  align-items: end;
+}
+.chegara-fields .field > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.daraja-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.daraja-dot.issiq {
+  --dot: var(--daraja-issiq);
+}
+.daraja-dot.iliq {
+  --dot: var(--daraja-iliq);
+}
+
+/* The scale: zones and the test anketalar as numbered marks. */
+.shkala {
+  display: grid;
+  gap: 6px;
+  padding-top: var(--yh-space-4);
+}
+.shkala-marks {
+  position: relative;
+  overflow-x: clip; /* the carriers are track-wide and translated: no page overflow */
+  overflow-clip-margin: 12px;
+  height: calc(22px * var(--rows, 1));
+}
+/* Full-width carrier moved by translateX(%) of the track: transform-only motion. */
+.shkala-mark-track {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 22px;
+  transform: translate(var(--x), calc(22px * var(--row, 0)));
+  transition: transform 220ms var(--ease-move);
+  pointer-events: none;
+}
+.shkala-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--yh-ink);
+  color: var(--yh-bg);
+  font: 600 11px/1 var(--yh-font);
+  pointer-events: auto;
+}
+.shkala-bar {
+  position: relative;
+  height: 10px;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-line);
+  overflow: hidden;
+}
+.zona {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.zona.sovuq {
+  background: var(--daraja-sovuq);
+}
+.zona.iliq {
+  background: var(--daraja-iliq);
+}
+.zona.issiq {
+  background: var(--daraja-issiq);
+}
+.shkala-axis {
+  position: relative;
+  height: 18px;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+.shkala-axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+.shkala-axis span:first-child {
+  left: 0;
+  transform: none;
+}
+.shkala-axis span.before {
+  transform: translateX(calc(-100% - 3px));
+}
+.shkala-axis span.after {
+  transform: translateX(3px);
+}
+.shkala-axis span.end {
+  right: 0;
+  transform: none;
+}
+
+/* ---- test anketalari ---- */
+.namunalar {
+  position: sticky;
+  top: var(--yh-space-32);
+  display: grid;
+  gap: var(--yh-space-12);
+}
+.namunalar header {
+  display: grid;
+  gap: var(--yh-space-4);
+}
+.namuna-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.namuna {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 64px;
+  gap: var(--yh-space-8);
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--yh-line);
+  font: var(--yh-caption);
+  color: var(--yh-ink-2);
+}
+.namuna-n {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--yh-ink);
+  color: var(--yh-bg);
+  font: 600 11px/1 var(--yh-font);
+}
+.namuna-ball {
+  font: var(--yh-title);
+  color: var(--yh-ink);
+  text-align: right;
+}
+.daraja-chip {
+  justify-self: end;
+  padding: 3px 10px;
+  border-radius: var(--yh-radius-pill);
+  font: var(--yh-label);
+  background: var(--bg);
+  color: var(--fg);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.daraja-chip.issiq {
+  --bg: var(--daraja-issiq-bg);
+  --fg: var(--daraja-issiq-fg);
+}
+.daraja-chip.iliq {
+  --bg: var(--daraja-iliq-bg);
+  --fg: var(--daraja-iliq-fg);
+}
+.daraja-chip.sovuq {
+  --bg: var(--daraja-sovuq-bg);
+  --fg: var(--daraja-sovuq-fg);
+}
+
+@media (max-width: 1100px) {
+  .skoring {
+    grid-template-columns: 1fr;
+  }
+  .namunalar {
+    position: static;
+    order: -1;
+  }
+}
+@media (max-width: 700px) {
+  .chegara-fields {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shkala-mark-track {
+    transition: none;
+  }
+}

@@ -20,6 +20,8 @@ export interface Crm {
   addNote(bitimId: string, text: string): Promise<void>;
   /** Adds tags (`bot_form`, `bot_quiz`, …, Manba, Daraja) to a Bitim. */
   addTags(bitimId: string, tags: string[]): Promise<void>;
+  /** Removes tags (e.g. the previous Daraja) from a Bitim; missing ones are ignored. */
+  removeTags(bitimId: string, tags: string[]): Promise<void>;
   /** Writes the (last) Manba into the Bitim's «Manba» field, if the CRM has one. */
   setManba(bitimId: string, manba: string): Promise<void>;
 

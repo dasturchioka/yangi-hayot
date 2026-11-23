@@ -89,6 +89,12 @@ export class RecordingCrm implements Crm {
     for (const t of tags) if (!b.tags.includes(t)) b.tags.push(t);
   }
 
+  async removeTags(bitimId: string, tags: string[]): Promise<void> {
+    this.#enter('removeTags', [bitimId, tags]);
+    const b = this.#bitim(bitimId);
+    b.tags = b.tags.filter((t) => !tags.includes(t));
+  }
+
   async setManba(bitimId: string, manba: string): Promise<void> {
     this.#enter('setManba', [bitimId, manba]);
     this.#bitim(bitimId).manba = manba;

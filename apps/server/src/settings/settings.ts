@@ -1,11 +1,13 @@
 import {
   DEFAULT_KALKULYATOR,
+  DEFAULT_SKORING,
   type BizHaqimizdaKontent,
   type BotMedia,
   type ByudjetOraligi,
   type KalkulyatorSozlamalari,
   type KontaktlarKontent,
   type Lang,
+  type SkoringQoidalari,
   type SotibOlishKontent,
 } from '@yh/shared';
 import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
@@ -43,6 +45,8 @@ export interface Settings {
   kvizByudjet: ByudjetOraligi[] | null;
   /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
   kalkulyator: KalkulyatorSozlamalari;
+  /** Ball qoidalari of the lead skoringi (UF-4, #18); the Administrator edits them. */
+  skoring: SkoringQoidalari;
 }
 
 const DEFAULTS: Settings = {
@@ -57,6 +61,7 @@ const DEFAULTS: Settings = {
   crmAuthAlertedAt: null,
   kvizByudjet: null,
   kalkulyator: DEFAULT_KALKULYATOR,
+  skoring: DEFAULT_SKORING,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
