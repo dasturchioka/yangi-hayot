@@ -7,6 +7,8 @@ export * from './bot';
 export * from './start';
 export * from './kalkulyator';
 export * from './kontent';
+export * from './skoring';
+import type { Daraja } from './skoring';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -481,6 +483,8 @@ export interface AdminYozilishDto {
   /** «A blok · 2 xona, 54 m²» or null. */
   planirovka: string | null;
   manba: string;
+  /** The Mijoz's current Daraja (#18); null = not scored yet. */
+  daraja: Daraja | null;
   holat: YozilishHolati;
   davomat: Davomat | null;
   /** How many times the Mijoz moved it. */

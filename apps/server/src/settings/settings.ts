@@ -1,11 +1,13 @@
 import {
   DEFAULT_KALKULYATOR,
+  DEFAULT_SKORING,
   type BizHaqimizdaKontent,
   type BotMedia,
   type ByudjetOraligi,
   type KalkulyatorSozlamalari,
   type KontaktlarKontent,
   type Lang,
+  type SkoringQoidalari,
   type SotibOlishKontent,
   type YozilishSozlamalari,
 } from '@yh/shared';
@@ -51,6 +53,8 @@ export interface Settings {
    * Telegram chat ids (the head of sales, a group). Empty = the managers group.
    */
   hisobot: { qabulQiluvchilar: string[] };
+  /** Ball qoidalari of the lead skoringi (UF-4, #18); the Administrator edits them. */
+  skoring: SkoringQoidalari;
 }
 
 const DEFAULTS: Settings = {
@@ -73,6 +77,7 @@ const DEFAULTS: Settings = {
   kvizByudjet: null,
   kalkulyator: DEFAULT_KALKULYATOR,
   hisobot: { qabulQiluvchilar: [] },
+  skoring: DEFAULT_SKORING,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
