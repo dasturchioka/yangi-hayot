@@ -15,6 +15,9 @@ export const DEFAULT_NOW = new Date('2026-11-23T05:00:00Z');
 /** API key the AI-menejer uses for /ai/* in tests. */
 export const TEST_AI_API_KEY = 'test-ai-api-key-0123456789';
 
+/** Direct Mini App link share links are built on. */
+export const TEST_MINIAPP_LINK = 'https://t.me/YangiHayotTestBot/app';
+
 export interface TestApp {
   app: ReturnType<typeof buildApp>;
   clock: FakeClock;
@@ -43,7 +46,9 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
   const app = buildApp({
-    config: { botToken: TEST_BOT_TOKEN, botApiSecret: TEST_BOT_API_SECRET, aiApiKey: TEST_AI_API_KEY },
+    config: { botToken: TEST_BOT_TOKEN, botApiSecret: TEST_BOT_API_SECRET, aiApiKey: TEST_AI_API_KEY,
+      miniAppLink: TEST_MINIAPP_LINK,
+    },
     db,
     clock,
     crm,

@@ -6,6 +6,7 @@ import { href } from '../router';
 import { openExternal } from '../telegram';
 import { useLoad } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
+import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
 
 // ---------------------------------------------------------------- Loyihalar
@@ -18,7 +19,12 @@ export function LoyihalarScreen() {
 
   return (
     <>
-      <h1 className="h1">{t('katalog.title')}</h1>
+      <div className="row-between">
+        <h1 className="h1">{t('katalog.title')}</h1>
+        <a className="button-icon" href={href({ name: 'sevimlilar' })} aria-label={t('sevimli.open')}>
+          ♡
+        </a>
+      </div>
       <Loaded load={load}>
         {({ loyihalar }) => {
           const shown = loyihalar.filter((l) => l.shahar === shahar);
@@ -285,6 +291,10 @@ export function PlanirovkaScreen({ id }: { id: number }) {
       {({ planirovka: p }) => (
         <>
           <Chizma src={p.chizma} />
+          <div className="row-actions">
+            <SevimliButton id={p.id} />
+            <UlashishButton p={p} />
+          </div>
           <div className="row-between">
             <p className="muted">
               {p.loyihaNomi} · {t('blok.nomi', { nomi: p.blokNomi })}

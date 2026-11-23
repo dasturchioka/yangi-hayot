@@ -58,6 +58,28 @@ export const ru = {
   'video.watch': 'Смотреть видео',
   'ariza.leave': 'Оставить заявку',
   'ariza.soon': 'Форма заявки скоро появится. Пока позвоните нам: 1349.',
+  'narx.som': '{narx} сум',
+
+  'sevimli.add': 'В избранное',
+  'sevimli.remove': 'Убрать из избранного',
+  'sevimli.title': 'Избранное',
+  'sevimli.open': 'Избранное',
+  'sevimli.empty': 'Здесь пока пусто. Нажмите ♡ на планировке, чтобы вернуться к ней позже.',
+  'taqqoslash.hint': 'Отметьте до {n} планировок для сравнения',
+  'taqqoslash.choose': 'Сравнить',
+  'taqqoslash.button': 'Сравнить · {n}',
+  'taqqoslash.title': 'Сравнение',
+  'taqqoslash.loyiha': 'Проект',
+  'taqqoslash.blok': 'Блок',
+  'taqqoslash.xonalar': 'Комнат',
+  'taqqoslash.maydon': 'Площадь',
+  'taqqoslash.narx': 'Цена',
+  'taqqoslash.kvMetr': 'Цена за м²',
+  'taqqoslash.oylik': 'Ежемесячный платёж',
+  'taqqoslash.holat': 'Статус',
+  'taqqoslash.legend': 'Зелёным — самый выгодный вариант.',
+  'ulashish.button': 'Поделиться',
+  'ulashish.text': '{loyiha}: {n}-комнатная, {maydon} м², {narx}. Посмотри в приложении Yangi Hayot',
 } as const;
 
 export type MessageKey = keyof typeof ru;

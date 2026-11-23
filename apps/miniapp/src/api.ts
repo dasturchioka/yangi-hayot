@@ -1,4 +1,13 @@
-import type { Lang, LoyihaResponse, LoyihalarResponse, MeResponse, PlanirovkaResponse } from '@yh/shared';
+import type {
+  Lang,
+  LoyihaResponse,
+  LoyihalarResponse,
+  MeResponse,
+  PlanirovkaResponse,
+  SevimlilarResponse,
+  TaqqoslashResponse,
+  UlashishResponse,
+} from '@yh/shared';
 import { getInitData } from './telegram';
 
 export class ApiError extends Error {
@@ -12,6 +21,20 @@ async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`/api${path}`, { headers: { authorization: `tma ${getInitData()}` } });
   if (!res.ok) throw new ApiError(res.status);
   return (await res.json()) as T;
+}
+
+/** PUT / DELETE / POST with an optional JSON body; resolves to the JSON answer (undefined on 204). */
+async function apiSend<T = void>(method: 'PUT' | 'DELETE' | 'POST', path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method,
+    headers: {
+      authorization: `tma ${getInitData()}`,
+      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new ApiError(res.status);
+  return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
 /**
@@ -37,4 +60,10 @@ export const api = {
   loyihalar: (lang: Lang) => cachedGet<LoyihalarResponse>(`/katalog/loyihalar?lang=${lang}`),
   loyiha: (id: number, lang: Lang) => cachedGet<LoyihaResponse>(`/katalog/loyihalar/${id}?lang=${lang}`),
   planirovka: (id: number, lang: Lang) => cachedGet<PlanirovkaResponse>(`/katalog/planirovkalar/${id}?lang=${lang}`),
+  /** Sevimlilar live on the server (follow the Mijoz across devices): never cached. */
+  sevimlilar: (lang: Lang) => apiGet<SevimlilarResponse>(`/sevimlilar?lang=${lang}`),
+  addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),
+  removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
+  taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
+  ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
 };

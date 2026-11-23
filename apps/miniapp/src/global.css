@@ -476,3 +476,78 @@ a {
   background: var(--yh-bg);
   box-shadow: var(--yh-shadow-sticky);
 }
+
+/* ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ---- */
+.button-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--yh-line);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  color: var(--yh-primary);
+  font-size: 20px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.button-icon.active {
+  border-color: var(--yh-primary);
+  background: var(--yh-status-free-bg);
+}
+.button-icon:disabled {
+  opacity: 0.5;
+}
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--yh-space-8);
+}
+.sevimli-row {
+  gap: var(--yh-space-8);
+  border: 1.5px solid transparent;
+}
+.sevimli-row.checked {
+  border-color: var(--yh-primary);
+}
+.sevimli-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--yh-primary);
+}
+.sevimli-link {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--yh-space-12);
+  color: inherit;
+  text-decoration: none;
+}
+.taqqoslash {
+  overflow-x: auto;
+}
+.taqqoslash table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.taqqoslash th,
+.taqqoslash td {
+  padding: var(--yh-space-8) var(--yh-space-4);
+  border-bottom: 1px solid var(--yh-line);
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+.taqqoslash thead th a {
+  color: var(--yh-primary);
+}
+.taqqoslash td.best {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  font-weight: 600;
+}

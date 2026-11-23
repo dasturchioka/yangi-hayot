@@ -43,7 +43,7 @@ Botga kirgan odam (bitta Telegram akkaunti).
 _Avoid_: Lid, foydalanuvchi, xaridor
 
 **Manba**:
-Mijoz qaysi reklama yoki kanaldan kelgani: `?start=src_<nomi>` belgisidagi nom, belgisiz — «Telegram (to'g'ridan-to'g'ri)». Har Mijozda birinchi (o'zgarmaydi) va oxirgi Manba.
+Mijoz qaysi reklama yoki kanaldan kelgani: `?start=src_<nomi>` belgisidagi nom, belgisiz — «Telegram (to'g'ridan-to'g'ri)», boshqa Mijozning «Ulashish» havolasi orqali — «mijoz ulashdi». Har Mijozda birinchi (o'zgarmaydi) va oxirgi Manba.
 _Avoid_: Istochnik, source (tizim matnlarida), UTM
 
 **Ariza**:

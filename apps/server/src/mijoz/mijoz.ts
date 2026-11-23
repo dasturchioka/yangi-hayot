@@ -18,6 +18,11 @@ export interface MijozRecord extends Mijoz {
   firstManba: string;
   /** Manba of the latest tagged visit (the first one while there is none). */
   lastManba: string;
+  /**
+   * `ulashish.id` of the share link behind last Manba «mijoz ulashdi» (who
+   * shared which Planirovka); null otherwise.
+   */
+  lastUlashishId: number | null;
   /** Unfinished bot step (e.g. editing /welcome), cleared by /restart. */
   botStep: string | null;
   botStepData: unknown;
@@ -28,7 +33,7 @@ export function langFromTelegram(languageCode: string | undefined): Lang {
   return languageCode?.toLowerCase().startsWith('uz') ? 'uz' : 'ru';
 }
 
-const COLUMNS = `telegram_id, name, lang, username, lang_chosen, first_source, last_source, bot_step, bot_step_data`;
+const COLUMNS = `telegram_id, name, lang, username, lang_chosen, first_source, last_source, last_ulashish_id, bot_step, bot_step_data`;
 
 interface Row {
   telegram_id: string;
@@ -38,6 +43,7 @@ interface Row {
   lang_chosen: boolean;
   first_source: string;
   last_source: string;
+  last_ulashish_id: number | null;
   bot_step: string | null;
   bot_step_data: unknown;
 }
@@ -51,6 +57,7 @@ function toRecord(row: Row): MijozRecord {
     langChosen: row.lang_chosen,
     firstManba: row.first_source,
     lastManba: row.last_source,
+    lastUlashishId: row.last_ulashish_id,
     botStep: row.bot_step,
     botStepData: row.bot_step_data,
   };
@@ -64,23 +71,37 @@ function toRecord(row: Row): MijozRecord {
  * been chosen in the bot). `manba` is the Manba of this visit (null when
  * untagged): it becomes the first Manba of a new Mijoz and the last Manba of
  * a known one; an untagged visit never overwrites a stored Manba.
+ *
+ * `ulashishId`: the «Ulashish» link of this visit (with manba «mijoz
+ * ulashdi»). Every tagged visit rewrites `last_ulashish_id`, so it is set
+ * exactly while the last Manba is «mijoz ulashdi».
  */
 export async function ensureMijoz(
   db: pg.Pool,
   user: TelegramUser,
   now: Date,
-  opts: { manba?: string | null } = {},
+  opts: { manba?: string | null; ulashishId?: number | null } = {},
 ): Promise<MijozRecord> {
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ');
   const { rows } = await db.query<Row>(
-    `INSERT INTO mijoz (telegram_id, name, username, lang, first_source, last_source, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, coalesce($5, $6), coalesce($5, $6), $7, $7)
+    `INSERT INTO mijoz (telegram_id, name, username, lang, first_source, last_source, last_ulashish_id, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, coalesce($5, $6), coalesce($5, $6), $8, $7, $7)
      ON CONFLICT (telegram_id) DO UPDATE SET
        updated_at  = EXCLUDED.updated_at,
        username    = coalesce(EXCLUDED.username, mijoz.username),
-       last_source = coalesce($5, mijoz.last_source)
+       last_source = coalesce($5, mijoz.last_source),
+       last_ulashish_id = CASE WHEN $5::text IS NULL THEN mijoz.last_ulashish_id ELSE $8 END
      RETURNING ${COLUMNS}`,
-    [user.id, name, user.username ?? null, langFromTelegram(user.language_code), opts.manba ?? null, DIRECT_MANBA, now],
+    [
+      user.id,
+      name,
+      user.username ?? null,
+      langFromTelegram(user.language_code),
+      opts.manba ?? null,
+      DIRECT_MANBA,
+      now,
+      opts.ulashishId ?? null,
+    ],
   );
   return toRecord(rows[0]!);
 }

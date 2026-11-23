@@ -25,6 +25,14 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
   AI_API_KEY: z.string().min(16).optional(),
+  /** Direct Mini App link, e.g. https://t.me/YangiHayotBot/app («Ulashish» links). */
+  MINIAPP_LINK: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z
+      .string()
+      .regex(/^https:\/\/t\.me\/[A-Za-z0-9_]+(\/[A-Za-z0-9_]+)?$/)
+      .optional(),
+  ),
 });
 
 export interface Config {
@@ -36,6 +44,8 @@ export interface Config {
   host: string;
   /** Key for the AI-menejer's katalog API (/ai/*). Optional: unset disables it. */
   aiApiKey?: string;
+  /** Direct Mini App link «Ulashish» links are built on. Optional: unset disables sharing. */
+  miniAppLink?: string;
 }
 
 /** Reads and validates process env. Fails fast on missing secrets. */
@@ -49,5 +59,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     port: e.PORT,
     host: e.HOST,
     aiApiKey: e.AI_API_KEY,
+    miniAppLink: e.MINIAPP_LINK,
   };
 }

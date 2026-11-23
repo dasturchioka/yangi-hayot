@@ -24,6 +24,7 @@ describe('GET /api/me', () => {
     expect(res.json()).toEqual({
       mijoz: { telegramId: '700000001', name: 'Aziz Karimov', lang: 'uz' },
       manba: { first: "Telegram (to'g'ridan-to'g'ri)", last: "Telegram (to'g'ridan-to'g'ri)" },
+      start: null,
     });
   });
 
