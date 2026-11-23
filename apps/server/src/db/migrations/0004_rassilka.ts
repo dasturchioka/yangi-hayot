@@ -4,8 +4,8 @@ import type { Migration } from './index';
  * Rassilka (#14): "botni bloklagan" flag on Mijoz, city interest (shaharga
  * qiziqish) facts, broadcasts and their per-recipient queue.
  */
-export const m0003_rassilka: Migration = {
-  name: '0003_rassilka',
+export const m0004_rassilka: Migration = {
+  name: '0004_rassilka',
   sql: `
     ALTER TABLE mijoz ADD COLUMN bot_blocked boolean NOT NULL DEFAULT false;
 

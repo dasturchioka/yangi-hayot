@@ -1,62 +1,57 @@
 import type { MijozDto } from '@yh/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from './api';
 import { I18nProvider, useT } from './i18n';
-import { getInitData, guessLang } from './telegram';
-
-type State =
-  | { kind: 'outside-telegram' }
-  | { kind: 'loading' }
-  | { kind: 'error' }
-  | { kind: 'ready'; mijoz: MijozDto };
+import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
+import { navigate, useRoute, type Route } from './router';
+import { getInitData, guessLang, setBackButton } from './telegram';
 
 export function App() {
-  const [state, setState] = useState<State>(() => (getInitData() ? { kind: 'loading' } : { kind: 'outside-telegram' }));
+  const inTelegram = Boolean(getInitData());
+  const [mijoz, setMijoz] = useState<MijozDto | null>(null);
 
-  const load = useCallback(() => {
-    if (!getInitData()) return;
-    setState({ kind: 'loading' });
-    api.me().then(
-      ({ mijoz }) => setState({ kind: 'ready', mijoz }),
-      () => setState({ kind: 'error' }),
-    );
-  }, []);
+  // The Mijoz's stored language wins; until /me answers we guess from Telegram
+  // and already load the catalog in parallel.
+  useEffect(() => {
+    if (!inTelegram) return;
+    api.me().then(({ mijoz }) => setMijoz(mijoz), () => {});
+  }, [inTelegram]);
 
-  useEffect(load, [load]);
-
-  const lang = state.kind === 'ready' ? state.mijoz.lang : guessLang();
   return (
-    <I18nProvider lang={lang}>
-      <main className="screen">
-        <Content state={state} onRetry={load} />
-      </main>
+    <I18nProvider lang={mijoz?.lang ?? guessLang()}>
+      <main className="screen">{inTelegram ? <Screens /> : <OutsideTelegram />}</main>
     </I18nProvider>
   );
 }
 
-function Content({ state, onRetry }: { state: State; onRetry: () => void }) {
+function OutsideTelegram() {
   const t = useT();
-  switch (state.kind) {
-    case 'outside-telegram':
-      return <p className="muted">{t('state.openInTelegram')}</p>;
-    case 'loading':
-      return <p className="muted">{t('state.loading')}</p>;
-    case 'error':
-      return (
-        <>
-          <p className="error">{t('state.error')}</p>
-          <button className="button-primary" onClick={onRetry}>
-            {t('state.retry')}
-          </button>
-        </>
-      );
-    case 'ready':
-      return (
-        <>
-          <p className="label">{t('app.title')}</p>
-          <h1 className="h1">{t('greeting.hello', { name: state.mijoz.name })}</h1>
-          <p className="muted">{t('greeting.lang')}</p>
-        </>
-      );
+  return <p className="muted">{t('state.openInTelegram')}</p>;
+}
+
+function Screens() {
+  const route = useRoute();
+  useEffect(
+    () =>
+      setBackButton(
+        route.name === 'loyihalar'
+          ? null
+          : () => (window.history.length > 1 ? window.history.back() : navigate({ name: 'loyihalar' })),
+      ),
+    [route],
+  );
+  return <Screen route={route} />;
+}
+
+function Screen({ route }: { route: Route }) {
+  switch (route.name) {
+    case 'loyihalar':
+      return <LoyihalarScreen />;
+    case 'loyiha':
+      return <LoyihaScreen key={route.id} id={route.id} />;
+    case 'planirovkalar':
+      return <PlanirovkalarScreen key={route.loyihaId} loyihaId={route.loyihaId} />;
+    case 'planirovka':
+      return <PlanirovkaScreen key={route.id} id={route.id} />;
   }
 }

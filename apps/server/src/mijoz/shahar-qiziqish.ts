@@ -1,7 +1,5 @@
+import type { Shahar } from '@yh/shared';
 import type pg from 'pg';
-
-export const SHAHARLAR = ['toshkent', 'navoiy'] as const;
-export type Shahar = (typeof SHAHARLAR)[number];
 
 /**
  * Why a Mijoz counts as interested in a city (Rassilka audiences «Toshkentga
@@ -15,8 +13,8 @@ export type QiziqishSabab = 'loyiha' | 'kviz' | 'ariza';
 
 /**
  * Records that the Mijoz is interested in `shahar`. Idempotent. Call it from
- * the catalog (city opened), the quiz and Ariza handling; the Mijoz must exist
- * (ensureMijoz runs on every Mini App request).
+ * the catalog (city opened — wired in routes/katalog-qiziqish.ts), the quiz and
+ * Ariza handling. Does nothing for an unknown Mijoz.
  */
 export async function recordShaharQiziqish(
   db: pg.Pool | pg.PoolClient,
@@ -26,7 +24,8 @@ export async function recordShaharQiziqish(
   now: Date,
 ): Promise<void> {
   await db.query(
-    `INSERT INTO mijoz_shahar_qiziqish (telegram_id, shahar, sabab, created_at) VALUES ($1, $2, $3, $4)
+    `INSERT INTO mijoz_shahar_qiziqish (telegram_id, shahar, sabab, created_at)
+     SELECT telegram_id, $2, $3, $4 FROM mijoz WHERE telegram_id = $1
      ON CONFLICT DO NOTHING`,
     [telegramId, shahar, sabab, now],
   );

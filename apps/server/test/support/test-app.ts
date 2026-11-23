@@ -12,6 +12,9 @@ import { TEST_BOT_TOKEN } from './init-data';
 /** Default fake "now": Monday 2026-11-23 10:00 in Tashkent (05:00 UTC). */
 export const DEFAULT_NOW = new Date('2026-11-23T05:00:00Z');
 
+/** API key the AI-menejer uses for /ai/* in tests. */
+export const TEST_AI_API_KEY = 'test-ai-api-key-0123456789';
+
 /** Temporary admin-panel token (until #5) the test app accepts on /admin/api. */
 export const TEST_ADMIN_TOKEN = 'test-admin-token-0123456789abcdef';
 
@@ -43,7 +46,12 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
   const app = buildApp({
-    config: { botToken: TEST_BOT_TOKEN, botApiSecret: TEST_BOT_API_SECRET, adminApiToken: TEST_ADMIN_TOKEN },
+    config: {
+      botToken: TEST_BOT_TOKEN,
+      botApiSecret: TEST_BOT_API_SECRET,
+      aiApiKey: TEST_AI_API_KEY,
+      adminApiToken: TEST_ADMIN_TOKEN,
+    },
     db,
     clock,
     crm,

@@ -28,6 +28,7 @@ const EnvSchema = z.object({
   ADMIN_API_TOKEN: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(32).optional()),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
+  AI_API_KEY: z.string().min(16).optional(),
 });
 
 export interface Config {
@@ -39,6 +40,8 @@ export interface Config {
   seed: { admins?: string[]; managersGroupId?: string };
   port: number;
   host: string;
+  /** Key for the AI-menejer's katalog API (/ai/*). Optional: unset disables it. */
+  aiApiKey?: string;
 }
 
 /** Reads and validates process env. Fails fast on missing secrets. */
@@ -53,5 +56,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     seed: { admins: e.ADMIN_TELEGRAM_IDS, managersGroupId: e.MANAGERS_GROUP_ID },
     port: e.PORT,
     host: e.HOST,
+    aiApiKey: e.AI_API_KEY,
   };
 }
