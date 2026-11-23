@@ -152,8 +152,9 @@ button.nav.active {
 }
 
 .preview {
-  border-left: 3px solid var(--yh-primary);
-  padding-left: var(--yh-space-12);
+  background: var(--yh-surface);
+  border-radius: var(--yh-radius-control);
+  padding: var(--yh-space-12);
 }
 
 .pre {
