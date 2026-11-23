@@ -6,6 +6,7 @@
 export * from './bot';
 export * from './start';
 export * from './kalkulyator';
+export * from './kontent';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -289,6 +290,56 @@ export interface JurnalDto {
   oldin: Record<string, unknown> | null;
   /** Changed fields after. */
   keyin: Record<string, unknown>;
+}
+
+// ---- Planirovkalar import from Excel / CSV (#6) ----
+
+/** One problem in the file. qator: spreadsheet row number (1 = header); null = the whole file. */
+export interface ImportXato {
+  qator: number | null;
+  /** Column label from the shablon (e.g. "maydon"), when the problem is in one cell. */
+  ustun?: string;
+  xabar: string;
+}
+
+/** What the import will do with one row of the file. */
+export interface ImportQator {
+  qator: number;
+  blok: string;
+  xonalar: number;
+  maydon: number;
+  nomi: string | null;
+  boshlangichNarx: number | null;
+  bosh: number;
+  bron: number;
+  sotilgan: number;
+  amal: 'yangi' | 'yangilanadi' | 'ozgarishsiz';
+  /** For 'yangilanadi': changed fields (boshlangichNarx, bosh, bron, sotilgan, nomi, chizma, video). */
+  ozgarishlar?: string[];
+}
+
+export interface ImportReja {
+  yangi: number;
+  yangilanadi: number;
+  ozgarishsiz: number;
+  /** Bloklar the import will create. */
+  yangiBloklar: string[];
+  /** Planirovkalar of the Loyiha that are not in the file; the import leaves them as they are. */
+  fayldaYoq: number;
+  qatorlar: ImportQator[];
+}
+
+/** POST …/import/tekshir. Import is possible only when xatolar is empty. */
+export interface ImportTekshirResponse {
+  xatolar: ImportXato[];
+  reja: ImportReja | null;
+}
+
+export interface ImportNatija {
+  yaratildi: number;
+  yangilandi: number;
+  ozgarishsiz: number;
+  yangiBloklar: string[];
 }
 
 // ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
