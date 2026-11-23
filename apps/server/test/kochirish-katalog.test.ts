@@ -40,14 +40,27 @@ describe("Ko'chirish: old Mini App catalog (HTML)", () => {
     expect(data.map((p) => (p as { name: string }).name)).toEqual(['Jozibali Maskan', 'Sayhun', 'Gulzor']);
   });
 
-  it('moves Sayhun (6) and Jozibali Maskan (3) Xonadonlar as Planirovkalar with matching counts', async () => {
+  const xonadonCount = async () => Number((await t.db.query('SELECT count(*) FROM xonadon')).rows[0].count);
+  const shaxmatka = async (loyiha: { bloklar: { id: number; nomi: string }[] }) => {
+    const out: (string | number)[][] = [];
+    for (const b of loyiha.bloklar) {
+      const { xonadonlar } = await get(`/api/katalog/bloklar/${b.id}/xonadonlar`);
+      for (const x of xonadonlar) out.push([b.nomi, x.qavat, x.raqam, x.xonalar, x.holat]);
+    }
+    return out;
+  };
+
+  it('moves Sayhun (6) and Jozibali Maskan (3) Xonadonlar as Xonadonlar, grouped into Planirovkalar, with matching counts', async () => {
+    const before = await xonadonCount();
     const report = await importLegacyKatalog(t.db, extractLegacyKatalog(fixture('katalog.html')), t.clock.now());
 
     expect(report.source).toMatchObject({ loyihalar: 3, planirovkalar: 9, xonadonlar: 9, rejected: [] });
     expect(report.db).toEqual({ loyihalar: 3, planirovkalar: 9, xonadonlar: 9 });
     expect(report.ok).toBe(true);
+    expect((await xonadonCount()) - before).toBe(9);
 
-    expect(planirovkalar(await loyihaBySlug('sayhun'))).toEqual([
+    const sayhun = await loyihaBySlug('sayhun');
+    expect(planirovkalar(sayhun)).toEqual([
       ['A', 1, 36, null, 'sotuvda'],
       ['A', 2, 52, null, 'sotuvda'],
       ['A', 2, 58.5, null, 'sotuvda'],
@@ -55,14 +68,54 @@ describe("Ko'chirish: old Mini App catalog (HTML)", () => {
       ['A', 3, 81, null, 'sotilgan'],
       ['A', 4, 98, 1_200_000_000, 'sotuvda'],
     ]);
+    // No floor / number in the old data: numbered in order at the end of the Blok.
+    expect(await shaxmatka(sayhun)).toEqual([
+      ['A', 1, 1, 1, 'bosh'],
+      ['A', 1, 2, 2, 'bosh'],
+      ['A', 1, 3, 2, 'bosh'],
+      ['A', 1, 4, 3, 'bron'],
+      ['A', 2, 5, 3, 'sotilgan'],
+      ['A', 2, 6, 4, 'bosh'],
+    ]);
     // Price per m² (TZ 0.4) becomes the whole Xonadon's price.
-    expect(planirovkalar(await loyihaBySlug('jozibali'))).toEqual([
+    const jozibali = await loyihaBySlug('jozibali');
+    expect(planirovkalar(jozibali)).toEqual([
       ['A', 2, 54.3, 455_500_000, 'sotuvda'],
       ['A', 3, 72, null, 'band'],
       ['B', 1, 38.5, 346_500_000, 'sotilgan'],
     ]);
+    // Their own floor and number.
+    expect(await shaxmatka(jozibali)).toEqual([
+      ['A', 3, 12, 2, 'bosh'],
+      ['A', 5, 21, 3, 'bron'],
+      ['B', 1, 2, 1, 'sotilgan'],
+    ]);
     // Topshirilgan Loyiha is moved but not shown in the katalog.
     expect((await get('/api/katalog/loyihalar?shahar=navoiy')).loyihalar).toEqual([]);
+  });
+
+  it('rejects an old Xonadon whose Blok, floor and number repeat another one', async () => {
+    const data = [
+      {
+        id: 'x',
+        name: 'X',
+        city: 'tashkent',
+        status: 'sale',
+        apartments: [
+          { block: 'A', floor: 2, number: 5, rooms: 1, area: 40 },
+          { block: 'A', floor: 2, number: 5, rooms: 2, area: 60 },
+        ],
+      },
+    ];
+    const before = await xonadonCount();
+    const report = await importLegacyKatalog(t.db, data, t.clock.now());
+
+    expect(report.ok).toBe(false);
+    expect(report.source.rejected).toEqual([
+      { where: 'PROJECTS[0] X apartments[1]', reason: 'same block, floor and number as apartments[0]' },
+    ]);
+    expect(report.db.xonadonlar).toBe(1);
+    expect((await xonadonCount()) - before).toBe(1);
   });
 
   it('creates no duplicates when run again', async () => {
@@ -82,7 +135,11 @@ describe("Ko'chirish: old Mini App catalog (HTML)", () => {
     const report = await importLegacyKatalog(t.db, extractLegacyKatalog(fixture('katalog.html')), t.clock.now());
 
     expect(report.added.loyihalar).toBe(0);
-    expect(report.ok).toBe(true);
+    // The seeded (DEMO) B blok already has a Xonadon on floor 1 with number 2: that one is reported, not overwritten.
+    expect(report.source.rejected).toEqual([
+      { where: 'PROJECTS[0] Jozibali Maskan apartments[2]', reason: 'its block, floor and number are taken in the database' },
+    ]);
+    expect(report.ok).toBe(false);
     t.clock.advance({ minutes: 1 }); // Katalog cache
     const sayhun = await loyihaBySlug('sayhun');
     expect(sayhun.id).toBe(sayhunBefore.id);

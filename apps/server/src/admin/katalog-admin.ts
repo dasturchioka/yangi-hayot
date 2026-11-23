@@ -8,9 +8,7 @@ import type {
   LokalDto,
 } from '@yh/shared';
 import type pg from 'pg';
-import { sevimliBandBoldi } from '../dojim/dojim';
 import { planirovkaHolati } from '../katalog/katalog';
-import { moslashtirSonlar } from '../xonadon/joylash';
 import { farq, yozJurnal, type Muallif } from './jurnal';
 
 /**
@@ -142,7 +140,7 @@ function loyihaParams(i: AdminLoyihaInput) {
   ];
 }
 
-/** What the jurnal stores of a Planirovka (derived counts included: only the count import changes them). */
+/** What the jurnal stores of a Planirovka: its own fields (counts are its Xonadonlar', jurnaled there). */
 const planirovkaFields = (p: AdminPlanirovkaDto) => ({
   xonalar: p.xonalar,
   maydon: p.maydon,
@@ -151,10 +149,6 @@ const planirovkaFields = (p: AdminPlanirovkaDto) => ({
   video: p.video,
   qoldaNarx: p.qoldaNarx,
   tartib: p.tartib,
-  bosh: p.bosh,
-  bron: p.bron,
-  sotilgan: p.sotilgan,
-  jami: p.jami,
 });
 
 const planirovkaTavsif = (loyiha: string, blok: string, p: AdminPlanirovkaInput) =>
@@ -409,9 +403,7 @@ export async function blokOf(c: pg.PoolClient, blokId: number): Promise<{ loyiha
   return { loyihaId: r.loyiha_id, loyihaNomi: r.loyiha_nomi, blokNomi: r.blok_nomi };
 }
 
-/** Counts: only the #6 count import gives them (Xonadonlar are then laid out at the end of the Blok). */
-export type PlanirovkaCreateInput = Partial<AdminPlanirovkaInput> &
-  Pick<AdminPlanirovkaInput, 'xonalar' | 'maydon'> & { bosh?: number; bron?: number; sotilgan?: number };
+export type PlanirovkaCreateInput = Partial<AdminPlanirovkaInput> & Pick<AdminPlanirovkaInput, 'xonalar' | 'maydon'>;
 
 export async function createPlanirovka(
   db: pg.Pool,
@@ -450,9 +442,6 @@ export async function createPlanirovkaIn(
     ],
   );
   const id = rows[0]!.id;
-  if (input.bosh || input.bron || input.sotilgan) {
-    await moslashtirSonlar(c, id, { bosh: input.bosh ?? 0, bron: input.bron ?? 0, sotilgan: input.sotilgan ?? 0 }, by.at);
-  }
   const p = planirovkaDto(await viewRow(c, id), { nomi: by.admin.nomi, at: by.at.toISOString() });
   await yozJurnal(c, by, {
     obyekt: 'planirovka',
@@ -476,12 +465,9 @@ export async function updatePlanirovka(
   return tx(db, (c) => changePlanirovkaIn(c, by, id, () => patch));
 }
 
-type PlanirovkaChange = Partial<AdminPlanirovkaInput & { bosh: number; bron: number; sotilgan: number }>;
+type PlanirovkaChange = Partial<AdminPlanirovkaInput>;
 
-/**
- * Sets a Planirovka's fields and counts as given (import: the file is the
- * whole truth), inside the caller's transaction. No-op when nothing differs.
- */
+/** `updatePlanirovka` inside the caller's transaction (import). No-op when nothing differs. */
 export async function setPlanirovkaIn(
   c: pg.PoolClient,
   by: Muallif,
@@ -504,14 +490,7 @@ async function changePlanirovkaIn(
   if (!(await c.query('SELECT 1 FROM planirovka WHERE id = $1 FOR UPDATE', [id])).rowCount) throw notFound();
   const row = await viewRow(c, id);
   const before = planirovkaDto(row);
-  const { bosh, bron, sotilgan, ...own } = change(before);
-  const merged = { ...before, ...own };
-  if (bosh !== undefined || bron !== undefined || sotilgan !== undefined) {
-    const target = { bosh: bosh ?? before.bosh, bron: bron ?? before.bron, sotilgan: sotilgan ?? before.sotilgan };
-    if (target.bosh !== before.bosh || target.bron !== before.bron || target.sotilgan !== before.sotilgan) {
-      await moslashtirSonlar(c, id, target, by.at);
-    }
-  }
+  const merged = { ...before, ...change(before) };
   await c.query(
     `UPDATE planirovka SET xonalar = $1, maydon = $2, nomi = $3, chizma_url = $4, video_url = $5,
             qolda_narx = $6, tartib = $7 WHERE id = $8`,
@@ -533,8 +512,6 @@ async function changePlanirovkaIn(
   const d = farq(planirovkaFields(before), planirovkaFields(after));
   if (!d) return before;
   await c.query('UPDATE planirovka SET updated_at = $1 WHERE id = $2', [by.at, id]);
-  // Every bo'sh change of the Planirovka row path (count import) passes here: dojim «sevimli band bo'ldi» (#17).
-  if (before.bosh > 0 && after.bosh === 0) await sevimliBandBoldi(c, id, by.at);
   const where = await blokOf(c, row.blok_id);
   await yozJurnal(c, by, {
     obyekt: 'planirovka',

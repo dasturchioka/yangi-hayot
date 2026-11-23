@@ -17,8 +17,7 @@ export interface XonadonJoyi {
 }
 
 /**
- * Lays out a Blok's Xonadonlar when only counts are known (demo seed, old
- * counts, the #6 count import): each floor takes one of each Planirovka in
+ * Lays out a Blok's Xonadonlar when only counts are known (test seeds): each floor takes one of each Planirovka in
  * turn, numbers go up floor by floor from 1, and each Planirovka's holatlar
  * are spread over its floors (not all sold ones at the bottom).
  *
@@ -92,18 +91,17 @@ export async function insertXonadonlar(
 }
 
 /**
- * Adds Xonadonlar of the given holatlar to a Planirovka at the end of its
- * Blok: next numbers, on the top floor while it has room (room = the fullest
- * floor), else on a new floor. For count-based writers only (#6 import).
+ * Adds Xonadonlar to a Planirovka at the end of its Blok when their floor and
+ * number are unknown (old catalog, #8): next numbers, on the top floor while
+ * it has room (room = the fullest floor), else on a new floor.
  */
 export async function appendXonadonlar(
   db: Queryable,
   blokId: number,
-  planirovkaId: number,
-  holatlar: XonadonHolati[],
+  xonadonlar: { planirovkaId: number; holat: XonadonHolati; narx?: number | null }[],
   at: Date,
 ): Promise<void> {
-  if (!holatlar.length) return;
+  if (!xonadonlar.length) return;
   const { rows } = (await db.query(
     `SELECT COALESCE(max(raqam), 0)::int AS raqam, COALESCE(max(qavat), 1)::int AS qavat,
             COALESCE((SELECT max(n) FROM (SELECT count(*)::int AS n FROM xonadon WHERE blok_id = $1 GROUP BY qavat) f), 0)::int AS per,
@@ -114,52 +112,14 @@ export async function appendXonadonlar(
   )) as { rows: { raqam: number; qavat: number; per: number; tepada: number }[] };
   let { raqam, qavat, tepada } = rows[0]!;
   const per = rows[0]!.per || 4; // empty Blok: 4 a floor
-  const out = holatlar.map((holat) => {
+  const out = xonadonlar.map(({ planirovkaId, holat, narx }) => {
     if (tepada >= per) {
       qavat += 1;
       tepada = 0;
     }
     tepada += 1;
     raqam += 1;
-    return { blokId, planirovkaId, qavat, raqam, holat };
+    return { blokId, planirovkaId, qavat, raqam, holat, narx };
   });
   await insertXonadonlar(db, out, at);
-}
-
-/**
- * Makes a Planirovka have exactly these counts by changing as few Xonadonlar
- * as possible: surplus Xonadonlar of one holat take a missing holat, the rest
- * are removed (highest raqam first) or added at the end of the Blok. Only for
- * the count-based #6 import, until #24 imports Xonadonlar row by row; the
- * caller writes the Planirovka's jurnal row with the counts.
- */
-export async function moslashtirSonlar(
-  c: Queryable,
-  planirovkaId: number,
-  target: { bosh: number; bron: number; sotilgan: number },
-  at: Date,
-): Promise<void> {
-  const rows = (
-    (await c.query(
-      `SELECT x.id, p.blok_id, x.holat FROM planirovka p LEFT JOIN xonadon x ON x.planirovka_id = p.id
-        WHERE p.id = $1 ORDER BY x.raqam DESC`,
-      [planirovkaId],
-    )) as { rows: { id: number | null; blok_id: number; holat: XonadonHolati }[] }
-  ).rows;
-  const blokId = rows[0]!.blok_id;
-  const xonadonlar = rows.flatMap((r) => (r.id === null ? [] : [{ id: r.id, holat: r.holat }]));
-  const ortiqcha: number[] = [];
-  const kerak: XonadonHolati[] = [];
-  for (const h of ['bosh', 'bron', 'sotilgan'] as const) {
-    const bor = xonadonlar.filter((x) => x.holat === h);
-    const farqi = bor.length - target[h];
-    if (farqi > 0) ortiqcha.push(...bor.slice(0, farqi).map((x) => x.id));
-    for (let i = 0; i < -farqi; i++) kerak.push(h);
-  }
-  const n = Math.min(ortiqcha.length, kerak.length);
-  for (let i = 0; i < n; i++) {
-    await c.query('UPDATE xonadon SET holat = $1, updated_at = $2 WHERE id = $3', [kerak[i], at, ortiqcha[i]]);
-  }
-  if (ortiqcha.length > n) await c.query('DELETE FROM xonadon WHERE id = ANY($1::int[])', [ortiqcha.slice(n)]);
-  await appendXonadonlar(c, blokId, planirovkaId, kerak.slice(n), at);
 }

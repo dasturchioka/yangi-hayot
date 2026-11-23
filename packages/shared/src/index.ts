@@ -360,7 +360,7 @@ export interface JurnalDto {
   keyin: Record<string, unknown>;
 }
 
-// ---- Planirovkalar import from Excel / CSV (#6) ----
+// ---- Xonadonlar import from Excel / CSV (#6, #24: one row = one Xonadon) ----
 
 /** One problem in the file. qator: spreadsheet row number (1 = header); null = the whole file. */
 export interface ImportXato {
@@ -370,32 +370,55 @@ export interface ImportXato {
   xabar: string;
 }
 
-/** What the import will do with one row of the file. */
+/** What the import will do with one row (one Xonadon) of the file. */
 export interface ImportQator {
   qator: number;
   blok: string;
+  qavat: number;
+  raqam: number;
   xonalar: number;
   maydon: number;
+  /** Planirovka nomi (uz); null = without a name. */
   nomi: string | null;
-  boshlangichNarx: number | null;
-  bosh: number;
-  bron: number;
-  sotilgan: number;
+  /** The Xonadon's own price, UZS; null → the Planirovka's qo'lda narx. */
+  narx: number | null;
+  holat: XonadonHolati;
   amal: 'yangi' | 'yangilanadi' | 'ozgarishsiz';
-  /** For 'yangilanadi': changed fields (boshlangichNarx, bosh, bron, sotilgan, nomi, chizma, video). */
-  ozgarishlar?: string[];
+  /** For 'yangilanadi': changed fields of the Xonadon ('planirovka', 'narx', 'holat'). */
+  ozgarishlar?: ('planirovka' | 'narx' | 'holat')[];
+  /** The row's Planirovka (Blok + xonalar + maydon + nomi) does not exist yet and will be created. */
+  yangiPlanirovka?: true;
+  /** For 'yangilanadi': the Xonadon's values now (only the changed ones). */
+  oldin?: { narx?: number | null; holat?: XonadonHolati; planirovka?: string };
+}
+
+/** A Xonadon of the Loyiha that is not in the file (the import leaves it as it is). */
+export interface ImportFayldaYoq {
+  blok: string;
+  qavat: number;
+  raqam: number;
+  holat: XonadonHolati;
 }
 
 export interface ImportReja {
+  /** Xonadonlar: created / changed / the same. */
   yangi: number;
   yangilanadi: number;
   ozgarishsiz: number;
   /** Bloklar the import will create. */
   yangiBloklar: string[];
-  /** Planirovkalar of the Loyiha that are not in the file; the import leaves them as they are. */
+  /** Planirovkalar the import will create (by Blok + xonalar + maydon + nomi). */
+  yangiPlanirovkalar: number;
+  /** Existing Planirovkalar whose chizma / video the file changes. */
+  yangilanadiganPlanirovkalar: number;
+  /** Xonadonlar of the Loyiha that are not in the file; never deleted. */
   fayldaYoq: number;
+  /** The first of them (at most IMPORT_FAYLDA_YOQ_MAX), Blok / qavat / raqam order. */
+  fayldaYoqlar: ImportFayldaYoq[];
   qatorlar: ImportQator[];
 }
+
+export const IMPORT_FAYLDA_YOQ_MAX = 200;
 
 /** POST …/import/tekshir. Import is possible only when xatolar is empty. */
 export interface ImportTekshirResponse {
@@ -408,6 +431,7 @@ export interface ImportNatija {
   yangilandi: number;
   ozgarishsiz: number;
   yangiBloklar: string[];
+  yangiPlanirovkalar: number;
 }
 
 // ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
