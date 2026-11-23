@@ -9,6 +9,7 @@
     "build": "tsup",
     "migrate": "tsx --env-file-if-exists=.env src/db/migrate-cli.ts",
     "seed": "tsx --env-file-if-exists=.env src/katalog/seed-cli.ts",
+    "admin:create": "tsx --env-file-if-exists=.env src/admin/create-admin-cli.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

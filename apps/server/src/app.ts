@@ -6,6 +6,8 @@ import type { Clock } from './clock';
 import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createKatalog } from './katalog/katalog';
+import { adminAuthRoutes } from './routes/admin-auth';
+import { adminKatalogRoutes } from './routes/admin-katalog';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { miniAppRoutes } from './routes/mini-app';
@@ -35,6 +37,8 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.get('/health', async () => ({ ok: true }));
   app.register((scope) => miniAppRoutes(scope, deps), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
+  app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
+  app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });

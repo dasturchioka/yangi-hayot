@@ -127,3 +127,125 @@ export interface LoyihaResponse {
 export interface PlanirovkaResponse {
   planirovka: PlanirovkaDto;
 }
+
+// ---- Admin-panel (#5) ----
+
+/** Administrator: everything. Menejer: Xonadon holatlari (counts) and yozilishlar only. */
+export const ADMIN_ROLLAR = ['administrator', 'menejer'] as const;
+export type AdminRol = (typeof ADMIN_ROLLAR)[number];
+
+export interface AdminDto {
+  id: number;
+  login: string;
+  nomi: string;
+  rol: AdminRol;
+  faol: boolean;
+}
+
+export interface AdminMeResponse {
+  admin: AdminDto;
+}
+
+/** Text in both languages, as the admin edits it. */
+export interface LokalDto {
+  ru: string;
+  uz: string;
+}
+
+export const LOYIHA_HOLATLARI = ['sotuvda', 'topshirilgan'] as const;
+export type LoyihaHolati = (typeof LOYIHA_HOLATLARI)[number];
+
+/** Where a Xonadon is: the three counts of a Planirovka. */
+export const XONADON_HOLATLARI = ['bosh', 'bron', 'sotilgan'] as const;
+export type XonadonHolati = (typeof XONADON_HOLATLARI)[number];
+
+export interface AdminInfratuzilmaDto {
+  kategoriya: string;
+  nomi: LokalDto;
+  masofa: LokalDto | null;
+}
+
+/** Loyiha fields the Administrator edits (POST creates, PATCH takes any subset). */
+export interface AdminLoyihaInput {
+  slug: string;
+  nomi: string;
+  shahar: Shahar;
+  holat: LoyihaHolati;
+  manzil: LokalDto;
+  qisqaTavsif: LokalDto | null;
+  tavsif: LokalDto | null;
+  fotolar: string[];
+  video: string | null;
+  qavatlarSoni: number | null;
+  xarita: { lat: number; lng: number } | null;
+  infratuzilma: AdminInfratuzilmaDto[];
+  tartib: number;
+}
+
+export interface AdminPlanirovkaInput {
+  xonalar: number;
+  maydon: number;
+  nomi: LokalDto | null;
+  chizma: string | null;
+  video: string | null;
+  /** UZS; null → «Narx so'rov bo'yicha». */
+  boshlangichNarx: number | null;
+  tartib: number;
+}
+
+export interface XonadonSonlari {
+  bosh: number;
+  bron: number;
+  sotilgan: number;
+  /** bosh + bron + sotilgan; changed only by the Administrator. */
+  jami: number;
+}
+
+export interface AdminPlanirovkaDto extends AdminPlanirovkaInput, XonadonSonlari {
+  id: number;
+  blokId: number;
+  holat: PlanirovkaHolati;
+}
+
+export interface AdminBlokDto {
+  id: number;
+  loyihaId: number;
+  nomi: string;
+  tartib: number;
+  planirovkalar: AdminPlanirovkaDto[];
+}
+
+export interface AdminLoyihaListItem extends XonadonSonlari {
+  id: number;
+  slug: string;
+  nomi: string;
+  shahar: Shahar;
+  holat: LoyihaHolati;
+  bloklarSoni: number;
+  planirovkalarSoni: number;
+}
+
+export interface AdminLoyihaDto extends AdminLoyihaInput {
+  id: number;
+  bloklar: AdminBlokDto[];
+}
+
+export type JurnalObyekt = 'loyiha' | 'blok' | 'planirovka';
+
+/** One jurnal row: kim, qachon, nima edi (oldin; null = created), nima bo'ldi (keyin). */
+export interface JurnalDto {
+  id: number;
+  /** ISO instant. */
+  at: string;
+  admin: { id: number | null; nomi: string };
+  obyekt: JurnalObyekt;
+  obyektId: number;
+  /** yaratildi | tahrirlandi | kochirildi */
+  amal: 'yaratildi' | 'tahrirlandi' | 'kochirildi';
+  /** Label of the object at that time, e.g. "Jozibali Maskan · A blok · 2 xona, 54 m²". */
+  tavsif: string;
+  /** Changed fields before (null = created). */
+  oldin: Record<string, unknown> | null;
+  /** Changed fields after. */
+  keyin: Record<string, unknown>;
+}

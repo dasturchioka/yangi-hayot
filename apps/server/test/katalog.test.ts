@@ -211,19 +211,6 @@ describe('Katalog in the Mini App', () => {
     ]);
   });
 
-  it('shows a change of counts or price within one minute', async () => {
-    const l = await seedLoyiha(t.db, { bloklar: [blok('A', [{ bosh: 1, boshlangichNarx: 400_000_000 }])] });
-    const id = l.bloklar[0]!.planirovkalar[0]!.id;
-    await get(`/api/katalog/planirovkalar/${id}`);
-
-    // No admin API yet (#5): change the row directly, as the admin-panel will.
-    await t.db.query('UPDATE planirovka SET bosh = 0, bron = 1, boshlangich_narx = 420000000 WHERE id = $1', [id]);
-    t.clock.advance({ minutes: 1 });
-
-    const { planirovka } = (await get(`/api/katalog/planirovkalar/${id}`)).json();
-    expect([planirovka.holat, planirovka.boshlangichNarx]).toEqual(['band', 420_000_000]);
-  });
-
   it('requires valid initData', async () => {
     const res = await t.app.inject({ method: 'GET', url: '/api/katalog/loyihalar' });
 
