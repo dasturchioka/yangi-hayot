@@ -1,4 +1,7 @@
 import type {
+  ArizaCreatedResponse,
+  ArizaFormRequest,
+  ArizalarResponse,
   Lang,
   LoyihaResponse,
   LoyihalarResponse,
@@ -60,6 +63,10 @@ export const api = {
   loyihalar: (lang: Lang) => cachedGet<LoyihalarResponse>(`/katalog/loyihalar?lang=${lang}`),
   loyiha: (id: number, lang: Lang) => cachedGet<LoyihaResponse>(`/katalog/loyihalar/${id}?lang=${lang}`),
   planirovka: (id: number, lang: Lang) => cachedGet<PlanirovkaResponse>(`/katalog/planirovkalar/${id}?lang=${lang}`),
+  /** Own Arizalar + name/phone to prefill forms. */
+  arizalar: () => apiGet<ArizalarResponse>('/arizalar'),
+  /** 400 = bad phone/context, 429 = too many Arizalar. */
+  createAriza: (body: ArizaFormRequest) => apiSend<ArizaCreatedResponse>('POST', '/arizalar', body),
   /** Sevimlilar live on the server (follow the Mijoz across devices): never cached. */
   sevimlilar: (lang: Lang) => apiGet<SevimlilarResponse>(`/sevimlilar?lang=${lang}`),
   addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),

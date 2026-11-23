@@ -1,5 +1,6 @@
 import type { BotMedia, Lang } from '@yh/shared';
 import type pg from 'pg';
+import type { WorkingHours } from '../ariza/working-hours';
 
 /** Welcome (salomlashish) set by an administrator with /welcome. */
 export type WelcomeContent = Record<Lang, { text: string; media?: BotMedia }>;
@@ -15,9 +16,23 @@ export interface Settings {
   managersGroupId: string | null;
   /** Welcome text and media; null = built-in default text. */
   welcome: WelcomeContent | null;
+  /**
+   * Deadline of «Qo'ng'iroq qilish» / «Bog'lanish» CRM tasks (8-bo'lim):
+   * `minutes` of working time from the Ariza.
+   */
+  crmTaskDue: { minutes: number; workingHours: WorkingHours };
+  /** Set when admins were alerted about an amoCRM auth error; cleared by the next successful delivery. */
+  crmAuthAlertedAt: string | null;
 }
 
-const DEFAULTS: Settings = { admins: [], managersGroupId: null, welcome: null };
+const DEFAULTS: Settings = {
+  admins: [],
+  managersGroupId: null,
+  welcome: null,
+  // TZ: 15 minutes «ish vaqtida». Office hours not confirmed yet (M11): Mon–Sat 9:00–19:00.
+  crmTaskDue: { minutes: 15, workingHours: { start: '09:00', end: '19:00', days: [1, 2, 3, 4, 5, 6] } },
+  crmAuthAlertedAt: null,
+};
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
   const { rows } = await db.query<{ value: Settings[K] }>('SELECT value FROM settings WHERE key = $1', [key]);

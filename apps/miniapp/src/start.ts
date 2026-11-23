@@ -10,11 +10,17 @@ let opened = false;
  * null (reads the parameter locally, no waiting) and again with the server's
  * reading from /api/me.
  *
- * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka.
- * TODO(#9, #11): bot buttons 'ariza' and 'booking' (#7) once their screens exist.
+ * Handled: «Ulashish» links `pl<id>_u<n>` (#16) → that Planirovka; the bot's
+ * «Ariza qoldirish» button `ariza` (#7, #9) → the Ariza form.
+ * TODO(#11): 'booking' once its screen exists.
  */
 export function openStartScreen(fromServer: StartDto | null): void {
   if (opened) return;
+  if (getStartParam() === 'ariza') {
+    opened = true;
+    if (parseRoute(window.location.hash).name === 'loyihalar') navigate({ name: 'ariza' });
+    return;
+  }
   const link = parseUlashishParam(getStartParam());
   const start: StartDto | null =
     fromServer ?? (link ? { ekran: 'planirovka', planirovkaId: link.planirovkaId } : null);
