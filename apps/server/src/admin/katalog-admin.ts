@@ -9,6 +9,7 @@ import type {
   XonadonHolati,
 } from '@yh/shared';
 import type pg from 'pg';
+import { sevimliBandBoldi } from '../dojim/dojim';
 import { planirovkaHolati } from '../katalog/katalog';
 import { farq, yozJurnal, type Muallif } from './jurnal';
 
@@ -542,6 +543,8 @@ async function changePlanirovkaIn(
       id,
     ],
   );
+  // Every bo'sh change (admin edit, Menejer ko'chirish, Excel import) passes here: dojim «sevimli band bo'ldi» (#17).
+  if (before.bosh > 0 && after.bosh === 0) await sevimliBandBoldi(c, id, by.at);
   const where = await blokOf(c, row.blok_id);
   await yozJurnal(c, by, {
     obyekt: 'planirovka',

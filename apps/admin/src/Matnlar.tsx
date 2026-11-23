@@ -8,6 +8,7 @@ import {
 } from '@yh/shared';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
+import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
 import './matnlar.css';
 import { YozilishSozlamalariForm } from './Yozilishlar';
@@ -52,6 +53,13 @@ const TABS: Tab[] = [
     name: "Muddatli to'lov va ipoteka",
     // Own settings key (GET/PUT /admin/api/kalkulyator), not part of Kontent.
     render: () => <KalkulyatorForm />,
+  },
+  {
+    id: 'dojim',
+    name: 'Dojim (eslatmalar)',
+    // Own settings key (GET/PUT /admin/api/dojim): the bot's reminder texts (#17).
+    render: () => null,
+    own: () => <DojimForm />,
   },
 ];
 
@@ -117,10 +125,12 @@ export function Form({
   children,
   onSubmit,
   state,
+  savedText = 'Saqlandi — Mini App’da ko‘rinadi',
 }: {
   children: ReactNode;
   onSubmit: () => void;
   state: ReturnType<typeof useSave>['state'];
+  savedText?: string;
 }) {
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -131,7 +141,7 @@ export function Form({
       {children}
       <div className="save-bar">
         <span className="save-status" role="status">
-          {state.kind === 'saved' && 'Saqlandi — Mini App’da ko‘rinadi'}
+          {state.kind === 'saved' && savedText}
           {state.kind === 'error' && <span className="save-error">{state.text}</span>}
         </span>
         <button className="primary" type="submit" disabled={state.kind === 'saving'}>

@@ -62,6 +62,10 @@ _Avoid_: Sdelka, deal, lid
 Administrator botdagi /broadcast yoki admin-paneldan auditoriyaga (hammasi, RU, UZ, Toshkentga qiziqish, Navoiyga qiziqish) yuboradigan bitta xabar: matn, ixtiyoriy foto/video va bitta tugma. Botni bloklagan Mijozlarga bormaydi.
 _Avoid_: Broadcast, mailing, xabarnoma
 
+**Dojim**:
+Bot Mijozga o'zi yuboradigan muloyim eslatma: Planirovkani ko'rib Ariza qoldirmadi, sevimli Planirovka band bo'ldi, ko'rishga kelmadi yoki keldi. Bitta Mijozga 7 kunda ko'pi bilan bitta; «Yubormang» bosilsa, boshqa hech qachon yuborilmaydi.
+_Avoid_: Napominanie, reminder, follow-up (tizim matnlarida)
+
 **Shaharga qiziqish**:
 Mijoz shahar Loyihalarini ochgan, kvizda shu shaharni tanlagan yoki uning Loyihasiga Ariza qoldirgan; bitta Mijoz ikkala shaharga ham qiziqishi mumkin.
 _Avoid_: Segment, shahar tanlovi
