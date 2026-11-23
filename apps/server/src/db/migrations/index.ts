@@ -9,6 +9,9 @@ import { m0008_t9_ariza } from './0008_t9_ariza';
 import { m0009_t19_taklif } from './0009_t19_taklif';
 import { m0010_t12_kalkulyator } from './0010_t12_kalkulyator';
 import { m0011_t11_yozilish } from './0011_t11_yozilish';
+import { m0012_t15_hodisa_hisobot } from './0012_t15_hodisa_hisobot';
+import { m0013_t18_skoring } from './0013_t18_skoring';
+import { m0014_t17_dojim } from './0014_t17_dojim';
 
 export interface Migration {
   /** Unique, sortable: `NNNN_short_name`. */
@@ -29,4 +32,7 @@ export const migrations: Migration[] = [
   m0009_t19_taklif,
   m0010_t12_kalkulyator,
   m0011_t11_yozilish,
+  m0012_t15_hodisa_hisobot,
+  m0013_t18_skoring,
+  m0014_t17_dojim,
 ];

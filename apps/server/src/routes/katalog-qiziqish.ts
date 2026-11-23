@@ -5,6 +5,7 @@ import type pg from 'pg';
 import type { Clock } from '../clock';
 import type { Katalog } from '../katalog/katalog';
 import { recordShaharQiziqish } from '../mijoz/shahar-qiziqish';
+import { planirovkaKorildi } from '../hodisa/hodisa';
 
 /**
  * Mini App catalog hook (preSerialization on /api/katalog): a Mijoz who
@@ -16,6 +17,8 @@ export function katalogQiziqishHook(deps: { db: pg.Pool; clock: Clock }, katalog
     if (reply.statusCode !== 200 || !req.telegramUser) return payload;
     const shahar = await shaharOf(req, payload, katalog);
     if (shahar) await recordShaharQiziqish(deps.db, String(req.telegramUser.id), shahar, 'loyiha', deps.clock.now());
+    const planirovka = (payload as Partial<PlanirovkaResponse>).planirovka;
+    if (planirovka) await planirovkaKorildi(deps.db, String(req.telegramUser.id), planirovka.id, deps.clock.now());
     return payload;
   };
 }

@@ -223,3 +223,97 @@
     transition: none;
   }
 }
+
+/* ---- DatePicker (DatePicker.tsx) ---- */
+.yh-date .yh-select-trigger {
+  justify-content: flex-start;
+  min-width: 0;
+  width: auto;
+  gap: 8px;
+}
+.yh-date-icon {
+  flex: none;
+  color: var(--yh-muted);
+}
+.yh-date-popover {
+  width: 296px;
+  max-width: 90vw;
+  padding: 10px;
+}
+.yh-date-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.yh-date-title {
+  font: var(--yh-title);
+  color: var(--yh-ink);
+}
+button.yh-date-nav,
+button.yh-date-day {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--yh-ink);
+  cursor: pointer;
+}
+button.yh-date-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+button.yh-date-nav:hover:not(:disabled) {
+  background: var(--yh-surface);
+}
+button.yh-date-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.yh-date-grid {
+  display: grid;
+  gap: 2px;
+}
+.yh-date-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.yh-date-wd {
+  padding: 4px 0;
+  color: var(--yh-muted);
+  font: 600 11px/16px var(--yh-font);
+  text-align: center;
+}
+button.yh-date-day {
+  width: 100%;
+  height: 36px;
+  border-radius: 10px;
+  font: 400 14px/20px var(--yh-font);
+  font-variant-numeric: tabular-nums;
+}
+button.yh-date-day:hover:not(:disabled) {
+  background: var(--yh-surface);
+}
+button.yh-date-day.out {
+  color: var(--yh-muted);
+}
+button.yh-date-day.today {
+  box-shadow: inset 0 0 0 1px var(--yh-line);
+}
+button.yh-date-day.selected {
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+  font-weight: 600;
+}
+button.yh-date-day:disabled {
+  color: var(--yh-line);
+  cursor: default;
+}
+button.yh-date-day:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 1px;
+}

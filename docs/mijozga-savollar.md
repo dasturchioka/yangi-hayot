@@ -22,7 +22,7 @@ Hajm: UF-1 2,5 kishi-kun edi, planirovkalar ekrani ~1 kishi-kun. **Bo'shagan haj
 - **a) (tavsiya)** Strategiyada va'da qilingan, lekin TZ'da yo'q funksiyaga yo'naltiramiz: ko'rish oldidan eslatma (S6).
 - b) Shartnoma narxidan chegiramiz.
 
-> **Default:** Shaxmatka Mini App'dan ham, admin'dan ham olib tashlanadi, o'rniga planirovkalar ekrani (S1-a). Bo'shagan hajm hisobdan chiqariladi. Asos: TZ 10-b., 4-band — yangi talab alohida baholanadi; TZ'da eslatma 12-b. bo'yicha hajmdan tashqari.
+> **Qaror (2026-11-23, ADR 0003):** Shaxmatka TZ UF-1 bo'yicha qoladi va Planirovkalar ekrani ham qoladi (gibrid). Hajm o'zgarmaydi.
 
 Javob kerak: **3-kungacha** (dizayn 1–7-kunlar, server 4–10-kunlar).
 
@@ -32,7 +32,7 @@ TZ UF-2: «Rollar: … menejer — xonadon statuslari», UF-1: «status: bo'sh /
 - **a) (tavsiya)** Faqat planirovka darajasida: har bir planirovkada «bo'sh / bron / sotilgan» soni. Menejer sonni o'zgartiradi, o'zgarishlar jurnali saqlanadi (UF-2). Raqam va qavat umuman kiritilmaydi.
 - b) Har bir xonadon admin'da ichki yozuv sifatida qoladi (ichki ID, status, narx), mijozga ko'rsatilmaydi. Excel'ni xonadonlar bo'yicha to'ldirish kerak bo'ladi.
 
-> **Default:** Faqat planirovka darajasida (S2-a): bo'sh / bron / sotilgan soni. Asos: talabdagi «qavat va xonadon raqami kerak emas». TZ'dan qoladi: UF-1 dagi uchta status, UF-2 dagi «Narx va status o'zgarishlari jurnali» va menejer roli.
+> **Qaror (2026-11-23, ADR 0003):** Har bir Xonadon alohida yozuv (qavat, raqam, narx, holat), mijozga ko'rinadi. Planirovka sonlari Xonadonlardan hisoblanadi. Excel Xonadonlar bo'yicha to'ldiriladi.
 
 Javob kerak: **3-kungacha**.
 
@@ -44,7 +44,7 @@ TZ 0.4: narx «xonadon uchun yoki «m² uchun … dan»»; «Narx maydoni majbur
 
 Shuningdek: narx **butun xonadon uchun** (misoldagi kabi «xx so'mdan») ko'rsatiladimi yoki **1 m² uchun** ham?
 
-> **Default:** Admin'da qo'lda kiritiladi, butun xonadon narxi «… so'mdan» (talabdagi misol). 1 m² narxi ko'rsatilmaydi. Maydon bo'sh bo'lsa, TZ 0.4: «Narx so'rov bo'yicha» va ariza tugmasi.
+> **Qaror (ADR 0003):** Bo'sh Xonadonlarning eng kichik narxi (S3-b); Xonadonlarda narx bo'lmasa — Planirovkaning qo'lda kiritilgan narxi; u ham bo'lmasa — «Narx so'rov bo'yicha».
 
 Javob kerak: **3-kungacha**.
 

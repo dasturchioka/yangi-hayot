@@ -1,0 +1,395 @@
+/* ---- «Analitika → Voronka» (#20, UF-7) ---- */
+
+.voronka {
+  max-width: 1120px;
+  gap: var(--yh-space-20);
+  /* Funnel stages are ordinal: one green, light → dark (validated: monotone L, light end 2.4:1 on white). */
+  --vr-step-0: #5cb979;
+  --vr-step-1: #3aa45d;
+  --vr-step-2: #1f8f47;
+  --vr-step-3: #0a7a34;
+  --vr-step-4: #08622a;
+}
+.voronka .h2 {
+  font: var(--yh-h1);
+}
+
+/* Filters: one row above the charts */
+.vr-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+.vr-tabs .tab {
+  font: var(--yh-label);
+  font-size: 13px;
+  border-radius: 12px;
+}
+.voronka .tab {
+  transition: transform 140ms var(--yh-ease-out);
+}
+.voronka .tab:active {
+  transform: scale(0.97);
+}
+.voronka .tab:focus-visible,
+.vr-filters input:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+.vr-tabs .tab.active {
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+  box-shadow: none;
+}
+.vr-range {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yh-space-4);
+  color: var(--yh-muted);
+}
+.vr-range-icon {
+  color: var(--yh-muted);
+}
+.vr-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yh-space-4);
+}
+.vr-filters input {
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  min-height: 44px;
+  padding: 0 var(--yh-space-12);
+  border: 1px solid var(--yh-line);
+  border-radius: 12px;
+  background: var(--yh-bg);
+}
+
+.vr-body {
+  display: grid;
+  gap: var(--yh-space-20);
+  transition: opacity 160ms ease;
+}
+.vr-body.is-loading {
+  opacity: 0.55;
+}
+
+.vr-card {
+  display: grid;
+  gap: var(--yh-space-12);
+}
+.vr-card.flush {
+  gap: 0;
+}
+.vr-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-8) var(--yh-space-20);
+}
+.vr-card-head .small {
+  margin: 0;
+}
+.vr-strong {
+  color: var(--yh-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Funnel: label | bar | count | step conversion */
+.vr-funnel-cols,
+.vr-step {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 1fr 72px 92px;
+  align-items: center;
+  gap: var(--yh-space-12);
+}
+.vr-funnel-cols {
+  font: var(--yh-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--yh-muted);
+}
+.vr-funnel-cols .num {
+  text-align: right;
+}
+.vr-funnel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.vr-step {
+  position: relative;
+  min-height: 44px;
+  padding: 0 var(--yh-space-8);
+  margin: 0 calc(-1 * var(--yh-space-8));
+  border-radius: 12px;
+  outline: none;
+  transition: background-color 140ms ease;
+}
+.vr-step:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--yh-primary);
+}
+.vr-step-name {
+  font: var(--yh-title);
+  font-size: 15px;
+  color: var(--yh-ink);
+}
+.vr-track {
+  position: relative;
+  height: 24px;
+}
+.vr-bar {
+  position: absolute;
+  inset: 0;
+  border-radius: 0 4px 4px 0;
+  transform-origin: left center;
+  transition: transform 240ms var(--yh-ease-out);
+  background: var(--vr-step-0);
+}
+.vr-step[data-step='1'] .vr-bar {
+  background: var(--vr-step-1);
+}
+.vr-step[data-step='2'] .vr-bar {
+  background: var(--vr-step-2);
+}
+.vr-step[data-step='3'] .vr-bar {
+  background: var(--vr-step-3);
+}
+.vr-step[data-step='4'] .vr-bar {
+  background: var(--vr-step-4);
+}
+.vr-track.is-na {
+  display: flex;
+  align-items: center;
+  border: 1px dashed var(--yh-line);
+  border-radius: 4px;
+  padding: 0 var(--yh-space-8);
+}
+.vr-na {
+  overflow: hidden;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vr-count {
+  font: var(--yh-h3);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.vr-conv {
+  font: var(--yh-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--yh-ink-2);
+  text-align: right;
+}
+.vr-empty {
+  padding-top: var(--yh-space-4);
+}
+
+/* Per-step tooltip (hover / keyboard focus) */
+.vr-tip {
+  position: absolute;
+  z-index: 2;
+  left: calc(min(220px, 30%) + var(--yh-space-12));
+  bottom: calc(100% - 4px);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--yh-ink);
+  color: var(--yh-on-primary);
+  font: var(--yh-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px) scale(0.98);
+  transform-origin: left bottom;
+  transition:
+    opacity 125ms ease-out,
+    transform 125ms var(--yh-ease-out);
+}
+.vr-step:focus-visible .vr-tip,
+.vr-step:focus .vr-tip {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .vr-step:hover {
+    background: var(--yh-surface);
+  }
+  .vr-step:hover .vr-tip {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Tables */
+.vr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.vr-card.flush {
+  overflow-x: auto;
+}
+.vr-table thead th {
+  padding: var(--yh-space-8) var(--yh-space-12);
+  font: var(--yh-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--yh-muted);
+  text-align: left;
+  vertical-align: bottom;
+  border-top: 1px solid var(--yh-line);
+  border-bottom: 1px solid var(--yh-line);
+}
+.vr-table td,
+.vr-table tbody th {
+  padding: 10px var(--yh-space-12);
+  border-bottom: 1px solid var(--yh-line);
+  vertical-align: middle;
+}
+.vr-table thead th:first-child,
+.vr-table td:first-child,
+.vr-table tbody th {
+  padding-left: var(--yh-space-20);
+}
+.vr-table thead th:last-child,
+.vr-table td:last-child {
+  padding-right: var(--yh-space-20);
+}
+.vr-table tbody tr:last-child td,
+.vr-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+.vr-table .num {
+  text-align: right;
+}
+.vr-table td.is-zero {
+  color: var(--yh-muted);
+}
+.vr-rate {
+  font-weight: 600;
+}
+.vr-table tbody th {
+  text-align: left;
+  font-weight: 400;
+}
+.vr-row-btn {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--yh-title);
+  font-size: 15px;
+  color: var(--yh-ink);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 140ms ease;
+}
+.vr-row-btn:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .vr-row-btn:hover {
+    text-decoration-color: currentColor;
+  }
+}
+.vr-table tr.is-selected td,
+.vr-table tr.is-selected th {
+  background: var(--yh-status-free-bg);
+}
+.vr-table tr.is-selected .vr-row-btn {
+  color: var(--yh-status-free-fg);
+}
+
+/* Most viewed */
+.vr-rank {
+  width: 48px;
+  color: var(--yh-muted);
+}
+.vr-top .vr-rank {
+  text-align: left;
+}
+.vr-pl-name {
+  display: block;
+  font: var(--yh-title);
+  font-size: 15px;
+}
+.vr-pl-sub {
+  display: block;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+.vr-views {
+  width: 40%;
+}
+.vr-views-track {
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(100% - 56px);
+  height: 8px;
+}
+.vr-views-bar {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--yh-primary);
+  transform-origin: left center;
+  transition: transform 240ms var(--yh-ease-out);
+}
+.vr-views-n {
+  display: inline-block;
+  width: 48px;
+  margin-left: var(--yh-space-8);
+  text-align: right;
+  font-weight: 600;
+}
+
+.voronka ::selection {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-ink);
+}
+
+@media (max-width: 720px) {
+  .vr-funnel-cols {
+    display: none;
+  }
+  .vr-step {
+    grid-template-columns: minmax(96px, 1fr) 1fr 48px 40px;
+    gap: var(--yh-space-8);
+  }
+  .vr-step-name {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .vr-count {
+    font: var(--yh-title);
+  }
+  .vr-tip {
+    left: 0;
+    white-space: normal;
+    max-width: 100%;
+  }
+}
+
+/* Nav item icon (until the design pass's sidebar gives every item one) */
+@media (prefers-reduced-motion: reduce) {
+  .vr-bar,
+  .vr-views-bar,
+  .vr-tip {
+    transition: opacity 125ms ease;
+  }
+  .voronka .tab {
+    transition: none;
+  }
+}

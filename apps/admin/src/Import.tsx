@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Select } from '@yh/ui/select';
 import { adminApi, adminUpload, ApiError, errorText } from './api';
 import { soum } from './format';
+import { UploadLargeIcon } from './icons';
 
 /**
  * «Import» (#6, TZ story 63): a Menejer or Administrator loads a Loyiha's
@@ -341,15 +342,5 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: 'fr
 }
 
 function UploadIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 15V4m0 0L8 8m4-4 4 4M5 14v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <UploadLargeIcon />;
 }

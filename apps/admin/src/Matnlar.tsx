@@ -8,7 +8,10 @@ import {
 } from '@yh/shared';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
+import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
+import { SkoringForm } from './Skoring';
+import { ArrowDownIcon, ArrowUpIcon, XIcon } from './icons';
 import './matnlar.css';
 import { YozilishSozlamalariForm } from './Yozilishlar';
 
@@ -52,6 +55,19 @@ const TABS: Tab[] = [
     name: "Muddatli to'lov va ipoteka",
     // Own settings key (GET/PUT /admin/api/kalkulyator), not part of Kontent.
     render: () => <KalkulyatorForm />,
+  },
+  {
+    id: 'skoring',
+    name: 'Ball qoidalari',
+    // Lead skoringi (UF-4, #18): own settings key (GET/PUT /admin/api/skoring).
+    render: () => <SkoringForm />,
+  },
+  {
+    id: 'dojim',
+    name: 'Dojim (eslatmalar)',
+    // Own settings key (GET/PUT /admin/api/dojim): the bot's reminder texts (#17).
+    render: () => null,
+    own: () => <DojimForm />,
   },
 ];
 
@@ -117,10 +133,13 @@ export function Form({
   children,
   onSubmit,
   state,
+  savedText = 'Saqlandi — Mini App’da ko‘rinadi',
 }: {
   children: ReactNode;
   onSubmit: () => void;
   state: ReturnType<typeof useSave>['state'];
+  /** Shown after a successful save. */
+  savedText?: string;
 }) {
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -131,7 +150,7 @@ export function Form({
       {children}
       <div className="save-bar">
         <span className="save-status" role="status">
-          {state.kind === 'saved' && 'Saqlandi — Mini App’da ko‘rinadi'}
+          {state.kind === 'saved' && savedText}
           {state.kind === 'error' && <span className="save-error">{state.text}</span>}
         </span>
         <button className="primary" type="submit" disabled={state.kind === 'saving'}>
@@ -237,7 +256,7 @@ export function ListEditor<T>({
           <div className="list-body">{children(item, (v) => set(i, v))}</div>
           <div className="list-actions">
             <button type="button" className="icon" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Yuqoriga">
-              <Icon d="M12 19V5M6 11l6-6 6 6" />
+              <ArrowUpIcon />
             </button>
             <button
               type="button"
@@ -246,7 +265,7 @@ export function ListEditor<T>({
               onClick={() => move(i, 1)}
               aria-label="Pastga"
             >
-              <Icon d="M12 5v14M6 13l6 6 6-6" />
+              <ArrowDownIcon />
             </button>
             <button
               type="button"
@@ -255,7 +274,7 @@ export function ListEditor<T>({
               onClick={() => onChange(items.filter((_, j) => j !== i))}
               aria-label="O'chirish"
             >
-              <Icon d="M6 6l12 12M18 6 6 18" />
+              <XIcon />
             </button>
           </div>
         </div>
@@ -269,14 +288,6 @@ export function ListEditor<T>({
         </span>
       </div>
     </div>
-  );
-}
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
   );
 }
 

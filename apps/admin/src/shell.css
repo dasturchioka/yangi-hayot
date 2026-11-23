@@ -199,7 +199,7 @@ button:not(:disabled):active {
   transform: scale(0.98);
 }
 @media (hover: hover) {
-  button:not(.primary):not(.nav):not(.link):not(.tab):not(.yh-select-trigger):not(.icon-button):not(:disabled):hover {
+  button:not(.primary):not(.nav):not(.link):not(.tab):not(.yh-select-trigger):not(.icon-button):not(.yh-date-day):not(.yh-date-nav):not(:disabled):hover {
     border-color: var(--yh-primary);
     color: var(--yh-primary);
   }

@@ -7,6 +7,9 @@ export * from './bot';
 export * from './start';
 export * from './kalkulyator';
 export * from './kontent';
+export * from './skoring';
+import type { Daraja } from './skoring';
+export * from './dojim';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;
@@ -415,6 +418,8 @@ export interface YozilishRequest {
   name: string;
   /** Any common Uzbek format; stored as +998XXXXXXXXX. */
   phone: string;
+  /** The dojim whose button opened this Mini App launch (#17); the booking then counts as «dojimdan». */
+  dojimId?: number;
 }
 
 /** POST /api/yozilishlar/:id/kochirish. */
@@ -481,6 +486,8 @@ export interface AdminYozilishDto {
   /** «A blok · 2 xona, 54 m²» or null. */
   planirovka: string | null;
   manba: string;
+  /** The Mijoz's current Daraja (#18); null = not scored yet. */
+  daraja: Daraja | null;
   holat: YozilishHolati;
   davomat: Davomat | null;
   /** How many times the Mijoz moved it. */
@@ -637,4 +644,59 @@ export interface TaklifQilinganDto extends TaklifMijozDto {
 export interface TaklifQilinganlarResponse {
   taklifchi: TaklifMijozDto;
   taklifQilinganlar: TaklifQilinganDto[];
+}
+
+// ── voronka (#20, UF-7) ──────────────────────────────────────────────────
+
+/**
+ * Funnel steps, in order. `korildi` = the Mijoz opened a Planirovka or a
+ * Xonadon card (ADR 0003: Xonadon views join the same step).
+ */
+export const VORONKA_QADAMLARI = ['bot_kirdi', 'korildi', 'ariza', 'yozilish', 'keldi'] as const;
+export type VoronkaQadami = (typeof VORONKA_QADAMLARI)[number];
+
+export interface VoronkaQadamDto {
+  kalit: VoronkaQadami;
+  nomi: string;
+  /** Distinct Mijozlar; null = the step has no Loyiha (bot entry under a Loyiha filter). */
+  mijozlar: number | null;
+}
+
+export interface VoronkaManbaDto {
+  manba: string;
+  /** Per step, in VORONKA_QADAMLARI order. */
+  mijozlar: (number | null)[];
+}
+
+export interface VoronkaLoyihaDto {
+  id: number;
+  nomi: string;
+  mijozlar: (number | null)[];
+}
+
+export interface KorilganPlanirovkaDto {
+  planirovkaId: number;
+  loyiha: string;
+  blok: string;
+  xonalar: number;
+  maydon: number;
+  nomi: string | null;
+  /** Openings. */
+  korishlar: number;
+  /** Distinct Mijozlar who opened it. */
+  mijozlar: number;
+}
+
+/** GET /admin/api/voronka?dan=&gacha=&manba=&loyihaId= (Administrator). */
+export interface VoronkaResponse {
+  /** Tashkent days, inclusive. */
+  dan: string;
+  gacha: string;
+  manba: string | null;
+  loyihaId: number | null;
+  qadamlar: VoronkaQadamDto[];
+  manbalar: VoronkaManbaDto[];
+  loyihalar: VoronkaLoyihaDto[];
+  engKopKorilgan: KorilganPlanirovkaDto[];
+  tanlov: { manbalar: string[]; loyihalar: { id: number; nomi: string }[] };
 }

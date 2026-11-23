@@ -21,19 +21,23 @@ Bitta Blok ichidagi bir xil xonadonlar turi: xonalar soni, maydon va chizma. Bos
 _Avoid_: Xonadon turi, layout, kvartira
 
 **Xonadon**:
-Planirovkaning sanaladigan bitta nusxasi. O'z raqami, qavati va alohida yozuvi yo'q — faqat Planirovka ichidagi soni bor.
+Blok ichidagi bitta sotiladigan uy: qavat, raqam, Planirovka, narx va holat bilan alohida yozuv (ADR 0003).
 _Avoid_: Kvartira (tizim matnlarida), uy
 
 **Xonadon holati**:
-Planirovka ichidagi har bir Xonadon bo'sh, bron yoki sotilgan; uchalasining yig'indisi — Planirovkaning jami soni.
+Har bir Xonadon bo'sh, bron yoki sotilgan. Planirovkaning bo'sh / bron / sotilgan soni va jami Xonadonlardan hisoblanadi.
 _Avoid_: Svobodno, zanyato
+
+**Shaxmatka**:
+Blok bo'yicha «qavat × xonadon» jadvali: katak rangi = Xonadon holati, katakda xonalar va maydon (TZ UF-1).
+_Avoid_: Shaxmatkа (kirill), chessboard
 
 **Planirovka holati**:
 Xonadonlar sonidan kelib chiqadi: Sotuvda (bo'sh bor), Band (bo'sh yo'q, bron bor), Sotilgan (hammasi sotilgan).
 _Avoid_: Status (qo'lda qo'yiladigan)
 
 **Boshlang'ich narx**:
-Planirovkadagi eng arzon Xonadon narxi, mijozga «… so'mdan» ko'rinishida; bo'lmasa — «Narx so'rov bo'yicha».
+Planirovkadagi bo'sh Xonadonlarning eng kichik narxi, mijozga «… so'mdan» ko'rinishida; Xonadonlarda narx bo'lmasa — Planirovkaning qo'lda kiritilgan narxi; u ham bo'lmasa — «Narx so'rov bo'yicha».
 _Avoid_: Dan narx, minimal narx, start narx
 
 ## Mijoz va sotuv
@@ -61,6 +65,10 @@ _Avoid_: Sdelka, deal, lid
 **Rassilka**:
 Administrator botdagi /broadcast yoki admin-paneldan auditoriyaga (hammasi, RU, UZ, Toshkentga qiziqish, Navoiyga qiziqish) yuboradigan bitta xabar: matn, ixtiyoriy foto/video va bitta tugma. Botni bloklagan Mijozlarga bormaydi.
 _Avoid_: Broadcast, mailing, xabarnoma
+
+**Dojim**:
+Bot Mijozga o'zi yuboradigan muloyim eslatma: Planirovkani ko'rib Ariza qoldirmadi, sevimli Planirovka band bo'ldi, ko'rishga kelmadi yoki keldi. Bitta Mijozga 7 kunda ko'pi bilan bitta; «Yubormang» bosilsa, boshqa hech qachon yuborilmaydi.
+_Avoid_: Napominanie, reminder, follow-up (tizim matnlarida)
 
 **Shaharga qiziqish**:
 Mijoz shahar Loyihalarini ochgan, kvizda shu shaharni tanlagan yoki uning Loyihasiga Ariza qoldirgan; bitta Mijoz ikkala shaharga ham qiziqishi mumkin.

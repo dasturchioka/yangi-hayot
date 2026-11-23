@@ -12,6 +12,7 @@ import { LoyihalarScreen } from './Loyihalar';
 import { MatnlarScreen } from './Matnlar';
 import { RassilkaScreen } from './Rassilka';
 import { TakliflarScreen } from './Takliflar';
+import { VoronkaScreen } from './Voronka';
 import { XonadonlarScreen } from './Xonadonlar';
 import { YozilishlarScreen } from './Yozilishlar';
 
@@ -34,7 +35,7 @@ const SECTIONS: Section[] = [
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
   { name: 'Takliflar', rollar: ['administrator'], render: () => <TakliflarScreen /> },
-  { name: 'Analitika', rollar: ['administrator'] },
+  { name: 'Analitika', rollar: ['administrator'], render: () => <VoronkaScreen /> },
   {
     name: 'Matnlar va sozlamalar',
     rollar: ['administrator'],

@@ -8,7 +8,7 @@ import type { Yozilishlar } from '../yozilish/yozilish';
 import type pg from 'pg';
 import { yozilishError } from './yozilish';
 
-const Sana = z
+export const Sana = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().startsWith(s));

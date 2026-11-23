@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUp,
   BarChart3,
   Building2,
   CalendarDays,
@@ -14,6 +16,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -46,3 +49,7 @@ export const LogoutIcon = make(LogOut);
 export const MenuIcon = make(Menu);
 export const CollapseIcon = make(PanelLeftClose);
 export const ExpandIcon = make(PanelLeftOpen);
+export const XIcon = () => <X size={16} strokeWidth={1.8} aria-hidden focusable={false} />;
+export const ArrowUpIcon = () => <ArrowUp size={16} strokeWidth={1.8} aria-hidden focusable={false} />;
+export const ArrowDownIcon = () => <ArrowDown size={16} strokeWidth={1.8} aria-hidden focusable={false} />;
+export const UploadLargeIcon = () => <Upload size={28} strokeWidth={1.8} aria-hidden focusable={false} />;

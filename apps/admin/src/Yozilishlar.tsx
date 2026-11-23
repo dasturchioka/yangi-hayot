@@ -6,7 +6,9 @@ import type {
   YozilishSozlamalari,
 } from '@yh/shared';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { DatePicker } from '@yh/ui/date';
 import { adminApi, errorText } from './api';
+import { DarajaChip } from './Skoring';
 import './yozilishlar.css';
 
 /** Today in Tashkent, `YYYY-MM-DD` (the server counts days the same way). */
@@ -102,13 +104,7 @@ export function YozilishlarScreen({ admin: _admin }: { admin: AdminDto }) {
             ))}
           </div>
           {davr === 'kun' && (
-            <input
-              className="yz-date"
-              type="date"
-              value={kun}
-              onChange={(e) => e.target.value && setKun(e.target.value)}
-              aria-label="Kun"
-            />
+            <DatePicker className="yz-date" value={kun} onChange={setKun} aria-label="Kun" />
           )}
         </div>
       </header>
@@ -189,7 +185,10 @@ function Row({ r, today, onChange }: { r: AdminYozilishDto; today: string; onCha
     <tr className={bekor ? 'yz-row is-bekor' : 'yz-row'} data-davomat={r.davomat ?? undefined}>
       <td className="yz-time">{r.vaqt}</td>
       <td>
-        <span className="yz-name">{r.mijoz.name}</span>
+        <span className="yz-name">
+          {r.mijoz.name}
+          {r.daraja && <DarajaChip daraja={r.daraja} inline />}
+        </span>
         <span className="yz-sub tabular">
           {formatPhone(r.mijoz.phone)}
           {r.mijoz.username ? ` · @${r.mijoz.username}` : ''}
@@ -361,7 +360,7 @@ export function YozilishSozlamalariForm() {
             </span>
           ))}
           <span className="yz-add">
-            <input type="date" min={today} value={yangiBayram} onChange={(e) => setYangiBayram(e.target.value)} aria-label="Bayram kuni" />
+            <DatePicker min={today} value={yangiBayram || today} onChange={setYangiBayram} aria-label="Bayram kuni" />
             <button type="button" onClick={addBayram} disabled={!yangiBayram}>
               + kun
             </button>
