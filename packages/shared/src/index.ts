@@ -5,6 +5,7 @@
 
 export * from './bot';
 export * from './start';
+export * from './kontent';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;

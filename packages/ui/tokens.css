@@ -59,4 +59,7 @@
   --yh-shadow-card: 0 4px 16px rgba(11, 61, 42, 0.06);
   --yh-shadow-sticky: 0 -4px 16px rgba(11, 61, 42, 0.06);
   --yh-shadow-sheet: 0 -8px 32px rgba(11, 61, 42, 0.12);
+
+  /* Harakat: kirish va bosish uchun kuchli ease-out */
+  --yh-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }

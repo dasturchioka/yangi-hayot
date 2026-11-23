@@ -6,6 +6,7 @@ import { href } from '../router';
 import { openExternal } from '../telegram';
 import { useLoad } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
+import { KontentLinks } from '../kontent/screens';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
 
@@ -51,6 +52,7 @@ export function LoyihalarScreen() {
           );
         }}
       </Loaded>
+      <KontentLinks />
     </>
   );
 }

@@ -6,6 +6,7 @@ import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
 import { JurnalScreen } from './Jurnal';
 import { LoginScreen } from './Login';
 import { LoyihalarScreen } from './Loyihalar';
+import { MatnlarScreen } from './Matnlar';
 import { RassilkaScreen } from './Rassilka';
 import { XonadonlarScreen } from './Xonadonlar';
 
@@ -27,7 +28,7 @@ const SECTIONS: Section[] = [
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
   { name: 'Analitika', rollar: ['administrator'] },
-  { name: 'Matnlar va sozlamalar', rollar: ['administrator'] },
+  { name: 'Matnlar va sozlamalar', rollar: ['administrator'], render: () => <MatnlarScreen /> },
   { name: 'Foydalanuvchilar', rollar: ['administrator'], render: (a) => <FoydalanuvchilarScreen me={a} /> },
 ];
 

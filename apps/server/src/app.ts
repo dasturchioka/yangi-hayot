@@ -17,6 +17,7 @@ import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
+import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
 import { yozilishRoutes } from './routes/yozilish';
@@ -94,9 +95,18 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await kontentRoutes(scope, deps);
       await yozilishRoutes(scope, { db: deps.db, clock: deps.clock });
     },
     { prefix: '/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
+      await adminKontentRoutes(scope, deps);
+    },
+    { prefix: '/admin/api' },
   );
   app.register(
     async (scope) => {

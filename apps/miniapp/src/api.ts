@@ -1,4 +1,5 @@
 import type {
+  KontentResponse,
   ArizaCreatedResponse,
   ArizaFormRequest,
   ArizalarResponse,
@@ -72,5 +73,7 @@ export const api = {
   addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),
   removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
   taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
+  /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
+  kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
 };
