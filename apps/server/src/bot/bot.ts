@@ -1,6 +1,8 @@
 import { LANGS, type BotAction, type BotEvent, type BotIncomingMessage, type BotUser, type Lang } from '@yh/shared';
 import type pg from 'pg';
-import type { Clock } from '../clock';
+import { toTashkent, type Clock } from '../clock';
+import { kunlikHisobot, kunlikMatn } from '../hisobot/hisobot';
+import { botKirdi } from '../hodisa/hodisa';
 import { manbaFromStartParam } from '../mijoz/manba';
 import { chooseLang, ensureMijoz, markBotUnblocked, setBotStep, type MijozRecord } from '../mijoz/mijoz';
 import { getSetting, isAdmin, setSetting, type WelcomeContent } from '../settings/settings';
@@ -34,6 +36,7 @@ export async function handleBotEvent(deps: BotDeps, user: BotUser, event: BotEve
 
   switch (event.type) {
     case 'start':
+      await botKirdi(deps.db, mijoz.telegramId, now);
       return mijoz.langChosen ? welcome(ctx, mijoz.lang) : [askLang(mijoz)];
     case 'callback':
       return onCallback(ctx, event.data);
@@ -53,6 +56,12 @@ async function onCommand(ctx: Ctx, name: string): Promise<BotAction[]> {
       return [fallbackReply(ctx)];
     case 'broadcast':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginBroadcast(bcCtx(ctx));
+      return [fallbackReply(ctx)];
+    case 'report':
+      if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) {
+        const sana = toTashkent(ctx.now).date;
+        return [{ type: 'send', chatId: ctx.mijoz.telegramId, text: kunlikMatn(await kunlikHisobot(ctx.deps.db, sana)) }];
+      }
       return [fallbackReply(ctx)];
     default:
       return [fallbackReply(ctx)];

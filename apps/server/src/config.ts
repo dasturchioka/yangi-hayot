@@ -22,6 +22,8 @@ const EnvSchema = z.object({
   ADMIN_TELEGRAM_IDS: idList,
   /** Initial managers group chat id; written to settings only if not set yet. */
   MANAGERS_GROUP_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().regex(/^-?\d+$/).optional()),
+  /** Initial recipients of the 19:30 report (comma-separated chat ids); empty = the managers group. */
+  HISOBOT_CHAT_IDS: idList,
   /** Mini App URL (web_app buttons in messages the server sends). Unset = messages are not sent to Telegram (dev). */
   MINIAPP_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -48,7 +50,7 @@ export interface Config {
   botToken: string;
   botApiSecret: string;
   miniAppUrl?: string;
-  seed: { admins?: string[]; managersGroupId?: string };
+  seed: { admins?: string[]; managersGroupId?: string; hisobot?: { qabulQiluvchilar: string[] } };
   port: number;
   host: string;
   /** Key for the AI-menejer's katalog API (/ai/*). Optional: unset disables it. */
@@ -66,7 +68,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     botToken: e.BOT_TOKEN,
     botApiSecret: e.BOT_API_SECRET,
     miniAppUrl: e.MINIAPP_URL,
-    seed: { admins: e.ADMIN_TELEGRAM_IDS, managersGroupId: e.MANAGERS_GROUP_ID },
+    seed: {
+      admins: e.ADMIN_TELEGRAM_IDS,
+      managersGroupId: e.MANAGERS_GROUP_ID,
+      hisobot: e.HISOBOT_CHAT_IDS ? { qabulQiluvchilar: e.HISOBOT_CHAT_IDS } : undefined,
+    },
     port: e.PORT,
     host: e.HOST,
     aiApiKey: e.AI_API_KEY,

@@ -4,6 +4,7 @@ import type { Crm } from '../adapters/crm/crm';
 import { CrmAuthError } from '../adapters/crm/crm';
 import type { Messenger } from '../adapters/messenger/messenger';
 import type { Clock } from '../clock';
+import { arizaHodisasi } from '../hodisa/hodisa';
 import { SHARED_MANBA } from '../mijoz/manba';
 import { getSetting, setSetting } from '../settings/settings';
 import { taklifQilganLines } from '../taklif/taklif';
@@ -198,6 +199,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       );
       if (phone) await db.query('UPDATE mijoz SET phone = $2 WHERE telegram_id = $1', [input.telegramId, phone]);
       const id = rows[0]!.id;
+      await arizaHodisasi(db, id); // analytics (#15)
       await deliver(id);
       return { id, duplicate: false };
     });
