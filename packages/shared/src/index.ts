@@ -21,3 +21,98 @@ export interface MeResponse {
 export interface ApiError {
   error: string;
 }
+
+// ---- Katalog (ADR 0001: Loyiha → Blok → Planirovka, no Xonadon records) ----
+
+export const SHAHARLAR = ['toshkent', 'navoiy'] as const;
+export type Shahar = (typeof SHAHARLAR)[number];
+
+/** Derived from the counts, never stored: bo'sh > 0 → sotuvda; else bron > 0 → band; else sotilgan. */
+export type PlanirovkaHolati = 'sotuvda' | 'band' | 'sotilgan';
+
+/** Where a video opens: a Telegram channel post or YouTube. Other links are not shown. */
+export interface VideoDto {
+  kind: 'telegram' | 'youtube';
+  url: string;
+}
+
+export interface InfratuzilmaDto {
+  /** e.g. talim, bogcha, transport, dokon, dam_olish, masjid, tibbiyot */
+  kategoriya: string;
+  nomi: string;
+  /** Free text, e.g. "0,8 km · 10 daq". */
+  masofa: string | null;
+}
+
+/** Loyiha in the list (Sotuvda only). */
+export interface LoyihaCardDto {
+  id: number;
+  slug: string;
+  nomi: string;
+  shahar: Shahar;
+  manzil: string;
+  qisqaTavsif: string | null;
+  /** First photo, or null. */
+  foto: string | null;
+  fotolarSoni: number;
+  video: VideoDto | null;
+  bloklarSoni: number;
+  qavatlarSoni: number | null;
+  /** Sum of bo'sh over all its Planirovkalar. */
+  boshXonadonlar: number;
+  /** Cheapest Boshlang'ich narx among Planirovkalar on sale (UZS); null → «Narx so'rov bo'yicha». */
+  boshlangichNarx: number | null;
+}
+
+export interface PlanirovkaDto {
+  id: number;
+  loyihaId: number;
+  loyihaNomi: string;
+  blokId: number;
+  blokNomi: string;
+  xonalar: number;
+  /** m² */
+  maydon: number;
+  nomi: string | null;
+  chizma: string | null;
+  video: VideoDto | null;
+  /** UZS; null → «Narx so'rov bo'yicha». */
+  boshlangichNarx: number | null;
+  bosh: number;
+  holat: PlanirovkaHolati;
+}
+
+export interface XonalarGuruhiDto {
+  xonalar: number;
+  planirovkalar: PlanirovkaDto[];
+}
+
+export interface BlokDto {
+  id: number;
+  nomi: string;
+  boshXonadonlar: number;
+  /** Planirovkalar grouped by xonalar soni, ascending. */
+  guruhlar: XonalarGuruhiDto[];
+}
+
+export interface LoyihaDto extends LoyihaCardDto {
+  tavsif: string | null;
+  fotolar: string[];
+  /** bo'sh + bron + sotilgan over all Planirovkalar. */
+  jamiXonadonlar: number;
+  xarita: { lat: number; lng: number } | null;
+  infratuzilma: InfratuzilmaDto[];
+  bloklar: BlokDto[];
+}
+
+export interface LoyihalarResponse {
+  loyihalar: LoyihaCardDto[];
+}
+
+export interface LoyihaResponse {
+  loyiha: LoyihaDto;
+}
+
+export interface PlanirovkaResponse {
+  planirovka: PlanirovkaDto;
+}

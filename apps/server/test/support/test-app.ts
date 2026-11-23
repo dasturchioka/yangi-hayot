@@ -11,6 +11,9 @@ import { TEST_BOT_TOKEN } from './init-data';
 /** Default fake "now": Monday 2026-11-23 10:00 in Tashkent (05:00 UTC). */
 export const DEFAULT_NOW = new Date('2026-11-23T05:00:00Z');
 
+/** API key the AI-menejer uses for /ai/* in tests. */
+export const TEST_AI_API_KEY = 'test-ai-api-key-0123456789';
+
 export interface TestApp {
   app: ReturnType<typeof buildApp>;
   clock: FakeClock;
@@ -39,7 +42,7 @@ export async function createTestApp(opts: { now?: Date } = {}): Promise<TestApp>
   const crm = new RecordingCrm();
   const messenger = new RecordingMessenger();
   const app = buildApp({
-    config: { botToken: TEST_BOT_TOKEN },
+    config: { botToken: TEST_BOT_TOKEN, aiApiKey: TEST_AI_API_KEY },
     db,
     clock,
     crm,
