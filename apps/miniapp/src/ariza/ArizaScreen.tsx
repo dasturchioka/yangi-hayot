@@ -8,12 +8,12 @@ import { href } from '../router';
 type Sending = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'failed'; reason: 'limit' | 'other' };
 
 /** 9 digits after +998, shown as «90 123 45 67». */
-function formatLocal(digits: string): string {
+export function formatLocal(digits: string): string {
   const d = digits.slice(0, 9);
   return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(' ');
 }
 
-function localDigits(phone: string | null): string {
+export function localDigits(phone: string | null): string {
   const d = (phone ?? '').replace(/\D/g, '');
   return d.startsWith('998') ? d.slice(3, 12) : d.slice(0, 9);
 }

@@ -1,4 +1,6 @@
+import type { PlanirovkaFiltr } from '@yh/shared';
 import { useEffect, useState } from 'react';
+import { filtrQuery, parseFiltr } from './tanlash/filtr';
 
 /** Screens of the Mini App, addressed by the URL hash so Back works and links can point at them. */
 export type Route =
@@ -9,7 +11,11 @@ export type Route =
   | { name: 'sevimlilar' }
   | { name: 'taqqoslash'; ids: number[] }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
-  | { name: 'ariza'; loyihaId?: number; planirovkaId?: number };
+  | { name: 'ariza'; loyihaId?: number; planirovkaId?: number }
+  /** Filtered Planirovkalar (#10); `sheet` = filter sheet open (so Back closes it); `kviz` = just finished the kviz. */
+  | { name: 'tanlash'; filtr: PlanirovkaFiltr; sheet?: boolean; kviz?: boolean }
+  /** «Xonadon tanlash» kvizi, step 1…N (each step its own history entry: Back = previous question). */
+  | { name: 'kviz'; qadam: number };
 
 export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?');
@@ -20,6 +26,16 @@ export function parseRoute(hash: string): Route {
     const planirovkaId = Number(q.get('planirovka')) || undefined;
     return { name: 'ariza', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
   }
+  if (parts[0] === 'tanlash') {
+    const q = new URLSearchParams(query);
+    return {
+      name: 'tanlash',
+      filtr: parseFiltr(q),
+      ...(q.get('sheet') === '1' ? { sheet: true } : {}),
+      ...(q.get('kviz') === '1' ? { kviz: true } : {}),
+    };
+  }
+  if (parts[0] === 'kviz') return { name: 'kviz', qadam: Math.max(1, Number(parts[1]) || 1) };
   const id = Number(parts[1]);
   if (parts[0] === 'loyiha' && id > 0) {
     return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
@@ -54,11 +70,25 @@ export function href(route: Route): string {
       return '#/sevimlilar';
     case 'taqqoslash':
       return `#/taqqoslash/${route.ids.join(',')}`;
+    case 'tanlash': {
+      const q = new URLSearchParams(filtrQuery(route.filtr));
+      if (route.sheet) q.set('sheet', '1');
+      if (route.kviz) q.set('kviz', '1');
+      const qs = q.toString();
+      return qs ? `#/tanlash?${qs}` : '#/tanlash';
+    }
+    case 'kviz':
+      return `#/kviz/${route.qadam}`;
   }
 }
 
 export function navigate(route: Route): void {
   window.location.hash = href(route);
+}
+
+/** Replaces the current history entry (no new Back step). */
+export function replaceRoute(route: Route): void {
+  window.location.replace(href(route));
 }
 
 export function useRoute(): Route {

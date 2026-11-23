@@ -2,6 +2,12 @@ import type {
   ArizaCreatedResponse,
   ArizaFormRequest,
   ArizalarResponse,
+  FiltrVariantlariResponse,
+  KvizRequest,
+  KvizResponse,
+  PlanirovkaFiltr,
+  PlanirovkalarResponse,
+  Shahar,
   Lang,
   LoyihaResponse,
   LoyihalarResponse,
@@ -11,6 +17,7 @@ import type {
   TaqqoslashResponse,
   UlashishResponse,
 } from '@yh/shared';
+import { filtrQuery } from './tanlash/filtr';
 import { getInitData } from './telegram';
 
 export class ApiError extends Error {
@@ -72,5 +79,12 @@ export const api = {
   addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),
   removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
   taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
+  /** Planirovkalar matching the filter (#10), cheapest first. */
+  planirovkalar: (f: PlanirovkaFiltr, lang: Lang) =>
+    cachedGet<PlanirovkalarResponse>(`/katalog/planirovkalar?${filtrQuery(f)}&lang=${lang}`),
+  /** Loyihalar/Bloklar, narx/maydon bounds and kviz budget ranges of a city (or both). */
+  filtr: (shahar?: Shahar) => cachedGet<FiltrVariantlariResponse>(`/katalog/filtr${shahar ? `?shahar=${shahar}` : ''}`),
+  /** Last kviz step: 400 = bad answers/phone, 429 = too many Arizalar. */
+  kviz: (body: KvizRequest) => apiSend<KvizResponse>('POST', '/kviz', body),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
 };

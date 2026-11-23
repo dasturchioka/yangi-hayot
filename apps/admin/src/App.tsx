@@ -4,6 +4,7 @@ import { adminApi, onUnauthorized } from './api';
 import { ROL_LABEL } from './format';
 import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
 import { JurnalScreen } from './Jurnal';
+import { KvizSozlamalariScreen } from './KvizSozlamalari';
 import { LoginScreen } from './Login';
 import { LoyihalarScreen } from './Loyihalar';
 import { RassilkaScreen } from './Rassilka';
@@ -27,7 +28,7 @@ const SECTIONS: Section[] = [
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
   { name: 'Analitika', rollar: ['administrator'] },
-  { name: 'Matnlar va sozlamalar', rollar: ['administrator'] },
+  { name: 'Matnlar va sozlamalar', rollar: ['administrator'], render: () => <KvizSozlamalariScreen /> },
   { name: 'Foydalanuvchilar', rollar: ['administrator'], render: (a) => <FoydalanuvchilarScreen me={a} /> },
 ];
 

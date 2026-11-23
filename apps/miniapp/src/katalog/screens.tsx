@@ -7,6 +7,8 @@ import { openExternal } from '../telegram';
 import { useLoad } from '../useLoad';
 import { formatMaydon, formatNarx } from './format';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
+import { KvizKirish } from '../kviz/KvizScreen';
+import { TanlashQidiruv } from '../tanlash/TanlashScreen';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
 
 // ---------------------------------------------------------------- Loyihalar
@@ -25,6 +27,8 @@ export function LoyihalarScreen() {
           ♡
         </a>
       </div>
+      <TanlashQidiruv />
+      <KvizKirish />
       <Loaded load={load}>
         {({ loyihalar }) => {
           const shown = loyihalar.filter((l) => l.shahar === shahar);

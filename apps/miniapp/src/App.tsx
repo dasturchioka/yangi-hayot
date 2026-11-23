@@ -6,6 +6,8 @@ import { ArizaScreen } from './ariza/ArizaScreen';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
 import { navigate, useRoute, type Route } from './router';
 import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
+import { KvizScreen } from './kviz/KvizScreen';
+import { TanlashScreen } from './tanlash/TanlashScreen';
 import { openStartScreen } from './start';
 import { getInitData, guessLang, setBackButton } from './telegram';
 
@@ -69,5 +71,9 @@ function Screen({ route }: { route: Route }) {
       return <SevimlilarScreen />;
     case 'taqqoslash':
       return <TaqqoslashScreen key={route.ids.join(',')} ids={route.ids} />;
+    case 'tanlash':
+      return <TanlashScreen route={route} />;
+    case 'kviz':
+      return <KvizScreen qadam={route.qadam} />;
   }
 }

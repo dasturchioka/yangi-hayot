@@ -1,0 +1,623 @@
+/* ---- Filtrlar va «Xonadon tanlash» kvizi (#10). Tokens: packages/ui/tokens.css ---- */
+
+/* Home: «Xonadon qidirish» field (kit home) that opens the filter sheet */
+.tanlash-search {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+  height: var(--yh-button-h);
+  padding: 0 6px 0 16px;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-muted);
+  font: var(--yh-body);
+  font-size: 14px;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.tanlash-search > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tanlash-search-icon {
+  display: grid;
+  place-items: center;
+  width: var(--yh-icon-button);
+  height: var(--yh-icon-button);
+  border-radius: 12px;
+  background: var(--yh-bg);
+  color: var(--yh-primary);
+}
+.tanlash-search:active,
+.kviz-kirish:active {
+  transform: scale(0.98);
+}
+
+/* Home: kviz entry — a leaf-cornered tile in the brand's quiet green */
+.kviz-kirish {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: 14px 14px 14px var(--yh-space-20);
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.kviz-kirish-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kviz-kirish-text .title {
+  color: var(--yh-ink);
+}
+.kviz-kirish-arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--yh-icon-button);
+  height: var(--yh-icon-button);
+  border-radius: 50%;
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+/* Results: filter button with the count of active filters (kit «Xonadonlar») */
+.filtr-button {
+  position: relative;
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.filtr-button:active {
+  transform: scale(0.94);
+}
+.filtr-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--yh-bg);
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+  font: var(--yh-label);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Active filter chips: light green with ×, tap removes */
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.chip-remove:active {
+  transform: scale(0.96);
+}
+.chip-lg {
+  height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid var(--yh-line);
+  background: var(--yh-bg);
+  font: var(--yh-title);
+  font-size: 15px;
+}
+.chip-lg.active {
+  border-color: var(--yh-primary);
+}
+
+.tanlash-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+  padding: var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+}
+.tanlash-empty .title {
+  margin: 0;
+}
+.tanlash-empty .button-secondary {
+  margin-top: var(--yh-space-4);
+}
+
+/* After the kviz: one quiet confirmation above the matches */
+.kviz-qabul {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-12) var(--yh-space-12) var(--yh-space-12) 14px;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  animation: rise 360ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.kviz-qabul > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.kviz-qabul .title {
+  color: var(--yh-ink);
+}
+.kviz-qabul-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px 3px 12px 3px;
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+
+/* ---- Bottom sheet (kit p.7): slides up on the iOS drawer curve, leaves faster ---- */
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 61, 42, 0.4);
+  opacity: 1;
+  transition: opacity 240ms ease;
+}
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+  border-radius: 28px 28px 0 0;
+  background: var(--yh-bg);
+  box-shadow: var(--yh-shadow-sheet);
+  transform: translateY(0);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@starting-style {
+  .sheet {
+    transform: translateY(100%);
+  }
+  .sheet-scrim {
+    opacity: 0;
+  }
+}
+.sheet-layer[data-closing] .sheet {
+  transform: translateY(100%);
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+.sheet-layer[data-closing] .sheet-scrim {
+  opacity: 0;
+  transition-duration: 180ms;
+}
+.sheet-handle {
+  align-self: center;
+  width: 64px;
+  height: 20px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sheet-handle::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 8px auto;
+  border-radius: 2px;
+  background: var(--yh-line);
+}
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-20);
+  padding: var(--yh-space-4) var(--yh-space-20) var(--yh-space-20);
+}
+.sheet-body .h2 {
+  margin: 0;
+}
+.sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.sheet-section > .field-label {
+  margin: 0;
+  color: var(--yh-ink-2);
+}
+.sheet-actions {
+  padding: var(--yh-space-12) var(--yh-space-20) max(var(--yh-space-12), env(safe-area-inset-bottom));
+  box-shadow: var(--yh-shadow-sticky);
+}
+.sheet-actions .button-primary {
+  font-variant-numeric: tabular-nums;
+}
+.link-button {
+  padding: var(--yh-space-8) 0;
+  border: 0;
+  background: none;
+  color: var(--yh-primary);
+  font: var(--yh-title);
+  cursor: pointer;
+}
+.link-button:disabled {
+  color: var(--yh-muted);
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Xonalar soni: 4 squares, several may be on (kit filter) */
+.xona-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--yh-space-8);
+}
+.xona-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border: 1.5px solid var(--yh-line);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.xona-toggle:active {
+  transform: scale(0.95);
+}
+.xona-toggle.active {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.xona-grid-lg .xona-toggle {
+  height: 88px;
+  gap: 2px;
+}
+.xona-grid-lg .xona-toggle b {
+  font: var(--yh-h2);
+}
+.xona-grid-lg .xona-toggle .caption {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* «dan / gacha» fields: the word sits inside the field, as in the kit */
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+.range-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--yh-space-8);
+}
+.range-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: text;
+}
+.range-input:focus-within {
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+}
+.range-input > span {
+  color: var(--yh-muted);
+  font: var(--yh-caption);
+}
+.range-input input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--yh-ink);
+  caret-color: var(--yh-primary);
+  font: inherit;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.range-input input::placeholder {
+  color: var(--yh-muted);
+  opacity: 0.7;
+}
+
+/* Two thumbs on one track: the inputs take pointer events only on the thumbs */
+.dual-range {
+  position: relative;
+  height: 28px;
+  margin: 0 2px;
+}
+.dual-range::before,
+.dual-range-fill {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+}
+.dual-range::before {
+  left: 0;
+  right: 0;
+  background: var(--yh-line);
+}
+.dual-range-fill {
+  left: var(--from);
+  right: calc(100% - var(--to));
+  background: var(--yh-primary);
+}
+.dual-range input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.dual-range input::-webkit-slider-thumb {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--yh-primary);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  box-shadow: 0 2px 6px rgba(11, 61, 42, 0.16);
+  pointer-events: auto;
+  cursor: grab;
+  -webkit-appearance: none;
+}
+.dual-range input::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--yh-primary);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  pointer-events: auto;
+  cursor: grab;
+}
+.dual-range input:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--yh-status-free-bg);
+}
+
+/* «Faqat bo'sh» switch (kit toggle) */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 44px;
+  font: var(--yh-body);
+  cursor: pointer;
+}
+.switch {
+  flex: none;
+  position: relative;
+  width: 52px;
+  height: 32px;
+  margin: 0;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-line);
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--yh-bg);
+  box-shadow: 0 1px 3px rgba(11, 61, 42, 0.2);
+  transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.switch:checked {
+  background: var(--yh-primary);
+}
+.switch:checked::after {
+  transform: translateX(20px);
+}
+.switch:focus-visible,
+.xona-toggle:focus-visible,
+.kviz-option:focus-visible,
+.chip:focus-visible,
+.link-button:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Kviz ---- */
+.kviz {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.kviz-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--yh-line);
+  overflow: hidden;
+}
+.kviz-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--yh-primary);
+  transform-origin: left;
+  transition: transform 360ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.kviz-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-20);
+  padding-top: var(--yh-space-12);
+  animation: kviz-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.kviz-step[data-dir='back'] {
+  animation-name: kviz-back;
+}
+@keyframes kviz-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes kviz-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+.kviz-savol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.kviz-savol .h1 {
+  text-wrap: balance;
+}
+.kviz-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.kviz-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 60px;
+  padding: 0 var(--yh-space-12) 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+.kviz-option:active {
+  transform: scale(0.98);
+}
+.kviz-option.active {
+  border-color: var(--yh-primary);
+  background: var(--yh-status-free-bg);
+}
+.kviz-check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--yh-line);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  color: transparent;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.kviz-option.active .kviz-check {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+  color: var(--yh-on-primary);
+}
+.kviz-option.active .kviz-check svg {
+  animation: kviz-tick 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes kviz-tick {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+.kviz-option-skeleton {
+  pointer-events: none;
+  animation: kviz-pulse 1.2s ease-in-out infinite;
+}
+@keyframes kviz-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .kviz-option:hover:not(.active),
+  .chip-lg:hover:not(.active),
+  .xona-toggle:hover:not(.active) {
+    border-color: var(--yh-primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kviz-step,
+  .kviz-step[data-dir='back'],
+  .kviz-qabul {
+    animation: fade 200ms ease both;
+  }
+  .kviz-option.active .kviz-check svg {
+    animation: none;
+  }
+  .sheet {
+    transition: opacity 200ms ease;
+  }
+  @starting-style {
+    .sheet {
+      transform: none;
+      opacity: 0;
+    }
+  }
+  .sheet-layer[data-closing] .sheet {
+    transform: none;
+    opacity: 0;
+  }
+  .kviz-progress > span {
+    transition: none;
+  }
+}
