@@ -71,6 +71,7 @@ export function errorText(e: unknown): string {
       cannot_demote_self: "O'zingizni o'chira yoki Menejer qila olmaysiz",
       kelajak: "Ko'rish kuni hali kelmagan",
       bekor: 'Mijoz bu yozilishni bekor qilgan',
+      bad_period: "Davr noto'g'ri: boshi oxiridan oldin, ko'pi bilan 1 yil",
     };
     return (code && known[code]) || `Xato (${e.status})`;
   }

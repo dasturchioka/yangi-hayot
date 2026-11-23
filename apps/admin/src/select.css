@@ -1,0 +1,116 @@
+/* ---- Select (select-only combobox; interim until the shared one lands) ---- */
+
+.sel {
+  position: relative;
+  display: inline-block;
+}
+.sel-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-8);
+  width: 100%;
+  min-width: 180px;
+  max-width: 260px;
+  min-height: 44px;
+  padding: 0 var(--yh-space-8) 0 var(--yh-space-12);
+  border: 1px solid var(--yh-line);
+  border-radius: 12px;
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font: var(--yh-body);
+  text-align: left;
+  transition:
+    border-color 140ms ease,
+    transform 140ms var(--yh-ease-out);
+}
+.sel-button:active {
+  transform: scale(0.98);
+}
+.sel-button:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+.sel-button[aria-expanded='true'] {
+  border-color: var(--yh-primary);
+}
+.sel-value {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sel-chevron {
+  flex: none;
+  color: var(--yh-muted);
+  transition: transform 160ms var(--yh-ease-out);
+}
+.sel-button[aria-expanded='true'] .sel-chevron {
+  transform: rotate(180deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sel-button:hover {
+    border-color: color-mix(in srgb, var(--yh-primary) 40%, var(--yh-line));
+  }
+}
+
+.sel-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--yh-space-4);
+  list-style: none;
+  background: var(--yh-bg);
+  border: 1px solid var(--yh-line);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(11, 61, 42, 0.12);
+  transform-origin: top left;
+  transition:
+    opacity 150ms var(--yh-ease-out),
+    transform 150ms var(--yh-ease-out);
+}
+@starting-style {
+  .sel-list {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+.sel-list[hidden] {
+  display: none;
+}
+.sel-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 40px;
+  padding: 0 var(--yh-space-8) 0 var(--yh-space-12);
+  border-radius: 10px;
+  font: var(--yh-body);
+  color: var(--yh-ink);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.sel-option.is-active {
+  background: var(--yh-surface);
+}
+.sel-option[aria-selected='true'] {
+  font-weight: 600;
+  color: var(--yh-primary);
+}
+.sel-check {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sel-button,
+  .sel-chevron,
+  .sel-list {
+    transition: none;
+  }
+}

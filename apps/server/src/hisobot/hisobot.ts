@@ -2,7 +2,9 @@ import type { ArizaTuri } from '@yh/shared';
 import type pg from 'pg';
 import { addDays, tashkentInstant, toTashkent } from '../clock';
 import { ARIZA_TURI } from '../ariza/turlar';
-import { dojimYozilishlari, hodisaSonlari, VORONKA, type HodisaTuri } from '../hodisa/hodisa';
+import type { VoronkaQadamDto } from '@yh/shared';
+import { dojimYozilishlari, hodisaSonlari } from '../hodisa/hodisa';
+import { voronkaQadamlari } from '../hodisa/voronka';
 import { getSetting } from '../settings/settings';
 
 /**
@@ -192,8 +194,8 @@ export interface HaftaRaqamlari {
   keldi: number;
   /** Yozilishlar that came from a dojim message (#17 marks them). */
   dojimYozilishlari: number;
-  /** Distinct Mijozlar per funnel step. */
-  voronka: Record<HodisaTuri, number>;
+  /** Distinct Mijozlar per funnel step (#20). */
+  voronka: VoronkaQadamDto[];
 }
 
 export interface HaftalikHisobot {
@@ -229,17 +231,9 @@ async function haftaRaqamlari(db: pg.Pool, dan: string): Promise<HaftaRaqamlari>
     yozilishlar: h.yozilish.jami,
     keldi: h.keldi.jami,
     dojimYozilishlari: await dojimYozilishlari(db, from, to),
-    voronka: Object.fromEntries(VORONKA.map((t) => [t, h[t].mijozlar])) as Record<HodisaTuri, number>,
+    voronka: await voronkaQadamlari(db, { dan, gacha }),
   };
 }
-
-const VORONKA_NOMI: Record<HodisaTuri, string> = {
-  bot_kirdi: 'Botga kirdi',
-  planirovka_korildi: "Planirovkalarni ko'rdi",
-  ariza: 'Ariza qoldirdi',
-  yozilish: "Ko'rishga yozildi",
-  keldi: 'Keldi',
-};
 
 export function haftalikMatn({ hafta: a, oldingi: b }: HaftalikHisobot): string {
   const taqqos = (x: number, y: number) => `${x} (${y}, ${x > y ? '+' : x < y ? '−' : '±'}${Math.abs(x - y)})`;
@@ -254,7 +248,7 @@ export function haftalikMatn({ hafta: a, oldingi: b }: HaftalikHisobot): string 
     `🔔 Dojimdan kelgan yozilishlar: ${taqqos(a.dojimYozilishlari, b.dojimYozilishlari)}`,
     '',
     'Voronka (Mijozlar):',
-    ...VORONKA.map((t) => `• ${VORONKA_NOMI[t]}: ${a.voronka[t]} (${b.voronka[t]})`),
+    ...a.voronka.map((q, i) => `• ${q.nomi}: ${taqqos(q.mijozlar ?? 0, b.voronka[i]!.mijozlar ?? 0)}`),
   ].join('\n');
 }
 

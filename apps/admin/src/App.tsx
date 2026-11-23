@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { adminApi, onUnauthorized } from './api';
 import { ROL_LABEL } from './format';
 import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
+import { ChartColumn } from './icons';
 import { ImportScreen } from './Import';
 import { JurnalScreen } from './Jurnal';
 import { KvizSozlamalariScreen } from './KvizSozlamalari';
@@ -11,6 +12,7 @@ import { LoyihalarScreen } from './Loyihalar';
 import { MatnlarScreen } from './Matnlar';
 import { RassilkaScreen } from './Rassilka';
 import { TakliflarScreen } from './Takliflar';
+import { VoronkaScreen } from './Voronka';
 import { XonadonlarScreen } from './Xonadonlar';
 import { YozilishlarScreen } from './Yozilishlar';
 
@@ -23,6 +25,7 @@ interface Section {
   name: string;
   rollar: AdminRol[];
   render?: (admin: AdminDto) => React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 const SECTIONS: Section[] = [
@@ -33,7 +36,7 @@ const SECTIONS: Section[] = [
   { name: 'Jurnal', rollar: ['administrator', 'menejer'], render: () => <JurnalScreen /> },
   { name: 'Rassilka', rollar: ['administrator'], render: () => <RassilkaScreen /> },
   { name: 'Takliflar', rollar: ['administrator'], render: () => <TakliflarScreen /> },
-  { name: 'Analitika', rollar: ['administrator'] },
+  { name: 'Analitika', rollar: ['administrator'], render: () => <VoronkaScreen />, icon: <ChartColumn size={18} /> },
   {
     name: 'Matnlar va sozlamalar',
     rollar: ['administrator'],
@@ -82,6 +85,7 @@ export function App() {
                 title={s.render ? undefined : "Keyingi bosqichda qo'shiladi"}
                 onClick={() => setSection(s.name)}
               >
+                {s.icon}
                 {s.name}
               </button>
             </li>
