@@ -477,6 +477,17 @@ a {
   box-shadow: var(--yh-shadow-sticky);
 }
 
+/* Two actions side by side (kit p.10): a narrow secondary + the primary */
+.actions-split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--yh-space-8);
+}
+.actions-split > .button-secondary {
+  height: var(--yh-button-h);
+  padding: 0 var(--yh-space-12);
+}
+
 /* ---------------------------------------------------------------- Ariza */
 
 /* Fills the screen so the send button sits at the bottom, as in the kit */

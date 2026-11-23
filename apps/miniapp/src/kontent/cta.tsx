@@ -1,4 +1,5 @@
 import { useT } from '../i18n';
+import { href } from '../router';
 import { showAlert } from '../telegram';
 
 /**
@@ -8,16 +9,13 @@ import { showAlert } from '../telegram';
  * new route, keep the component name so every caller follows.
  */
 
-/** TODO(#12): open the calculator (no Planirovka context from here → Mijoz enters the price). */
+/** Opens the calculator (no Planirovka context from here → the Mijoz enters the price). */
 export function HisoblashButton({ primary = false }: { primary?: boolean }) {
   const t = useT();
   return (
-    <button
-      className={primary ? 'button-primary' : 'button-secondary'}
-      onClick={() => showAlert(t('kontent.hisoblashSoon'))}
-    >
+    <a className={primary ? 'button-primary' : 'button-secondary'} href={href({ name: 'kalkulyator' })}>
       {t('kontent.hisoblash')}
-    </button>
+    </a>
   );
 }
 

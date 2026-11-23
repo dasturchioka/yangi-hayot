@@ -34,6 +34,13 @@ export function KontentLinks() {
         </span>
         <ArrowIcon />
       </a>
+      <a className="kontent-link" href={href({ name: 'kalkulyator' })}>
+        <span>
+          <span className="title">{t('kalk.open')}</span>
+          <span className="caption muted">{t('kalk.openHint')}</span>
+        </span>
+        <ArrowIcon />
+      </a>
       <a className="kontent-link" href={href({ name: 'bizHaqimizda' })}>
         <span>
           <span className="title">{t('kontent.bizHaqimizda')}</span>

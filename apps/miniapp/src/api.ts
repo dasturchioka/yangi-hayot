@@ -3,6 +3,9 @@ import type {
   ArizaCreatedResponse,
   ArizaFormRequest,
   ArizalarResponse,
+  KalkulyatorArizaRequest,
+  KalkulyatorHisobRequest,
+  KalkulyatorResponse,
   Lang,
   LoyihaResponse,
   LoyihalarResponse,
@@ -75,5 +78,11 @@ export const api = {
   taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
   /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
   kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
+  /** Muddatli to'lov terms and banks: changed by admins, so cached like the katalog. */
+  kalkulyator: () => cachedGet<KalkulyatorResponse>('/kalkulyator'),
+  /** «Hisobladi» (dojim #17, Daraja #18). Fire and forget. */
+  kalkulyatorHisob: (body: KalkulyatorHisobRequest) => apiSend('POST', '/kalkulyator/hisob', body),
+  /** «Hisobni menejerga yuborish»: 400 = bad phone or input outside the settings, 429 = too many Arizalar. */
+  kalkulyatorAriza: (body: KalkulyatorArizaRequest) => apiSend<ArizaCreatedResponse>('POST', '/kalkulyator/ariza', body),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
 };

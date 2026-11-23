@@ -8,6 +8,8 @@ export type Route =
   | { name: 'planirovka'; id: number }
   | { name: 'sevimlilar' }
   | { name: 'taqqoslash'; ids: number[] }
+  /** To'lov kalkulyatori; from a Planirovka its Boshlang'ich narx is put in. */
+  | { name: 'kalkulyator'; planirovkaId?: number }
   | { name: 'sotibOlish' }
   | { name: 'bizHaqimizda' }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
@@ -28,6 +30,10 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'planirovka' && id > 0) return { name: 'planirovka', id };
   if (parts[0] === 'sevimlilar') return { name: 'sevimlilar' };
+  if (parts[0] === 'kalkulyator') {
+    const planirovkaId = Number(new URLSearchParams(query).get('planirovka')) || undefined;
+    return { name: 'kalkulyator', ...(planirovkaId ? { planirovkaId } : {}) };
+  }
   if (parts[0] === 'qanday-sotib-olish') return { name: 'sotibOlish' };
   if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
   if (parts[0] === 'taqqoslash') {
@@ -54,6 +60,8 @@ export function href(route: Route): string {
       const qs = q.toString();
       return qs ? `#/ariza?${qs}` : '#/ariza';
     }
+    case 'kalkulyator':
+      return route.planirovkaId ? `#/kalkulyator?planirovka=${route.planirovkaId}` : '#/kalkulyator';
     case 'sevimlilar':
       return '#/sevimlilar';
     case 'taqqoslash':
