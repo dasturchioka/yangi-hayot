@@ -23,34 +23,41 @@ describe('Katalog in the admin-panel', () => {
     await t.close();
   });
 
-  const call = (method: 'GET' | 'POST' | 'PATCH', url: string, headers: { cookie: string }, payload?: object) =>
+  const call = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, headers: { cookie: string }, payload?: object) =>
     t.app.inject({ method, url: `/admin/api/katalog${url}`, headers, payload });
   const miniApp = (url: string) =>
     t.app.inject({ method: 'GET', url: `/api/katalog${url}`, headers: tmaAuth(signInitData(aziz, { authDate: t.clock.now() })) });
   const ai = (url: string) =>
     t.app.inject({ method: 'GET', url: `/ai/katalog${url}`, headers: { authorization: `Bearer ${TEST_AI_API_KEY}` } });
 
-  /** Loyiha → Blok A → one Planirovka, through the admin API. */
-  async function createKatalog(p: object = {}) {
+  /** Loyiha → Blok A → one Planirovka with Xonadonlar in the given holatlar, through the admin API. */
+  async function createKatalog(p: { bosh?: number; bron?: number; sotilgan?: number; [k: string]: unknown } = {}) {
+    const { bosh = 5, bron = 1, sotilgan = 4, ...fields } = p;
     const loyiha = (await call('POST', '/loyihalar', admin, jozibali)).json().loyiha;
     const blok = (await call('POST', `/loyihalar/${loyiha.id}/bloklar`, admin, { nomi: 'A' })).json().blok;
     const res = await call('POST', `/bloklar/${blok.id}/planirovkalar`, admin, {
       xonalar: 2,
       maydon: 54.5,
-      boshlangichNarx: 455_500_000,
-      bosh: 5,
-      bron: 1,
-      sotilgan: 4,
-      ...p,
+      qoldaNarx: 455_500_000,
+      ...fields,
     });
     expect(res.statusCode).toBe(200);
-    return { loyiha, blok, planirovka: res.json().planirovka };
+    const planirovka = res.json().planirovka;
+    const holatlar = [...Array(bosh).fill('bosh'), ...Array(bron).fill('bron'), ...Array(sotilgan).fill('sotilgan')];
+    const xonadonlar = [];
+    for (const [i, holat] of holatlar.entries()) {
+      const x = await call('POST', `/bloklar/${blok.id}/xonadonlar`, admin, { planirovkaId: planirovka.id, qavat: i + 1, raqam: i + 1, holat });
+      xonadonlar.push(x.json().xonadon);
+    }
+    return { loyiha, blok, planirovka, xonadonlar };
   }
 
   it('lets the Administrator create a Loyiha, Blok and Planirovka that the Mini App shows', async () => {
     const { loyiha, planirovka } = await createKatalog({ nomi: { ru: 'Угловая', uz: 'Burchak' } });
 
-    expect(planirovka).toMatchObject({ bosh: 5, bron: 1, sotilgan: 4, jami: 10, holat: 'sotuvda' });
+    expect(planirovka).toMatchObject({ jami: 0, qoldaNarx: 455_500_000, boshlangichNarx: 455_500_000 });
+    const tree = (await call('GET', `/loyihalar/${loyiha.id}`, admin)).json().loyiha;
+    expect(tree.bloklar[0].planirovkalar[0]).toMatchObject({ bosh: 5, bron: 1, sotilgan: 4, jami: 10, holat: 'sotuvda' });
     const shown = (await miniApp(`/planirovkalar/${planirovka.id}?lang=uz`)).json().planirovka;
     expect(shown).toMatchObject({
       loyihaId: loyiha.id,
@@ -65,13 +72,13 @@ describe('Katalog in the admin-panel', () => {
   });
 
   it('shows an admin change in the Mini App and the AI API at once (well within one minute)', async () => {
-    const { planirovka } = await createKatalog({ bosh: 1, bron: 0, boshlangichNarx: 400_000_000 });
+    const { planirovka, xonadonlar } = await createKatalog({ bosh: 1, bron: 0, sotilgan: 0, qoldaNarx: 400_000_000 });
     const menejer = await adminLogin(t, 'menejer');
     await miniApp(`/planirovkalar/${planirovka.id}`);
     await ai(`/planirovkalar/${planirovka.id}`);
 
-    await call('PATCH', `/planirovkalar/${planirovka.id}`, admin, { boshlangichNarx: 420_000_000 });
-    await call('POST', `/planirovkalar/${planirovka.id}/kochirish`, menejer, { dan: 'bosh', ga: 'bron', soni: 1 });
+    await call('PATCH', `/planirovkalar/${planirovka.id}`, admin, { qoldaNarx: 420_000_000 });
+    await call('PATCH', `/xonadonlar/${xonadonlar[0].id}`, menejer, { holat: 'bron' });
 
     for (const res of [await miniApp(`/planirovkalar/${planirovka.id}`), await ai(`/planirovkalar/${planirovka.id}`)]) {
       const { planirovka: shown } = res.json();
@@ -79,28 +86,11 @@ describe('Katalog in the admin-panel', () => {
     }
   });
 
-  it("moves Xonadonlar bo'sh → bron → sotilgan and back keeping bo'sh + bron + sotilgan = jami", async () => {
-    const { planirovka } = await createKatalog({ bosh: 5, bron: 1, sotilgan: 4 });
-    const menejer = await adminLogin(t, 'menejer');
-    const move = (dan: string, ga: string, soni: number) =>
-      call('POST', `/planirovkalar/${planirovka.id}/kochirish`, menejer, { dan, ga, soni });
-
-    const counts = async (dan: string, ga: string, soni: number) => {
-      const p = (await move(dan, ga, soni)).json().planirovka;
-      return [p.bosh, p.bron, p.sotilgan, p.jami];
-    };
-
-    expect(await counts('bosh', 'bron', 2)).toEqual([3, 3, 4, 10]);
-    expect(await counts('bron', 'sotilgan', 3)).toEqual([3, 0, 7, 10]);
-    expect(await counts('sotilgan', 'bron', 1)).toEqual([3, 1, 6, 10]);
-    expect(await counts('bron', 'bosh', 1)).toEqual([4, 0, 6, 10]);
-  });
-
   it("shows who changed each Planirovka last («Oxirgi o'zgarish»)", async () => {
     const { loyiha, planirovka } = await createKatalog();
-    const menejer = await adminLogin(t, 'menejer', { nomi: 'Dilnoza' });
+    const ikkinchi = await adminLogin(t, 'administrator', { nomi: 'Dilnoza' });
     t.clock.advance({ hours: 2 });
-    await call('POST', `/planirovkalar/${planirovka.id}/kochirish`, menejer, { dan: 'bosh', ga: 'bron', soni: 1 });
+    await call('PATCH', `/planirovkalar/${planirovka.id}`, ikkinchi, { qoldaNarx: 460_000_000 });
 
     const tree = (await call('GET', `/loyihalar/${loyiha.id}`, admin)).json().loyiha;
     expect(tree.bloklar[0].planirovkalar[0].oxirgiOzgarish).toEqual({
@@ -109,31 +99,8 @@ describe('Katalog in the admin-panel', () => {
     });
   });
 
-  it('refuses to move more Xonadonlar than there are', async () => {
-    const { planirovka } = await createKatalog({ bosh: 1, bron: 0, sotilgan: 0 });
-
-    const res = await call('POST', `/planirovkalar/${planirovka.id}/kochirish`, admin, { dan: 'bosh', ga: 'sotilgan', soni: 2 });
-
-    expect(res.statusCode).toBe(409);
-    const shown = (await miniApp(`/planirovkalar/${planirovka.id}`)).json().planirovka;
-    expect([shown.bosh, shown.holat]).toEqual([1, 'sotuvda']);
-  });
-
-  it("lets only the Administrator change jami, through bo'sh, never below bron + sotilgan", async () => {
-    const { planirovka } = await createKatalog({ bosh: 2, bron: 1, sotilgan: 4 });
-    const menejer = await adminLogin(t, 'menejer');
-
-    expect((await call('PATCH', `/planirovkalar/${planirovka.id}`, menejer, { jami: 12 })).statusCode).toBe(403);
-
-    const up = (await call('PATCH', `/planirovkalar/${planirovka.id}`, admin, { jami: 12 })).json().planirovka;
-    expect([up.bosh, up.bron, up.sotilgan, up.jami]).toEqual([7, 1, 4, 12]);
-    expect((await call('PATCH', `/planirovkalar/${planirovka.id}`, admin, { jami: 4 })).statusCode).toBe(409);
-    const down = (await call('PATCH', `/planirovkalar/${planirovka.id}`, admin, { jami: 5 })).json().planirovka;
-    expect([down.bosh, down.bron, down.sotilgan, down.jami]).toEqual([0, 1, 4, 5]);
-  });
-
-  it('lets a Menejer only read the katalog and move Xonadonlar', async () => {
-    const { loyiha, blok, planirovka } = await createKatalog();
+  it('lets a Menejer only read the katalog and change Xonadon holati', async () => {
+    const { loyiha, blok, planirovka, xonadonlar } = await createKatalog();
     const menejer = await adminLogin(t, 'menejer');
 
     expect((await call('GET', '/loyihalar', menejer)).statusCode).toBe(200);
@@ -142,9 +109,9 @@ describe('Katalog in the admin-panel', () => {
     expect((await call('PATCH', `/loyihalar/${loyiha.id}`, menejer, { holat: 'topshirilgan' })).statusCode).toBe(403);
     expect((await call('POST', `/loyihalar/${loyiha.id}/bloklar`, menejer, { nomi: 'B' })).statusCode).toBe(403);
     expect((await call('PATCH', `/bloklar/${blok.id}`, menejer, { nomi: 'B' })).statusCode).toBe(403);
-    expect((await call('POST', `/bloklar/${blok.id}/planirovkalar`, menejer, { xonalar: 1, maydon: 30, bosh: 1 })).statusCode).toBe(403);
-    expect((await call('PATCH', `/planirovkalar/${planirovka.id}`, menejer, { boshlangichNarx: 1 })).statusCode).toBe(403);
-    expect((await call('POST', `/planirovkalar/${planirovka.id}/kochirish`, menejer, { dan: 'bosh', ga: 'bron', soni: 1 })).statusCode).toBe(200);
+    expect((await call('POST', `/bloklar/${blok.id}/planirovkalar`, menejer, { xonalar: 1, maydon: 30 })).statusCode).toBe(403);
+    expect((await call('PATCH', `/planirovkalar/${planirovka.id}`, menejer, { qoldaNarx: 1 })).statusCode).toBe(403);
+    expect((await call('PATCH', `/xonadonlar/${xonadonlar[0].id}`, menejer, { holat: 'bron' })).statusCode).toBe(200);
   });
 
   it('hides a Loyiha from the Mini App once it is Topshirilgan, but keeps it in the admin-panel', async () => {
@@ -168,7 +135,7 @@ describe('Katalog in the admin-panel', () => {
       nomi: { ru: 'Угловая', uz: 'Burchak' },
       chizma: '/media/planirovka/a-3.webp',
       video: 'https://t.me/yangihayot/123',
-      boshlangichNarx: null,
+      qoldaNarx: null,
     });
     await call('PATCH', `/bloklar/${blok.id}`, admin, { nomi: 'B' });
 
@@ -183,6 +150,7 @@ describe('Katalog in the admin-panel', () => {
             nomi: { ru: 'Угловая', uz: 'Burchak' },
             chizma: '/media/planirovka/a-3.webp',
             video: 'https://t.me/yangihayot/123',
+            qoldaNarx: null,
             boshlangichNarx: null,
           }),
         ],

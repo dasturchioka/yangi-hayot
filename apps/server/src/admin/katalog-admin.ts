@@ -6,10 +6,10 @@ import type {
   AdminPlanirovkaDto,
   AdminPlanirovkaInput,
   LokalDto,
-  XonadonHolati,
 } from '@yh/shared';
 import type pg from 'pg';
 import { planirovkaHolati } from '../katalog/katalog';
+import { moslashtirSonlar } from '../xonadon/joylash';
 import { farq, yozJurnal, type Muallif } from './jurnal';
 
 /**
@@ -17,15 +17,15 @@ import { farq, yozJurnal, type Muallif } from './jurnal';
  * transaction together with its jurnal row. Callers (routes, import) must call
  * `katalog.invalidate()` afterwards so the Mini App and the AI API see it.
  *
- * Counts (ADR 0001): a Planirovka has bo'sh / bron / sotilgan; jami is their
- * sum. `kochirish` moves Xonadonlar between counts and keeps jami; only
- * `updatePlanirovka({jami})` (Administrator) changes jami, through bo'sh.
+ * Counts (ADR 0003): a Planirovka's bo'sh / bron / sotilgan / jami and its
+ * Boshlang'ich narx are read from `planirovka_view` (counted from its
+ * Xonadonlar). Xonadon writes are in xonadon-admin.ts.
  */
 
 export class KatalogAdminError extends Error {
   constructor(
-    readonly code: 'not_found' | 'slug_taken' | 'blok_taken' | 'not_enough' | 'jami_too_small',
-    readonly status: 404 | 409,
+    readonly code: 'not_found' | 'slug_taken' | 'blok_taken' | 'xonadon_taken' | 'planirovka_boshqa_blokda',
+    readonly status: 400 | 404 | 409,
   ) {
     super(code);
   }
@@ -70,6 +70,8 @@ interface PlanirovkaRow {
   nomi: LokalDto | null;
   chizma_url: string | null;
   video_url: string | null;
+  qolda_narx: string | null;
+  /** Derived columns of planirovka_view. */
   boshlangich_narx: string | null;
   bosh: number;
   bron: number;
@@ -106,6 +108,7 @@ function planirovkaDto(r: PlanirovkaRow, oxirgiOzgarish: AdminPlanirovkaDto['oxi
     nomi: r.nomi,
     chizma: r.chizma_url,
     video: r.video_url,
+    qoldaNarx: r.qolda_narx === null ? null : Number(r.qolda_narx),
     boshlangichNarx: r.boshlangich_narx === null ? null : Number(r.boshlangich_narx),
     tartib: r.tartib,
     bosh: r.bosh,
@@ -138,14 +141,14 @@ function loyihaParams(i: AdminLoyihaInput) {
   ];
 }
 
-/** What the jurnal stores of a Planirovka (counts included, holat derived). */
+/** What the jurnal stores of a Planirovka (derived counts included: only the count import changes them). */
 const planirovkaFields = (p: AdminPlanirovkaDto) => ({
   xonalar: p.xonalar,
   maydon: p.maydon,
   nomi: p.nomi,
   chizma: p.chizma,
   video: p.video,
-  boshlangichNarx: p.boshlangichNarx,
+  qoldaNarx: p.qoldaNarx,
   tartib: p.tartib,
   bosh: p.bosh,
   bron: p.bron,
@@ -169,7 +172,10 @@ export async function tx<T>(db: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): 
     await c.query('ROLLBACK');
     if ((err as { code?: string }).code === '23505') {
       const constraint = (err as { constraint?: string }).constraint ?? '';
-      throw new KatalogAdminError(constraint.startsWith('blok') ? 'blok_taken' : 'slug_taken', 409);
+      throw new KatalogAdminError(
+        constraint.startsWith('blok') ? 'blok_taken' : constraint === 'xonadon_joyi' ? 'xonadon_taken' : 'slug_taken',
+        409,
+      );
     }
     throw err;
   } finally {
@@ -200,7 +206,7 @@ export async function listLoyihalar(db: pg.Pool): Promise<AdminLoyihaListItem[]>
             COALESCE(sum(p.sotilgan), 0)::int AS sotilgan
        FROM loyiha l
        LEFT JOIN blok b ON b.loyiha_id = l.id
-       LEFT JOIN planirovka p ON p.blok_id = b.id
+       LEFT JOIN planirovka_view p ON p.blok_id = b.id
       GROUP BY l.id
       ORDER BY l.holat DESC, l.shahar DESC, l.tartib, l.nomi, l.id`,
   );
@@ -226,7 +232,7 @@ export async function getLoyiha(db: pg.Pool, id: number): Promise<AdminLoyihaDto
     .rows;
   const planirovkaRows = (
     await db.query<PlanirovkaRow>(
-      `SELECT p.* FROM planirovka p JOIN blok b ON b.id = p.blok_id
+      `SELECT p.* FROM planirovka_view p JOIN blok b ON b.id = p.blok_id
         WHERE b.loyiha_id = $1 ORDER BY p.xonalar, p.maydon, p.tartib, p.id`,
       [id],
     )
@@ -381,7 +387,16 @@ export async function updateBlok(
 
 // ---- Planirovka ----
 
-async function blokOf(c: pg.PoolClient, blokId: number): Promise<{ loyihaId: number; loyihaNomi: string; blokNomi: string }> {
+/** The Blok's Planirovkalar with counts (admin Xonadonlar screen). */
+export async function planirovkalarOfBlok(db: pg.Pool, blokId: number): Promise<AdminPlanirovkaDto[]> {
+  const { rows } = await db.query<PlanirovkaRow>(
+    'SELECT * FROM planirovka_view WHERE blok_id = $1 ORDER BY xonalar, maydon, tartib, id',
+    [blokId],
+  );
+  return rows.map((r) => planirovkaDto(r));
+}
+
+export async function blokOf(c: pg.PoolClient, blokId: number): Promise<{ loyihaId: number; loyihaNomi: string; blokNomi: string }> {
   const r = (
     await c.query<{ loyiha_id: number; loyiha_nomi: string; blok_nomi: string }>(
       `SELECT b.loyiha_id, l.nomi AS loyiha_nomi, b.nomi AS blok_nomi
@@ -393,8 +408,9 @@ async function blokOf(c: pg.PoolClient, blokId: number): Promise<{ loyihaId: num
   return { loyihaId: r.loyiha_id, loyihaNomi: r.loyiha_nomi, blokNomi: r.blok_nomi };
 }
 
+/** Counts: only the #6 count import gives them (Xonadonlar are then laid out at the end of the Blok). */
 export type PlanirovkaCreateInput = Partial<AdminPlanirovkaInput> &
-  Pick<AdminPlanirovkaInput, 'xonalar' | 'maydon'> & { bosh: number; bron?: number; sotilgan?: number };
+  Pick<AdminPlanirovkaInput, 'xonalar' | 'maydon'> & { bosh?: number; bron?: number; sotilgan?: number };
 
 export async function createPlanirovka(
   db: pg.Pool,
@@ -416,10 +432,10 @@ export async function createPlanirovkaIn(
   const tartib =
     input.tartib ??
     (await c.query<{ n: number }>('SELECT count(*)::int AS n FROM planirovka WHERE blok_id = $1', [blokId])).rows[0]!.n;
-  const { rows } = await c.query<PlanirovkaRow>(
-    `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, boshlangich_narx,
-                             bosh, bron, sotilgan, tartib, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) RETURNING *`,
+  const { rows } = await c.query<{ id: number }>(
+    `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, qolda_narx,
+                             tartib, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9) RETURNING id`,
     [
       blokId,
       input.xonalar,
@@ -427,15 +443,16 @@ export async function createPlanirovkaIn(
       input.nomi ? JSON.stringify(input.nomi) : null,
       input.chizma ?? null,
       input.video ?? null,
-      input.boshlangichNarx ?? null,
-      input.bosh,
-      input.bron ?? 0,
-      input.sotilgan ?? 0,
+      input.qoldaNarx ?? null,
       tartib,
       by.at,
     ],
   );
-  const p = planirovkaDto(rows[0]!, { nomi: by.admin.nomi, at: by.at.toISOString() });
+  const id = rows[0]!.id;
+  if (input.bosh || input.bron || input.sotilgan) {
+    await moslashtirSonlar(c, id, { bosh: input.bosh ?? 0, bron: input.bron ?? 0, sotilgan: input.sotilgan ?? 0 }, by.at);
+  }
+  const p = planirovkaDto(await viewRow(c, id), { nomi: by.admin.nomi, at: by.at.toISOString() });
   await yozJurnal(c, by, {
     obyekt: 'planirovka',
     obyektId: p.id,
@@ -448,35 +465,14 @@ export async function createPlanirovkaIn(
   return p;
 }
 
-/**
- * Edits a Planirovka (Administrator). `jami` changes bo'sh by the difference;
- * it cannot go below bron + sotilgan.
- */
+/** Edits a Planirovka's own fields (Administrator). Counts come from its Xonadonlar. */
 export async function updatePlanirovka(
   db: pg.Pool,
   by: Muallif,
   id: number,
-  patch: Partial<AdminPlanirovkaInput> & { jami?: number },
+  patch: Partial<AdminPlanirovkaInput>,
 ): Promise<AdminPlanirovkaDto> {
-  return changePlanirovka(db, by, id, 'tahrirlandi', (p) => {
-    const { jami, ...fields } = patch;
-    const bosh = jami === undefined ? p.bosh : p.bosh + (jami - p.jami);
-    if (bosh < 0) throw new KatalogAdminError('jami_too_small', 409);
-    return { ...fields, bosh };
-  });
-}
-
-/** Moves `soni` Xonadonlar from one holat to another (Menejer or Administrator). Jami stays. */
-export async function kochirish(
-  db: pg.Pool,
-  by: Muallif,
-  id: number,
-  m: { dan: XonadonHolati; ga: XonadonHolati; soni: number },
-): Promise<AdminPlanirovkaDto> {
-  return changePlanirovka(db, by, id, 'kochirildi', (p) => {
-    if (p[m.dan] < m.soni) throw new KatalogAdminError('not_enough', 409);
-    return { [m.dan]: p[m.dan] - m.soni, [m.ga]: p[m.ga] + m.soni };
-  });
+  return tx(db, (c) => changePlanirovkaIn(c, by, id, () => patch));
 }
 
 type PlanirovkaChange = Partial<AdminPlanirovkaInput & { bosh: number; bron: number; sotilgan: number }>;
@@ -491,63 +487,57 @@ export async function setPlanirovkaIn(
   id: number,
   fields: PlanirovkaChange,
 ): Promise<AdminPlanirovkaDto> {
-  return changePlanirovkaIn(c, by, id, 'tahrirlandi', () => fields);
+  return changePlanirovkaIn(c, by, id, () => fields);
 }
 
-async function changePlanirovka(
-  db: pg.Pool,
-  by: Muallif,
-  id: number,
-  amal: 'tahrirlandi' | 'kochirildi',
-  change: (p: AdminPlanirovkaDto) => PlanirovkaChange,
-): Promise<AdminPlanirovkaDto> {
-  return tx(db, (c) => changePlanirovkaIn(c, by, id, amal, change));
+async function viewRow(c: pg.PoolClient, id: number): Promise<PlanirovkaRow> {
+  return (await c.query<PlanirovkaRow>('SELECT * FROM planirovka_view WHERE id = $1', [id])).rows[0]!;
 }
 
 async function changePlanirovkaIn(
   c: pg.PoolClient,
   by: Muallif,
   id: number,
-  amal: 'tahrirlandi' | 'kochirildi',
   change: (p: AdminPlanirovkaDto) => PlanirovkaChange,
 ): Promise<AdminPlanirovkaDto> {
-  const row = (await c.query<PlanirovkaRow>('SELECT * FROM planirovka WHERE id = $1 FOR UPDATE', [id])).rows[0];
-  if (!row) throw notFound();
+  if (!(await c.query('SELECT 1 FROM planirovka WHERE id = $1 FOR UPDATE', [id])).rowCount) throw notFound();
+  const row = await viewRow(c, id);
   const before = planirovkaDto(row);
-  const merged = { ...before, ...change(before) };
+  const { bosh, bron, sotilgan, ...own } = change(before);
+  const merged = { ...before, ...own };
+  if (bosh !== undefined || bron !== undefined || sotilgan !== undefined) {
+    const target = { bosh: bosh ?? before.bosh, bron: bron ?? before.bron, sotilgan: sotilgan ?? before.sotilgan };
+    if (target.bosh !== before.bosh || target.bron !== before.bron || target.sotilgan !== before.sotilgan) {
+      await moslashtirSonlar(c, id, target, by.at);
+    }
+  }
+  await c.query(
+    `UPDATE planirovka SET xonalar = $1, maydon = $2, nomi = $3, chizma_url = $4, video_url = $5,
+            qolda_narx = $6, tartib = $7 WHERE id = $8`,
+    [
+      merged.xonalar,
+      merged.maydon,
+      merged.nomi ? JSON.stringify(merged.nomi) : null,
+      merged.chizma,
+      merged.video,
+      merged.qoldaNarx,
+      merged.tartib,
+      id,
+    ],
+  );
   const after: AdminPlanirovkaDto = {
-    ...merged,
-    jami: merged.bosh + merged.bron + merged.sotilgan,
-    holat: planirovkaHolati(merged),
+    ...planirovkaDto(await viewRow(c, id)),
     oxirgiOzgarish: { nomi: by.admin.nomi, at: by.at.toISOString() },
   };
   const d = farq(planirovkaFields(before), planirovkaFields(after));
   if (!d) return before;
-  await c.query(
-    `UPDATE planirovka SET xonalar = $1, maydon = $2, nomi = $3, chizma_url = $4, video_url = $5,
-            boshlangich_narx = $6, bosh = $7, bron = $8, sotilgan = $9, tartib = $10, updated_at = $11
-      WHERE id = $12`,
-    [
-      after.xonalar,
-      after.maydon,
-      after.nomi ? JSON.stringify(after.nomi) : null,
-      after.chizma,
-      after.video,
-      after.boshlangichNarx,
-      after.bosh,
-      after.bron,
-      after.sotilgan,
-      after.tartib,
-      by.at,
-      id,
-    ],
-  );
+  await c.query('UPDATE planirovka SET updated_at = $1 WHERE id = $2', [by.at, id]);
   const where = await blokOf(c, row.blok_id);
   await yozJurnal(c, by, {
     obyekt: 'planirovka',
     obyektId: id,
     loyihaId: where.loyihaId,
-    amal,
+    amal: 'tahrirlandi',
     tavsif: planirovkaTavsif(where.loyihaNomi, where.blokNomi, after),
     ...d,
   });

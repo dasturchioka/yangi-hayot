@@ -39,12 +39,12 @@ export interface ApiError {
   error: string;
 }
 
-// ---- Katalog (ADR 0001: Loyiha → Blok → Planirovka, no Xonadon records) ----
+// ---- Katalog (ADR 0003: Loyiha → Blok → Xonadon; Planirovka = a type of Xonadon in a Blok) ----
 
 export const SHAHARLAR = ['toshkent', 'navoiy'] as const;
 export type Shahar = (typeof SHAHARLAR)[number];
 
-/** Derived from the counts, never stored: bo'sh > 0 → sotuvda; else bron > 0 → band; else sotilgan. */
+/** Derived from its Xonadonlar' counts, never stored: bo'sh > 0 → sotuvda; else bron > 0 → band; else sotilgan. */
 export type PlanirovkaHolati = 'sotuvda' | 'band' | 'sotilgan';
 
 /** Where a video opens: a Telegram channel post or YouTube. Other links are not shown. */
@@ -134,6 +134,33 @@ export interface PlanirovkaResponse {
   planirovka: PlanirovkaDto;
 }
 
+/** One Xonadon as the Mini App and the AI-menejer see it (shaxmatka cell / Xonadon kartochkasi). */
+export interface XonadonDto {
+  id: number;
+  loyihaId: number;
+  blokId: number;
+  blokNomi: string;
+  planirovkaId: number;
+  qavat: number;
+  raqam: number;
+  xonalar: number;
+  /** m² */
+  maydon: number;
+  /** UZS: the Xonadon's own narx, else its Planirovka's qo'lda narx; null → «Narx so'rov bo'yicha». */
+  narx: number | null;
+  holat: XonadonHolati;
+}
+
+/** GET …/katalog/bloklar/:id/xonadonlar — all Xonadonlar of a Blok, by qavat then raqam. */
+export interface BlokXonadonlarResponse {
+  blok: { id: number; nomi: string; loyihaId: number; loyihaNomi: string };
+  xonadonlar: XonadonDto[];
+}
+
+export interface XonadonResponse {
+  xonadon: XonadonDto;
+}
+
 // ---- Ariza (TZ 8-bo'lim) ----
 
 /** form = «Ariza qoldirish», quiz = «Xonadon tanlash», visit = ko'rishga yozilish, calc = kalkulyator, ai = AI-menejer, human = «Menejer kerak». */
@@ -172,7 +199,7 @@ export interface ArizalarResponse {
 
 // ---- Admin-panel (#5) ----
 
-/** Administrator: everything. Menejer: Xonadon holatlari (counts) and yozilishlar only. */
+/** Administrator: everything. Menejer: Xonadon holati and yozilishlar only. */
 export const ADMIN_ROLLAR = ['administrator', 'menejer'] as const;
 export type AdminRol = (typeof ADMIN_ROLLAR)[number];
 
@@ -197,7 +224,7 @@ export interface LokalDto {
 export const LOYIHA_HOLATLARI = ['sotuvda', 'topshirilgan'] as const;
 export type LoyihaHolati = (typeof LOYIHA_HOLATLARI)[number];
 
-/** Where a Xonadon is: the three counts of a Planirovka. */
+/** Holat of one Xonadon (ADR 0003). */
 export const XONADON_HOLATLARI = ['bosh', 'bron', 'sotilgan'] as const;
 export type XonadonHolati = (typeof XONADON_HOLATLARI)[number];
 
@@ -234,16 +261,20 @@ export interface AdminPlanirovkaInput {
   nomi: LokalDto | null;
   chizma: string | null;
   video: string | null;
-  /** UZS; null → «Narx so'rov bo'yicha». */
-  boshlangichNarx: number | null;
+  /**
+   * UZS, the Planirovka's qo'lda kiritilgan narx: the Boshlang'ich narx only
+   * while none of its bo'sh Xonadonlar has a narx (ADR 0003).
+   */
+  qoldaNarx: number | null;
   tartib: number;
 }
 
+/** Counted from the Xonadonlar, never stored (ADR 0003). */
 export interface XonadonSonlari {
   bosh: number;
   bron: number;
   sotilgan: number;
-  /** bosh + bron + sotilgan; changed only by the Administrator. */
+  /** bosh + bron + sotilgan = number of Xonadonlar. */
   jami: number;
 }
 
@@ -251,6 +282,8 @@ export interface AdminPlanirovkaDto extends AdminPlanirovkaInput, XonadonSonlari
   id: number;
   blokId: number;
   holat: PlanirovkaHolati;
+  /** Derived (ADR 0003): cheapest bo'sh Xonadon narx, else qoldaNarx; null → «Narx so'rov bo'yicha». */
+  boshlangichNarx: number | null;
   /** Latest jurnal row of this Planirovka («Oxirgi o'zgarish»): who and when; null if none. */
   oxirgiOzgarish: { nomi: string; at: string } | null;
 }
@@ -278,7 +311,33 @@ export interface AdminLoyihaDto extends AdminLoyihaInput {
   bloklar: AdminBlokDto[];
 }
 
-export type JurnalObyekt = 'loyiha' | 'blok' | 'planirovka';
+/** Fields of a Xonadon the admin edits. Menejer: holat only. */
+export interface AdminXonadonInput {
+  planirovkaId: number;
+  qavat: number;
+  raqam: number;
+  /** UZS; null → the Planirovka's qo'lda narx is shown. */
+  narx: number | null;
+  holat: XonadonHolati;
+}
+
+export interface AdminXonadonDto extends AdminXonadonInput {
+  id: number;
+  blokId: number;
+  /** Latest jurnal row of this Xonadon: who and when; null if none. */
+  oxirgiOzgarish: { nomi: string; at: string } | null;
+}
+
+/** GET /admin/api/katalog/bloklar/:id/xonadonlar */
+export interface AdminBlokXonadonlarResponse {
+  blok: { id: number; nomi: string; loyihaId: number; loyihaNomi: string };
+  /** The Blok's Planirovkalar (with counts), for the Planirovka select and legend. */
+  planirovkalar: AdminPlanirovkaDto[];
+  /** By qavat, then raqam. */
+  xonadonlar: AdminXonadonDto[];
+}
+
+export type JurnalObyekt = 'loyiha' | 'blok' | 'planirovka' | 'xonadon';
 
 /** One jurnal row: kim, qachon, nima edi (oldin; null = created), nima bo'ldi (keyin). */
 export interface JurnalDto {
@@ -288,8 +347,8 @@ export interface JurnalDto {
   admin: { id: number | null; nomi: string };
   obyekt: JurnalObyekt;
   obyektId: number;
-  /** yaratildi | tahrirlandi | kochirildi */
-  amal: 'yaratildi' | 'tahrirlandi' | 'kochirildi';
+  /** yaratildi | tahrirlandi | ochirildi (Xonadon); kochirildi = old Planirovka count moves (before ADR 0003). */
+  amal: 'yaratildi' | 'tahrirlandi' | 'ochirildi' | 'kochirildi';
   /** Label of the object at that time, e.g. "Jozibali Maskan · A blok · 2 xona, 54 m²". */
   tavsif: string;
   /** Changed fields before (null = created). */

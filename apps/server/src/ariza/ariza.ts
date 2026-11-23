@@ -424,7 +424,7 @@ async function loadKontekst(db: pg.Pool, loyihaId: number | null, planirovkaId: 
     }>(
       `SELECT l.id AS loyiha_id, l.nomi AS loyiha_nomi, l.crm_responsible_id AS responsible, b.nomi AS blok_nomi,
               p.id, p.xonalar, p.maydon, p.nomi, p.boshlangich_narx AS narx
-         FROM planirovka p JOIN blok b ON b.id = p.blok_id JOIN loyiha l ON l.id = b.loyiha_id
+         FROM planirovka_view p JOIN blok b ON b.id = p.blok_id JOIN loyiha l ON l.id = b.loyiha_id
         WHERE p.id = $1 AND l.holat = 'sotuvda'`,
       [planirovkaId],
     );

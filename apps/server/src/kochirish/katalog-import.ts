@@ -1,5 +1,6 @@
 import vm from 'node:vm';
 import type pg from 'pg';
+import { moslashtirSonlar } from '../xonadon/joylash';
 import type { Lokal } from '../katalog/seed';
 import {
   DEFAULT_BLOK,
@@ -196,24 +197,14 @@ export async function importLegacyKatalog(
           [loyihaId, g.blok],
         );
         const pl = await client.query<{ id: number }>(
-          `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, boshlangich_narx,
-                                   bosh, bron, sotilgan, tartib, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                   (SELECT count(*) FROM planirovka WHERE blok_id = $1), $11, $11) RETURNING id`,
-          [
-            blok.rows[0]!.id,
-            g.xonalar,
-            g.maydon,
-            g.nomi ? JSON.stringify(g.nomi) : null,
-            g.chizma,
-            g.video,
-            g.narx,
-            g.bosh,
-            g.bron,
-            g.sotilgan,
-            now,
-          ],
+          `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, qolda_narx,
+                                   tartib, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7,
+                   (SELECT count(*) FROM planirovka WHERE blok_id = $1), $8, $8) RETURNING id`,
+          [blok.rows[0]!.id, g.xonalar, g.maydon, g.nomi ? JSON.stringify(g.nomi) : null, g.chizma, g.video, g.narx, now],
         );
+        // TODO(#24): old apartments become Xonadonlar with their own qavat / raqam
+        await moslashtirSonlar(client, pl.rows[0]!.id, g, now);
         await client.query('INSERT INTO legacy_planirovka (legacy_key, planirovka_id, imported_at) VALUES ($1, $2, $3)', [
           g.key,
           pl.rows[0]!.id,
@@ -226,8 +217,8 @@ export async function importLegacyKatalog(
     const counts = await client.query<{ loyihalar: string; planirovkalar: string; xonadonlar: string }>(
       `SELECT (SELECT count(DISTINCT id) FROM loyiha WHERE id = ANY($1::int[])) AS loyihalar,
               count(p.id) AS planirovkalar,
-              coalesce(sum(p.bosh + p.bron + p.sotilgan), 0) AS xonadonlar
-         FROM legacy_planirovka lp JOIN planirovka p ON p.id = lp.planirovka_id
+              coalesce(sum(p.jami), 0) AS xonadonlar
+         FROM legacy_planirovka lp JOIN planirovka_view p ON p.id = lp.planirovka_id
         WHERE lp.legacy_key = ANY($2::text[])`,
       [loyihaIds, keys],
     );

@@ -216,14 +216,14 @@ async function mavjud(db: Queryable, loyihaId: number, lock: boolean): Promise<M
     xonalar: number;
     maydon: string;
     nomi: LokalDto | null;
-    boshlangich_narx: string | null;
+    qolda_narx: string | null;
     bosh: number;
     bron: number;
     sotilgan: number;
     chizma_url: string | null;
     video_url: string | null;
   }>(
-    `SELECT p.* FROM planirovka p JOIN blok b ON b.id = p.blok_id WHERE b.loyiha_id = $1
+    `SELECT p.* FROM planirovka_view p JOIN blok b ON b.id = p.blok_id WHERE b.loyiha_id = $1
       ORDER BY b.tartib, b.nomi, p.xonalar, p.maydon, p.tartib, p.id`,
     [loyihaId],
   );
@@ -235,7 +235,8 @@ async function mavjud(db: Queryable, loyihaId: number, lock: boolean): Promise<M
       xonalar: r.xonalar,
       maydon: Number(r.maydon),
       nomi: r.nomi,
-      boshlangichNarx: r.boshlangich_narx === null ? null : Number(r.boshlangich_narx),
+      // the file's narx column is the Planirovka's qo'lda narx (ADR 0003)
+      boshlangichNarx: r.qolda_narx === null ? null : Number(r.qolda_narx),
       bosh: r.bosh,
       bron: r.bron,
       sotilgan: r.sotilgan,
@@ -355,8 +356,9 @@ export async function importQil(db: pg.Pool, by: Muallif, loyihaId: number, file
     );
     for (const nomi of reja.yangiBloklar) bloklar.set(normKey(nomi), (await createBlokIn(c, by, loyihaId, { nomi })).id);
     for (const { q, planirovkaId, ozgarishlar } of qadamlar) {
+      // counts → Xonadonlar are added / removed / re-holated (moslashtirSonlar) until #24
       const fields = {
-        boshlangichNarx: q.boshlangichNarx,
+        qoldaNarx: q.boshlangichNarx,
         bosh: q.bosh,
         bron: q.bron,
         sotilgan: q.sotilgan,

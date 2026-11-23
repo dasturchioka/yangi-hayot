@@ -1,5 +1,8 @@
 import type {
   BlokDto,
+  BlokXonadonlarResponse,
+  XonadonDto,
+  XonadonHolati,
   InfratuzilmaDto,
   Lang,
   FiltrVariantlariResponse,
@@ -35,12 +38,16 @@ export interface Katalog {
   planirovkalar(filtr: PlanirovkaFiltr, lang: Lang): Promise<PlanirovkaDto[]>;
   /** Loyihalar/Bloklar and narx/maydon bounds of a city (or both) for the filter sheet. Budget ranges: see kviz/byudjet. */
   filtrVariantlari(shahar?: Shahar): Promise<Omit<FiltrVariantlariResponse, 'byudjet'>>;
+  /** All Xonadonlar of a Blok (shaxmatka), by qavat then raqam; null when no such Blok in a Sotuvdagi Loyiha. */
+  blokXonadonlari(blokId: number): Promise<BlokXonadonlarResponse | null>;
+  /** null when no such Xonadon in a Sotuvdagi Loyiha. Sotilgan ones are returned. */
+  xonadon(id: number): Promise<XonadonDto | null>;
   invalidate(): void;
 }
 
 export const KATALOG_TTL_MS = 30_000;
 
-/** Planirovka holati from its counts (ADR 0001). */
+/** Planirovka holati from its Xonadonlar' counts (ADR 0003). */
 export function planirovkaHolati(c: { bosh: number; bron: number }): PlanirovkaHolati {
   if (c.bosh > 0) return 'sotuvda';
   if (c.bron > 0) return 'band';
@@ -93,14 +100,28 @@ interface PlanirovkaRow {
   nomi: Lokal | null;
   chizma_url: string | null;
   video_url: string | null;
+  /** Derived (planirovka_view, ADR 0003). */
   boshlangich_narx: string | null;
+  qolda_narx: string | null;
   bosh: number;
   bron: number;
   sotilgan: number;
 }
 
+interface XonadonRow {
+  id: number;
+  blok_id: number;
+  planirovka_id: number;
+  qavat: number;
+  raqam: number;
+  narx: string | null;
+  holat: XonadonHolati;
+}
+
 interface Snapshot {
   loadedAt: number;
+  xonadonlarOf: Map<number, XonadonRow[]>;
+  xonadonById: Map<number, XonadonRow>;
   loyihalar: LoyihaRow[];
   bloklarOf: Map<number, BlokRow[]>;
   planirovkalarOf: Map<number, PlanirovkaRow[]>;
@@ -126,14 +147,24 @@ async function loadSnapshot(db: pg.Pool, now: number): Promise<Snapshot> {
   const planirovkalar = (
     await db.query<PlanirovkaRow>(
       `SELECT p.id, p.blok_id, p.xonalar, p.maydon, p.nomi, p.chizma_url, p.video_url, p.boshlangich_narx,
-              p.bosh, p.bron, p.sotilgan
-         FROM planirovka p JOIN blok b ON b.id = p.blok_id JOIN loyiha l ON l.id = b.loyiha_id
+              p.qolda_narx, p.bosh, p.bron, p.sotilgan
+         FROM planirovka_view p JOIN blok b ON b.id = p.blok_id JOIN loyiha l ON l.id = b.loyiha_id
         WHERE l.holat = 'sotuvda' ORDER BY p.xonalar, p.maydon, p.tartib, p.id`,
+    )
+  ).rows;
+
+  const xonadonlar = (
+    await db.query<XonadonRow>(
+      `SELECT x.id, x.blok_id, x.planirovka_id, x.qavat, x.raqam, x.narx, x.holat
+         FROM xonadon x JOIN blok b ON b.id = x.blok_id JOIN loyiha l ON l.id = b.loyiha_id
+        WHERE l.holat = 'sotuvda' ORDER BY x.qavat, x.raqam, x.id`,
     )
   ).rows;
 
   const s: Snapshot = {
     loadedAt: now,
+    xonadonlarOf: new Map(),
+    xonadonById: new Map(xonadonlar.map((x) => [x.id, x])),
     loyihalar,
     bloklarOf: new Map(),
     planirovkalarOf: new Map(),
@@ -143,6 +174,7 @@ async function loadSnapshot(db: pg.Pool, now: number): Promise<Snapshot> {
   };
   for (const b of bloklar) push(s.bloklarOf, b.loyiha_id, b);
   for (const p of planirovkalar) push(s.planirovkalarOf, p.blok_id, p);
+  for (const x of xonadonlar) push(s.xonadonlarOf, x.blok_id, x);
   return s;
 }
 
@@ -184,6 +216,25 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
       boshlangichNarx: p.boshlangich_narx === null ? null : Number(p.boshlangich_narx),
       bosh: p.bosh,
       holat: planirovkaHolati(p),
+    };
+  }
+
+  function xonadonDto(s: Snapshot, x: XonadonRow): XonadonDto {
+    const blok = s.blokById.get(x.blok_id)!;
+    const p = s.planirovkaById.get(x.planirovka_id)!;
+    const narx = x.narx ?? p.qolda_narx;
+    return {
+      id: x.id,
+      loyihaId: blok.loyiha_id,
+      blokId: blok.id,
+      blokNomi: blok.nomi,
+      planirovkaId: p.id,
+      qavat: x.qavat,
+      raqam: x.raqam,
+      xonalar: p.xonalar,
+      maydon: Number(p.maydon),
+      narx: narx === null ? null : Number(narx),
+      holat: x.holat,
     };
   }
 
@@ -305,6 +356,23 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
         narx: bounds(narxlar),
         maydon: bounds(maydonlar),
       };
+    },
+
+    async blokXonadonlari(blokId) {
+      const s = await current();
+      const blok = s.blokById.get(blokId);
+      if (!blok) return null;
+      const loyiha = s.loyihaById.get(blok.loyiha_id)!;
+      return {
+        blok: { id: blok.id, nomi: blok.nomi, loyihaId: loyiha.id, loyihaNomi: loyiha.nomi },
+        xonadonlar: (s.xonadonlarOf.get(blokId) ?? []).map((x) => xonadonDto(s, x)),
+      };
+    },
+
+    async xonadon(id) {
+      const s = await current();
+      const x = s.xonadonById.get(id);
+      return x ? xonadonDto(s, x) : null;
     },
 
     invalidate() {

@@ -174,8 +174,8 @@ describe("Planirovkalar import from Excel / CSV", () => {
     expect(yozuv).toMatchObject({
       admin: { nomi: 'Dilnoza' },
       amal: 'tahrirlandi',
-      oldin: { boshlangichNarx: 455_500_000, bosh: 5, bron: 1, sotilgan: 4 },
-      keyin: { boshlangichNarx: 460_000_000, bosh: 2, bron: 2, sotilgan: 6 },
+      oldin: { qoldaNarx: 455_500_000, bosh: 5, bron: 1, sotilgan: 4 },
+      keyin: { qoldaNarx: 460_000_000, bosh: 2, bron: 2, sotilgan: 6 },
     });
   });
 });

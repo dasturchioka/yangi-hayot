@@ -8,13 +8,19 @@ import {
   createPlanirovka,
   getLoyiha,
   KatalogAdminError,
-  kochirish,
   listLoyihalar,
   updateBlok,
   updateLoyiha,
   updatePlanirovka,
 } from '../admin/katalog-admin';
 import { importQil, ImportXatolari, shablon, tekshir } from '../admin/planirovka-import';
+import {
+  createXonadon,
+  deleteXonadon,
+  listBlokXonadonlari,
+  setXonadonlarHolati,
+  updateXonadon,
+} from '../admin/xonadon-admin';
 import { onlyRol, requireAdmin } from '../auth/admin-auth';
 import type { AppDeps } from '../app';
 import { parseVideo, type Katalog } from '../katalog/katalog';
@@ -72,24 +78,31 @@ const CreateLoyiha = LoyihaFields.partial()
 
 const BlokFields = z.object({ nomi: z.string().trim().min(1).max(20), tartib: z.number().int() });
 
-const Count = z.number().int().min(0).max(100_000);
 const PlanirovkaFields = z.object({
   xonalar: z.number().int().min(1).max(20),
   maydon: z.number().positive().max(10_000),
   nomi: Lokal.nullable(),
   chizma: MediaUrl.nullable(),
   video: Video,
-  boshlangichNarx: z.number().int().positive().max(1e13).nullable(),
+  qoldaNarx: z.number().int().positive().max(1e13).nullable(),
   tartib: z.number().int(),
 });
-const CreatePlanirovka = PlanirovkaFields.partial()
-  .required({ xonalar: true, maydon: true })
-  .extend({ bosh: Count, bron: Count.optional(), sotilgan: Count.optional() });
-const UpdatePlanirovka = PlanirovkaFields.partial().extend({ jami: Count.optional() });
+const CreatePlanirovka = PlanirovkaFields.partial().required({ xonalar: true, maydon: true });
+const UpdatePlanirovka = PlanirovkaFields.partial();
 
-const Kochirish = z
-  .object({ dan: z.enum(XONADON_HOLATLARI), ga: z.enum(XONADON_HOLATLARI), soni: z.number().int().min(1).max(100_000) })
-  .refine((m) => m.dan !== m.ga);
+const XonadonFields = z.object({
+  planirovkaId: z.number().int().positive(),
+  qavat: z.number().int().min(-5).max(200),
+  raqam: z.number().int().positive().max(1_000_000),
+  narx: z.number().int().positive().max(1e13).nullable(),
+  holat: z.enum(XONADON_HOLATLARI),
+});
+const CreateXonadon = XonadonFields.partial({ narx: true, holat: true });
+const UpdateXonadon = XonadonFields.partial();
+const XonadonlarHolati = z.object({
+  ids: z.array(z.number().int().positive()).min(1).max(1000),
+  holat: z.enum(XONADON_HOLATLARI),
+});
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const IMPORT_MAX_BYTES = 5 * 1024 * 1024;
@@ -97,7 +110,7 @@ const IMPORT_MAX_BYTES = 5 * 1024 * 1024;
 const IdParams = z.object({ id: z.coerce.number().int().positive() });
 const JurnalQuery = z.object({
   loyihaId: z.coerce.number().int().positive().optional(),
-  obyekt: z.enum(['loyiha', 'blok', 'planirovka']).optional(),
+  obyekt: z.enum(['loyiha', 'blok', 'planirovka', 'xonadon']).optional(),
   obyektId: z.coerce.number().int().positive().optional(),
   beforeId: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -118,9 +131,9 @@ export function slugify(nomi: string): string {
 
 /**
  * /admin/api/katalog (behind `requireAdmin`). Reads: both roles. Loyiha / Blok /
- * Planirovka create and edit (incl. price and jami): Administrator. Moving
- * Xonadonlar between bo'sh / bron / sotilgan: both roles. Every write goes to
- * the jurnal and invalidates the Mini App / AI katalog cache.
+ * Planirovka / Xonadon create and edit (incl. narx): Administrator. Xonadon
+ * holati: both roles (TZ UF-2: Menejer — xonadon statuslari). Every write goes
+ * to the jurnal and invalidates the Mini App / AI katalog cache.
  */
 export async function adminKatalogRoutes(app: FastifyInstance, deps: AppDeps, katalog: Katalog) {
   requireAdmin(app, deps);
@@ -190,11 +203,48 @@ export async function adminKatalogRoutes(app: FastifyInstance, deps: AppDeps, ka
     return write(reply, async () => ({ planirovka: await updatePlanirovka(deps.db, by(req), p.data.id, body.data) }));
   });
 
-  app.post('/katalog/planirovkalar/:id/kochirish', async (req, reply) => {
+  // ---- Xonadonlar (ADR 0003) ----
+
+  app.get('/katalog/bloklar/:id/xonadonlar', async (req, reply) => {
     const p = IdParams.safeParse(req.params);
-    const body = Kochirish.safeParse(req.body);
+    const out = p.success ? await listBlokXonadonlari(deps.db, p.data.id) : null;
+    return out ?? reply.code(404).send({ error: 'not_found' });
+  });
+
+  app.post('/katalog/bloklar/:id/xonadonlar', administrator, async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    const body = CreateXonadon.safeParse(req.body);
     if (!p.success || !body.success) return bad(reply);
-    return write(reply, async () => ({ planirovka: await kochirish(deps.db, by(req), p.data.id, body.data) }));
+    return write(reply, async () => ({ xonadon: await createXonadon(deps.db, by(req), p.data.id, body.data) }));
+  });
+
+  /** Menejer: holat only (any other field → 403); Administrator: all. */
+  app.patch('/katalog/xonadonlar/:id', async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    const body = UpdateXonadon.safeParse(req.body);
+    if (!p.success || !body.success) return bad(reply);
+    if (req.admin.rol !== 'administrator' && Object.keys(body.data).some((k) => k !== 'holat')) {
+      return reply.code(403).send({ error: 'forbidden' });
+    }
+    return write(reply, async () => ({ xonadon: await updateXonadon(deps.db, by(req), p.data.id, body.data) }));
+  });
+
+  /** One holat for several Xonadonlar (both roles). */
+  app.post('/katalog/xonadonlar/holat', async (req, reply) => {
+    const body = XonadonlarHolati.safeParse(req.body);
+    if (!body.success) return bad(reply);
+    return write(reply, async () => ({
+      xonadonlar: await setXonadonlarHolati(deps.db, by(req), body.data.ids, body.data.holat),
+    }));
+  });
+
+  app.delete('/katalog/xonadonlar/:id', administrator, async (req, reply) => {
+    const p = IdParams.safeParse(req.params);
+    if (!p.success) return bad(reply);
+    return write(reply, async () => {
+      await deleteXonadon(deps.db, by(req), p.data.id);
+      return { ok: true };
+    });
   });
 
   // ---- Excel / CSV import (#6): both roles (TZ story 63) ----

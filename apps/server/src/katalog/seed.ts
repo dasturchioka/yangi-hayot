@@ -1,5 +1,6 @@
-import type { Shahar } from '@yh/shared';
+import type { Shahar, XonadonHolati } from '@yh/shared';
 import type pg from 'pg';
+import { insertXonadonlar, joylashtir } from '../xonadon/joylash';
 
 /** Text in both languages. */
 export interface Lokal {
@@ -19,11 +20,25 @@ export interface PlanirovkaInput {
   nomi?: Lokal | null;
   chizma?: string | null;
   video?: string | null;
-  /** UZS, whole Xonadon; null → «Narx so'rov bo'yicha». */
+  /**
+   * UZS, whole Xonadon: the Planirovka's own («qo'lda kiritilgan») price. It is
+   * the Boshlang'ich narx while no bo'sh Xonadon has a narx (ADR 0003);
+   * null and no Xonadon narx → «Narx so'rov bo'yicha».
+   */
   boshlangichNarx?: number | null;
+  /** How many Xonadonlar to make in each holat (laid out by `joylashtir`)… */
   bosh: number;
   bron?: number;
   sotilgan?: number;
+  /** …or exactly these Xonadonlar (then the counts are ignored). */
+  xonadonlar?: XonadonInput[];
+}
+
+export interface XonadonInput {
+  qavat: number;
+  raqam: number;
+  holat?: XonadonHolati;
+  narx?: number | null;
 }
 
 export interface BlokInput {
@@ -55,8 +70,8 @@ export interface InsertedLoyiha {
 }
 
 /**
- * Writes one Loyiha with its Bloklar and Planirovkalar in one transaction.
- * Used by the seed script and by tests until the admin-panel can create them.
+ * Writes one Loyiha with its Bloklar, Planirovkalar and their Xonadonlar in one
+ * transaction. Used by the seed script and by tests.
  */
 export async function insertLoyiha(db: pg.Pool, input: LoyihaInput): Promise<InsertedLoyiha> {
   const client = await db.connect();
@@ -95,9 +110,8 @@ export async function insertLoyiha(db: pg.Pool, input: LoyihaInput): Promise<Ins
       const planirovkalar: { id: number }[] = [];
       for (const [pi, p] of b.planirovkalar.entries()) {
         const pr = await client.query<{ id: number }>(
-          `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, boshlangich_narx,
-                                   bosh, bron, sotilgan, tartib)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+          `INSERT INTO planirovka (blok_id, xonalar, maydon, nomi, chizma_url, video_url, qolda_narx, tartib)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
           [
             blokId,
             p.xonalar,
@@ -106,14 +120,32 @@ export async function insertLoyiha(db: pg.Pool, input: LoyihaInput): Promise<Ins
             p.chizma ?? null,
             p.video ?? null,
             p.boshlangichNarx ?? null,
-            p.bosh,
-            p.bron ?? 0,
-            p.sotilgan ?? 0,
             pi,
           ],
         );
         planirovkalar.push({ id: pr.rows[0]!.id });
       }
+      const at = new Date();
+      const aniq = b.planirovkalar.flatMap((p, pi) =>
+        (p.xonadonlar ?? []).map((x) => ({
+          blokId,
+          planirovkaId: planirovkalar[pi]!.id,
+          qavat: x.qavat,
+          raqam: x.raqam,
+          holat: x.holat ?? ('bosh' as const),
+          narx: x.narx ?? null,
+        })),
+      );
+      const raqamdan = Math.max(0, ...aniq.map((x) => x.raqam));
+      const sonlar = b.planirovkalar.map((p) => (p.xonadonlar ? { bosh: 0 } : p));
+      const hosil = joylashtir(sonlar, input.qavatlarSoni ?? null).map((x) => ({
+        blokId,
+        planirovkaId: planirovkalar[x.tur]!.id,
+        qavat: x.qavat,
+        raqam: raqamdan + x.raqam,
+        holat: x.holat,
+      }));
+      await insertXonadonlar(client, [...aniq, ...hosil], at);
       bloklar.push({ id: blokId, nomi: b.nomi, planirovkalar });
     }
 

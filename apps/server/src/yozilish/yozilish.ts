@@ -145,7 +145,7 @@ const SELECT = `
     JOIN loyiha l ON l.id = y.loyiha_id
     JOIN ariza a ON a.id = y.ariza_id
     JOIN mijoz m ON m.telegram_id = y.mijoz_id
-    LEFT JOIN planirovka p ON p.id = y.planirovka_id
+    LEFT JOIN planirovka_view p ON p.id = y.planirovka_id
     LEFT JOIN blok b ON b.id = p.blok_id
     LEFT JOIN admin_user au ON au.id = y.davomat_admin_id`;
 

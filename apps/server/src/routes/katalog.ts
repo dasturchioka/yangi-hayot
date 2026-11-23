@@ -6,6 +6,8 @@ import {
   type LoyihalarResponse,
   type PlanirovkaResponse,
   type PlanirovkalarResponse,
+  type BlokXonadonlarResponse,
+  type XonadonResponse,
 } from '@yh/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -85,5 +87,19 @@ export async function katalogRoutes(app: FastifyInstance, katalog: Katalog, deps
     const planirovka = await katalog.planirovka(p.data.id, q.data.lang);
     if (!planirovka) return reply.code(404).send({ error: 'not_found' });
     return { planirovka };
+  });
+
+  /** Shaxmatka of a Blok (ADR 0003). */
+  app.get('/bloklar/:id/xonadonlar', async (req, reply): Promise<BlokXonadonlarResponse | void> => {
+    const p = IdParams.safeParse(req.params);
+    const out = p.success ? await katalog.blokXonadonlari(p.data.id) : null;
+    return out ?? reply.code(404).send({ error: 'not_found' });
+  });
+
+  app.get('/xonadonlar/:id', async (req, reply): Promise<XonadonResponse | void> => {
+    const p = IdParams.safeParse(req.params);
+    const xonadon = p.success ? await katalog.xonadon(p.data.id) : null;
+    if (!xonadon) return reply.code(404).send({ error: 'not_found' });
+    return { xonadon };
   });
 }
