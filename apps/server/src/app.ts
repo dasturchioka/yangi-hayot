@@ -12,11 +12,13 @@ import { Jobs } from './jobs/jobs';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminKatalogRoutes } from './routes/admin-katalog';
+import { adminKvizRoutes } from './routes/admin-kviz';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
+import { kvizRoutes } from './routes/kviz';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
 import { createSevimlilar } from './sevimlilar/sevimlilar';
@@ -72,7 +74,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       scope.addHook('preSerialization', katalogQiziqishHook(deps, katalog));
-      await katalogRoutes(scope, katalog);
+      await katalogRoutes(scope, katalog, deps);
     },
     { prefix: '/api/katalog' },
   );
@@ -86,6 +88,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await kvizRoutes(scope, { db: deps.db, clock: deps.clock, arizalar });
+    },
+    { prefix: '/api/kviz' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       await sevimlilarRoutes(scope, { db: deps.db, clock: deps.clock, sevimlilar });
     },
     { prefix: '/api' },
@@ -93,7 +102,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireAiKey(scope, deps.config.aiApiKey);
-      await katalogRoutes(scope, katalog);
+      await katalogRoutes(scope, katalog, deps);
     },
     { prefix: '/ai/katalog' },
   );
@@ -102,6 +111,14 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       requireAdmin(scope, deps);
       scope.addHook('preHandler', onlyRol('administrator'));
       await adminRassilkaRoutes(scope, deps);
+    },
+    { prefix: '/admin/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
+      await adminKvizRoutes(scope, deps, katalog);
     },
     { prefix: '/admin/api' },
   );
