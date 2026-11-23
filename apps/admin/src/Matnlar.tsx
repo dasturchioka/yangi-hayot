@@ -8,6 +8,7 @@ import {
 } from '@yh/shared';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
+import { KalkulyatorForm } from './Kalkulyator';
 import './matnlar.css';
 import { YozilishSozlamalariForm } from './Yozilishlar';
 
@@ -45,6 +46,12 @@ const TABS: Tab[] = [
     name: "Ko'rish kunlari va vaqtlari",
     render: () => null,
     own: () => <YozilishSozlamalariForm />,
+  },
+  {
+    id: 'kalkulyator',
+    name: "Muddatli to'lov va ipoteka",
+    // Own settings key (GET/PUT /admin/api/kalkulyator), not part of Kontent.
+    render: () => <KalkulyatorForm />,
   },
 ];
 
@@ -106,7 +113,7 @@ function useSave<T>(path: string, onSaved: (k: AdminKontentResponse) => void) {
   return { state, save, touch: () => setState((s) => (s.kind === 'saved' ? { kind: 'idle' } : s)) };
 }
 
-function Form({
+export function Form({
   children,
   onSubmit,
   state,
@@ -135,7 +142,7 @@ function Form({
   );
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
     <section className="card matn-section">
       <header>
@@ -193,7 +200,7 @@ function MatnField({
 }
 
 /** Ordered list with add / remove / move; `max` from the TZ limits. */
-function ListEditor<T>({
+export function ListEditor<T>({
   items,
   onChange,
   max,

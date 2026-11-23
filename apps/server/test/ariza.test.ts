@@ -373,6 +373,8 @@ describe('Ariza module (other entry points)', () => {
       contactId: t.crm.contacts[0]!.id,
       bitimId: bitim.id,
       taskId: t.crm.tasks[0]!.id,
+      bitimCreated: true,
+      status: 'sent',
     });
   });
 

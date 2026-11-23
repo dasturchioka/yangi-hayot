@@ -1,4 +1,6 @@
+import type { PlanirovkaFiltr } from '@yh/shared';
 import { useEffect, useState } from 'react';
+import { filtrQuery, parseFiltr } from './tanlash/filtr';
 
 /** Screens of the Mini App, addressed by the URL hash so Back works and links can point at them. */
 export type Route =
@@ -8,8 +10,12 @@ export type Route =
   | { name: 'planirovka'; id: number }
   | { name: 'sevimlilar' }
   | { name: 'taqqoslash'; ids: number[] }
+  /** To'lov kalkulyatori; from a Planirovka its Boshlang'ich narx is put in. */
+  | { name: 'kalkulyator'; planirovkaId?: number }
   | { name: 'sotibOlish' }
   | { name: 'bizHaqimizda' }
+  /** «Do'stingni taklif qil» (#19). */
+  | { name: 'taklif' }
   /** «Ariza qoldirish» form, optionally about a Loyiha or a Planirovka. */
   | { name: 'ariza'; loyihaId?: number; planirovkaId?: number }
   /** «Ko'rishga yozilish» (#11): Loyiha → kun → vaqt → ism, telefon. Without a Loyiha the Mijoz picks one. */
@@ -19,7 +25,11 @@ export type Route =
   /** Pick a new day and time for an own booking. */
   | { name: 'yozilishKochirish'; id: number }
   /** «Mening arizalarim va yozilishlarim». */
-  | { name: 'mening' };
+  | { name: 'mening' }
+  /** Filtered Planirovkalar (#10); `sheet` = filter sheet open (so Back closes it); `kviz` = just finished the kviz. */
+  | { name: 'tanlash'; filtr: PlanirovkaFiltr; sheet?: boolean; kviz?: boolean }
+  /** «Xonadon tanlash» kvizi, step 1…N (each step its own history entry: Back = previous question). */
+  | { name: 'kviz'; qadam: number };
 
 export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?');
@@ -30,6 +40,16 @@ export function parseRoute(hash: string): Route {
     const planirovkaId = Number(q.get('planirovka')) || undefined;
     return { name: 'ariza', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
   }
+  if (parts[0] === 'tanlash') {
+    const q = new URLSearchParams(query);
+    return {
+      name: 'tanlash',
+      filtr: parseFiltr(q),
+      ...(q.get('sheet') === '1' ? { sheet: true } : {}),
+      ...(q.get('kviz') === '1' ? { kviz: true } : {}),
+    };
+  }
+  if (parts[0] === 'kviz') return { name: 'kviz', qadam: Math.max(1, Number(parts[1]) || 1) };
   const id = Number(parts[1]);
   if (parts[0] === 'yozilish') {
     if (id > 0 && parts[2] === 'kochirish') return { name: 'yozilishKochirish', id };
@@ -48,8 +68,13 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'planirovka' && id > 0) return { name: 'planirovka', id };
   if (parts[0] === 'sevimlilar') return { name: 'sevimlilar' };
+  if (parts[0] === 'kalkulyator') {
+    const planirovkaId = Number(new URLSearchParams(query).get('planirovka')) || undefined;
+    return { name: 'kalkulyator', ...(planirovkaId ? { planirovkaId } : {}) };
+  }
   if (parts[0] === 'qanday-sotib-olish') return { name: 'sotibOlish' };
   if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
+  if (parts[0] === 'taklif') return { name: 'taklif' };
   if (parts[0] === 'taqqoslash') {
     const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
     if (ids.length > 0) return { name: 'taqqoslash', ids };
@@ -87,14 +112,27 @@ export function href(route: Route): string {
       return `#/yozilish/${route.id}/kochirish`;
     case 'mening':
       return '#/mening';
+    case 'kalkulyator':
+      return route.planirovkaId ? `#/kalkulyator?planirovka=${route.planirovkaId}` : '#/kalkulyator';
     case 'sevimlilar':
       return '#/sevimlilar';
     case 'taqqoslash':
       return `#/taqqoslash/${route.ids.join(',')}`;
+    case 'tanlash': {
+      const q = new URLSearchParams(filtrQuery(route.filtr));
+      if (route.sheet) q.set('sheet', '1');
+      if (route.kviz) q.set('kviz', '1');
+      const qs = q.toString();
+      return qs ? `#/tanlash?${qs}` : '#/tanlash';
+    }
+    case 'kviz':
+      return `#/kviz/${route.qadam}`;
     case 'sotibOlish':
       return '#/qanday-sotib-olish';
     case 'bizHaqimizda':
       return '#/biz-haqimizda';
+    case 'taklif':
+      return '#/taklif';
   }
 }
 
@@ -102,7 +140,7 @@ export function navigate(route: Route): void {
   window.location.hash = href(route);
 }
 
-/** Like navigate, but the current screen leaves the history (a finished form must not come back on Back). */
+/** Replaces the current history entry (no new Back step): a finished form must not come back on Back. */
 export function replaceRoute(route: Route): void {
   window.location.replace(href(route));
 }

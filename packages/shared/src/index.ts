@@ -5,6 +5,7 @@
 
 export * from './bot';
 export * from './start';
+export * from './kalkulyator';
 export * from './kontent';
 import type { StartDto } from './start';
 
@@ -297,6 +298,56 @@ export interface JurnalDto {
   keyin: Record<string, unknown>;
 }
 
+// ---- Planirovkalar import from Excel / CSV (#6) ----
+
+/** One problem in the file. qator: spreadsheet row number (1 = header); null = the whole file. */
+export interface ImportXato {
+  qator: number | null;
+  /** Column label from the shablon (e.g. "maydon"), when the problem is in one cell. */
+  ustun?: string;
+  xabar: string;
+}
+
+/** What the import will do with one row of the file. */
+export interface ImportQator {
+  qator: number;
+  blok: string;
+  xonalar: number;
+  maydon: number;
+  nomi: string | null;
+  boshlangichNarx: number | null;
+  bosh: number;
+  bron: number;
+  sotilgan: number;
+  amal: 'yangi' | 'yangilanadi' | 'ozgarishsiz';
+  /** For 'yangilanadi': changed fields (boshlangichNarx, bosh, bron, sotilgan, nomi, chizma, video). */
+  ozgarishlar?: string[];
+}
+
+export interface ImportReja {
+  yangi: number;
+  yangilanadi: number;
+  ozgarishsiz: number;
+  /** Bloklar the import will create. */
+  yangiBloklar: string[];
+  /** Planirovkalar of the Loyiha that are not in the file; the import leaves them as they are. */
+  fayldaYoq: number;
+  qatorlar: ImportQator[];
+}
+
+/** POST …/import/tekshir. Import is possible only when xatolar is empty. */
+export interface ImportTekshirResponse {
+  xatolar: ImportXato[];
+  reja: ImportReja | null;
+}
+
+export interface ImportNatija {
+  yaratildi: number;
+  yangilandi: number;
+  ozgarishsiz: number;
+  yangiBloklar: string[];
+}
+
 // ---- Sevimlilar, taqqoslash, «Ulashish» (#16) ----
 
 /** GET /api/sevimlilar: newest first; only Planirovkalar still in the katalog. */
@@ -319,7 +370,7 @@ export interface TaqqoslashDto {
   boshlangichNarx: number | null;
   /** Boshlang'ich narx / maydon, whole so'm; null without a price. */
   kvMetrNarxi: number | null;
-  /** Monthly muddatli to'lov, UZS. null until the kalkulyator settings (#12) exist. */
+  /** Typical monthly payment (namunaviyOylik: muddatli to'lov, else first bank annuitet), UZS; null without a price. */
   oylikTolov: number | null;
   holat: PlanirovkaHolati;
 }
@@ -446,4 +497,144 @@ export interface AdminYozilishlarResponse {
 /** PATCH /admin/api/yozilishlar/:id/davomat. null clears a mistaken mark. */
 export interface AdminDavomatRequest {
   davomat: Davomat | null;
+}
+
+// ---- Filtrlar va «Xonadon tanlash» kvizi (#10) ----
+
+/** «4+» in the xonalar filter and the kviz: 4 means four rooms or more. */
+export const XONALAR_VARIANTLARI = [1, 2, 3, 4] as const;
+
+/**
+ * GET /api/katalog/planirovkalar?shahar=&loyiha=&blok=&xonalar=2,3&narxDan=&narxGacha=&maydonDan=&maydonGacha=&faqatBosh=1
+ * No qavat (ADR 0001). Bounds are inclusive; narx in UZS; any narx bound leaves out «Narx so'rov bo'yicha».
+ * «Faqat bo'sh» hides Band and Sotilgan; without it Sotilgan ones are listed (greyed in the UI).
+ */
+export interface PlanirovkaFiltr {
+  shahar?: Shahar;
+  loyihaId?: number;
+  blokId?: number;
+  xonalar?: number[];
+  narxDan?: number;
+  narxGacha?: number;
+  maydonDan?: number;
+  maydonGacha?: number;
+  faqatBosh?: boolean;
+}
+
+/** Cheapest first, «Narx so'rov bo'yicha» last. */
+export interface PlanirovkalarResponse {
+  planirovkalar: PlanirovkaDto[];
+}
+
+/** One kviz budget answer, UZS; null = open end («… dan» / «… gacha»). */
+export interface ByudjetOraligi {
+  dan: number | null;
+  gacha: number | null;
+}
+
+/** GET /api/katalog/filtr?shahar= — what the filter sheet and the kviz offer. */
+export interface FiltrVariantlariResponse {
+  loyihalar: { id: number; nomi: string; shahar: Shahar; bloklar: { id: number; nomi: string }[] }[];
+  /** Boshlang'ich narx bounds over priced Planirovkalar; null when none has a price. */
+  narx: { min: number; max: number } | null;
+  maydon: { min: number; max: number } | null;
+  /** Kviz budget answers: the Administrator's own, else 4 equal ranges from narx.min to narx.max. */
+  byudjet: ByudjetOraligi[];
+}
+
+/** GET/PUT /admin/api/kviz/byudjet (Administrator). qolda = null → automatic ranges. */
+export interface KvizByudjetSozlamasi {
+  qolda: ByudjetOraligi[] | null;
+  /** Read only: the automatic ranges over both cities, for comparison. */
+  avtomatik: ByudjetOraligi[];
+}
+
+/** «Tur» (S13): to live in, or to rent out (investment). */
+export const KVIZ_TURLARI = ['yashash', 'ijara'] as const;
+export type KvizTuri = (typeof KVIZ_TURLARI)[number];
+/** «Xarid muddati» (S13). */
+export const KVIZ_MUDDATLARI = ['shu_oy', '1_3_oy', '3_6_oy', 'bilmayman'] as const;
+export type KvizMuddati = (typeof KVIZ_MUDDATLARI)[number];
+/** «To'lov usuli» (S13, UF-4). */
+export const KVIZ_TOLOV_USULLARI = ['toliq', 'muddatli', 'ipoteka'] as const;
+export type KvizTolovUsuli = (typeof KVIZ_TOLOV_USULLARI)[number];
+
+/**
+ * Answers of the «Xonadon tanlash» kviz. Stored with its Ariza (payload.kviz);
+ * lead scoring (UF-4, #18) reads byudjet, muddat and tolov from here.
+ */
+export interface KvizJavoblari {
+  shahar: Shahar;
+  tur: KvizTuri;
+  /** Non-empty; 4 = «4+». */
+  xonalar: number[];
+  /** null when the katalog offered no budget ranges. */
+  byudjet: ByudjetOraligi | null;
+  muddat: KvizMuddati;
+  tolov: KvizTolovUsuli;
+}
+
+/** POST /api/kviz: the answers plus the contact left on the last step. */
+export interface KvizRequest extends KvizJavoblari {
+  name: string;
+  phone: string;
+}
+
+/** 201 (200 on a repeat). `filtr` = the answers as a filter, for the matching Planirovkalar list. */
+export interface KvizResponse {
+  id: number;
+  filtr: PlanirovkaFiltr;
+}
+
+// ---- «Do'stingni taklif qil» (#19, UF-6) ----
+
+/** GET /api/taklif: the Mijoz's personal link and how many Mijozlar came by it. */
+export interface TaklifResponse {
+  /** `https://t.me/<bot>?start=taklif_<kod>`: opens the bot for the friend. */
+  url: string;
+  /** Mijozlar who first came to the bot by this link. */
+  soni: number;
+}
+
+/** A Mijoz as the admin-panel shows them in the taklif lists. */
+export interface TaklifMijozDto {
+  telegramId: string;
+  name: string;
+  username: string | null;
+  phone: string | null;
+}
+
+/** GET /admin/api/takliflar row: a Mijoz who invited at least one other. */
+export interface TaklifchiDto extends TaklifMijozDto {
+  soni: number;
+  /** When the latest invited Mijoz came (ISO). */
+  oxirgiAt: string;
+}
+
+export interface TaklifchilarResponse {
+  taklifchilar: TaklifchiDto[];
+}
+
+/** An amoCRM Bitim of an invited Mijoz, as known from their Arizalar. */
+export interface TaklifBitimDto {
+  id: string;
+  /** Link into amoCRM when AMO_BASE_URL is set. */
+  url: string | null;
+  arizalarSoni: number;
+  oxirgiArizaAt: string;
+}
+
+export interface TaklifQilinganDto extends TaklifMijozDto {
+  /** When they first came to the bot (ISO). */
+  kelganAt: string;
+  arizalarSoni: number;
+  /** Arizalar not yet in amoCRM (queued for retry). */
+  kutilayotganArizalar: number;
+  bitimlar: TaklifBitimDto[];
+}
+
+/** GET /admin/api/takliflar/:telegramId */
+export interface TaklifQilinganlarResponse {
+  taklifchi: TaklifMijozDto;
+  taklifQilinganlar: TaklifQilinganDto[];
 }

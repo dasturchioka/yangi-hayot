@@ -2,9 +2,11 @@ import type {
   BlokDto,
   InfratuzilmaDto,
   Lang,
+  FiltrVariantlariResponse,
   LoyihaCardDto,
   LoyihaDto,
   PlanirovkaDto,
+  PlanirovkaFiltr,
   PlanirovkaHolati,
   Shahar,
   VideoDto,
@@ -29,6 +31,10 @@ export interface Katalog {
   loyiha(id: number, lang: Lang): Promise<LoyihaDto | null>;
   /** null when there is no such Planirovka in a Sotuvdagi Loyiha. Sotilgan ones are returned. */
   planirovka(id: number, lang: Lang): Promise<PlanirovkaDto | null>;
+  /** Planirovkalar matching the filter (#10), cheapest first, «Narx so'rov bo'yicha» last. */
+  planirovkalar(filtr: PlanirovkaFiltr, lang: Lang): Promise<PlanirovkaDto[]>;
+  /** Loyihalar/Bloklar and narx/maydon bounds of a city (or both) for the filter sheet. Budget ranges: see kviz/byudjet. */
+  filtrVariantlari(shahar?: Shahar): Promise<Omit<FiltrVariantlariResponse, 'byudjet'>>;
   invalidate(): void;
 }
 
@@ -251,6 +257,54 @@ export function createKatalog(deps: { db: pg.Pool; clock: Clock; ttlMs?: number 
       const s = await current();
       const p = s.planirovkaById.get(id);
       return p ? planirovkaDto(s, p, lang) : null;
+    },
+
+    async planirovkalar(f, lang) {
+      const s = await current();
+      const matches = (p: PlanirovkaRow) => {
+        const blok = s.blokById.get(p.blok_id)!;
+        const loyiha = s.loyihaById.get(blok.loyiha_id)!;
+        if (f.shahar && loyiha.shahar !== f.shahar) return false;
+        if (f.loyihaId && loyiha.id !== f.loyihaId) return false;
+        if (f.blokId && blok.id !== f.blokId) return false;
+        if (f.xonalar?.length && !f.xonalar.some((x) => (x >= 4 ? p.xonalar >= 4 : p.xonalar === x))) return false;
+        if (f.narxDan !== undefined || f.narxGacha !== undefined) {
+          if (p.boshlangich_narx === null) return false;
+          const narx = Number(p.boshlangich_narx);
+          if (f.narxDan !== undefined && narx < f.narxDan) return false;
+          if (f.narxGacha !== undefined && narx > f.narxGacha) return false;
+        }
+        const maydon = Number(p.maydon);
+        if (f.maydonDan !== undefined && maydon < f.maydonDan) return false;
+        if (f.maydonGacha !== undefined && maydon > f.maydonGacha) return false;
+        if (f.faqatBosh && planirovkaHolati(p) !== 'sotuvda') return false;
+        return true;
+      };
+      const narx = (p: PlanirovkaRow) => (p.boshlangich_narx === null ? Infinity : Number(p.boshlangich_narx));
+      return s.loyihalar
+        .flatMap((l) => planirovkalarOfLoyiha(s, l.id))
+        .filter(matches)
+        .sort((a, b) => narx(a) - narx(b) || Number(a.maydon) - Number(b.maydon) || a.id - b.id)
+        .map((p) => planirovkaDto(s, p, lang));
+    },
+
+    async filtrVariantlari(shahar) {
+      const s = await current();
+      const loyihalar = s.loyihalar.filter((l) => !shahar || l.shahar === shahar);
+      const ps = loyihalar.flatMap((l) => planirovkalarOfLoyiha(s, l.id));
+      const narxlar = ps.filter((p) => p.boshlangich_narx !== null).map((p) => Number(p.boshlangich_narx));
+      const maydonlar = ps.map((p) => Number(p.maydon));
+      const bounds = (xs: number[]) => (xs.length ? { min: Math.min(...xs), max: Math.max(...xs) } : null);
+      return {
+        loyihalar: loyihalar.map((l) => ({
+          id: l.id,
+          nomi: l.nomi,
+          shahar: l.shahar,
+          bloklar: (s.bloklarOf.get(l.id) ?? []).map((b) => ({ id: b.id, nomi: b.nomi })),
+        })),
+        narx: bounds(narxlar),
+        maydon: bounds(maydonlar),
+      };
     },
 
     invalidate() {

@@ -1,10 +1,13 @@
-import type {
-  BizHaqimizdaKontent,
-  BotMedia,
-  KontaktlarKontent,
-  Lang,
-  SotibOlishKontent,
-  YozilishSozlamalari,
+import {
+  DEFAULT_KALKULYATOR,
+  type BizHaqimizdaKontent,
+  type BotMedia,
+  type ByudjetOraligi,
+  type KalkulyatorSozlamalari,
+  type KontaktlarKontent,
+  type Lang,
+  type SotibOlishKontent,
+  type YozilishSozlamalari,
 } from '@yh/shared';
 import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
@@ -39,6 +42,10 @@ export interface Settings {
   crmAuthAlertedAt: string | null;
   /** Ko'rishga yozilish: showing weekdays, slots, holidays (#11; admin «Ko'rish kunlari va vaqtlari»). */
   yozilish: YozilishSozlamalari;
+  /** Kviz budget answers set by the Administrator (#10); null = automatic (kviz/byudjet.ts). */
+  kvizByudjet: ByudjetOraligi[] | null;
+  /** Muddatli to'lov terms and ipoteka banks (TZ 6-b., UF-2); the Administrator edits them (#12). */
+  kalkulyator: KalkulyatorSozlamalari;
 }
 
 const DEFAULTS: Settings = {
@@ -58,6 +65,8 @@ const DEFAULTS: Settings = {
     bayramlar: [],
     kunlarSoni: 14,
   },
+  kvizByudjet: null,
+  kalkulyator: DEFAULT_KALKULYATOR,
 };
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {

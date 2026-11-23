@@ -22,7 +22,7 @@ const xaritaUrl = ({ lat, lng }: { lat: number; lng: number }) =>
 
 // ---------------------------------------------------------------- entry links (home)
 
-/** Two rows under the katalog: «Qanday sotib olish» and «Biz haqimizda». */
+/** Rows under the katalog: «Qanday sotib olish», «Biz haqimizda», «Do'stingni taklif qil» (#19). */
 export function KontentLinks() {
   const t = useT();
   return (
@@ -48,10 +48,24 @@ export function KontentLinks() {
         </span>
         <ArrowIcon />
       </a>
+      <a className="kontent-link" href={href({ name: 'kalkulyator' })}>
+        <span>
+          <span className="title">{t('kalk.open')}</span>
+          <span className="caption muted">{t('kalk.openHint')}</span>
+        </span>
+        <ArrowIcon />
+      </a>
       <a className="kontent-link" href={href({ name: 'bizHaqimizda' })}>
         <span>
           <span className="title">{t('kontent.bizHaqimizda')}</span>
           <span className="caption muted">{t('kontent.bizHaqimizdaHint')}</span>
+        </span>
+        <ArrowIcon />
+      </a>
+      <a className="kontent-link" href={href({ name: 'taklif' })}>
+        <span>
+          <span className="title">{t('taklif.open')}</span>
+          <span className="caption muted">{t('taklif.openHint')}</span>
         </span>
         <ArrowIcon />
       </a>

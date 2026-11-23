@@ -75,7 +75,16 @@ export function PlanIcon() {
 }
 
 /** One Planirovka in a list. Sotilgan ones are shown but cannot be opened. */
-export function PlanirovkaRow({ p, showBlok = false }: { p: PlanirovkaDto; showBlok?: boolean }) {
+export function PlanirovkaRow({
+  p,
+  showBlok = false,
+  showLoyiha = false,
+}: {
+  p: PlanirovkaDto;
+  showBlok?: boolean;
+  /** Lists across Loyihalar (filter results) name the Loyiha too. */
+  showLoyiha?: boolean;
+}) {
   const t = useT();
   const sold = p.holat === 'sotilgan';
   const body = (
@@ -86,7 +95,9 @@ export function PlanirovkaRow({ p, showBlok = false }: { p: PlanirovkaDto; showB
       <span className="plan-text">
         <span className="title">{t('planirovka.short', { n: p.xonalar, maydon: formatMaydon(p.maydon) })}</span>
         <span className="caption">
-          {[showBlok ? t('blok.nomi', { nomi: p.blokNomi }) : null, p.nomi].filter(Boolean).join(' · ')}
+          {[showLoyiha ? p.loyihaNomi : null, showBlok ? t('blok.nomi', { nomi: p.blokNomi }) : null, p.nomi]
+            .filter(Boolean)
+            .join(' · ')}
         </span>
         <span className="plan-price">{formatNarx(t, p.boshlangichNarx)}</span>
       </span>

@@ -3,12 +3,22 @@ import type {
   ArizaCreatedResponse,
   ArizaFormRequest,
   ArizalarResponse,
+  FiltrVariantlariResponse,
+  KvizRequest,
+  KvizResponse,
+  PlanirovkaFiltr,
+  PlanirovkalarResponse,
+  Shahar,
+  KalkulyatorArizaRequest,
+  KalkulyatorHisobRequest,
+  KalkulyatorResponse,
   Lang,
   LoyihaResponse,
   LoyihalarResponse,
   MeResponse,
   PlanirovkaResponse,
   SevimlilarResponse,
+  TaklifResponse,
   TaqqoslashResponse,
   UlashishResponse,
   YozilishKochirishRequest,
@@ -17,6 +27,7 @@ import type {
   YozilishResponse,
   YozilishSlotlarResponse,
 } from '@yh/shared';
+import { filtrQuery } from './tanlash/filtr';
 import { getInitData } from './telegram';
 
 export class ApiError extends Error {
@@ -78,6 +89,13 @@ export const api = {
   addSevimli: (id: number) => apiSend('PUT', `/sevimlilar/${id}`),
   removeSevimli: (id: number) => apiSend('DELETE', `/sevimlilar/${id}`),
   taqqoslash: (ids: number[], lang: Lang) => apiGet<TaqqoslashResponse>(`/taqqoslash?ids=${ids.join(',')}&lang=${lang}`),
+  /** Planirovkalar matching the filter (#10), cheapest first. */
+  planirovkalar: (f: PlanirovkaFiltr, lang: Lang) =>
+    cachedGet<PlanirovkalarResponse>(`/katalog/planirovkalar?${filtrQuery(f)}&lang=${lang}`),
+  /** Loyihalar/Bloklar, narx/maydon bounds and kviz budget ranges of a city (or both). */
+  filtr: (shahar?: Shahar) => cachedGet<FiltrVariantlariResponse>(`/katalog/filtr${shahar ? `?shahar=${shahar}` : ''}`),
+  /** Last kviz step: 400 = bad answers/phone, 429 = too many Arizalar. */
+  kviz: (body: KvizRequest) => apiSend<KvizResponse>('POST', '/kviz', body),
   /** «Qanday sotib olish», «Biz haqimizda» (+ portfolio), kontaktlar — texts the Administrator edits. */
   /** Booking calendar: always fresh (today's slots disappear as time passes). */
   yozilishSlotlar: () => apiGet<YozilishSlotlarResponse>('/yozilish/slotlar'),
@@ -90,5 +108,13 @@ export const api = {
     apiSend<YozilishResponse>('POST', `/yozilishlar/${id}/kochirish?lang=${lang}`, body),
   bekor: (id: number, lang: Lang) => apiSend<YozilishResponse>('POST', `/yozilishlar/${id}/bekor?lang=${lang}`),
   kontent: (lang: Lang) => cachedGet<KontentResponse>(`/kontent?lang=${lang}`),
+  /** Muddatli to'lov terms and banks: changed by admins, so cached like the katalog. */
+  kalkulyator: () => cachedGet<KalkulyatorResponse>('/kalkulyator'),
+  /** «Hisobladi» (dojim #17, Daraja #18). Fire and forget. */
+  kalkulyatorHisob: (body: KalkulyatorHisobRequest) => apiSend('POST', '/kalkulyator/hisob', body),
+  /** «Hisobni menejerga yuborish»: 400 = bad phone or input outside the settings, 429 = too many Arizalar. */
+  kalkulyatorAriza: (body: KalkulyatorArizaRequest) => apiSend<ArizaCreatedResponse>('POST', '/kalkulyator/ariza', body),
   ulashish: (planirovkaId: number) => apiSend<UlashishResponse>('POST', '/ulashish', { planirovkaId }),
+  /** Personal «Do'stingni taklif qil» link + invited count; 503 = MINIAPP_LINK not set. Never cached. */
+  taklif: () => apiGet<TaklifResponse>('/taklif'),
 };

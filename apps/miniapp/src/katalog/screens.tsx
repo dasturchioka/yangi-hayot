@@ -10,6 +10,8 @@ import { KontentLinks } from '../kontent/screens';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { VideoYozilishLink, YozilishButton } from '../kontent/cta';
 import '../yozilish/yozilish.css';
+import { KvizKirish } from '../kviz/KvizScreen';
+import { TanlashQidiruv } from '../tanlash/TanlashScreen';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
 
 // ---------------------------------------------------------------- Loyihalar
@@ -28,6 +30,8 @@ export function LoyihalarScreen() {
           ♡
         </a>
       </div>
+      <TanlashQidiruv />
+      <KvizKirish />
       <Loaded load={load}>
         {({ loyihalar }) => {
           const shown = loyihalar.filter((l) => l.shahar === shahar);
@@ -314,9 +318,15 @@ export function PlanirovkaScreen({ id }: { id: number }) {
           <VideoButton video={p.video} />
           {p.video && p.holat !== 'sotilgan' && <VideoYozilishLink loyihaId={p.loyihaId} planirovkaId={p.id} />}
           {p.holat !== 'sotilgan' && (
-            <div className="sticky-actions actions-pair">
-              <ArizaButton planirovkaId={p.id} primary={false} />
-              <YozilishButton primary loyihaId={p.loyihaId} planirovkaId={p.id} label="yozilish.juft" />
+            <div className="sticky-actions actions-stack">
+              {/* Main step from a Planirovka is seeing it (kit p.9); calculating and an Ariza sit above as equals */}
+              <div className="actions-pair">
+                <a className="button-secondary" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
+                  {t('kalk.hisoblash')}
+                </a>
+                <ArizaButton planirovkaId={p.id} primary={false} />
+              </div>
+              <YozilishButton primary loyihaId={p.loyihaId} planirovkaId={p.id} />
             </div>
           )}
         </>

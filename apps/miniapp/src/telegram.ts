@@ -108,3 +108,28 @@ export function shareToChat(url: string, text: string): void {
   if (w?.openTelegramLink) w.openTelegramLink(share);
   else window.open(share, '_blank', 'noopener');
 }
+
+/** A light «done» tap on phones (no-op elsewhere). */
+export function hapticSuccess(): void {
+  webApp()?.HapticFeedback?.notificationOccurred('success');
+}
+
+/** Copies text; false when the webview refuses (old Telegram clients, no user gesture). */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback for webviews without the async clipboard.
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    return ok;
+  }
+}

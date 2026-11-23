@@ -9,14 +9,19 @@ import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
 import { Jobs } from './jobs/jobs';
+import { createKalkulyator } from './kalkulyator/kalkulyator';
 import { createKatalog } from './katalog/katalog';
 import { adminAuthRoutes } from './routes/admin-auth';
 import { adminKatalogRoutes } from './routes/admin-katalog';
+import { adminKvizRoutes } from './routes/admin-kviz';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
+import { adminTaklifRoutes } from './routes/admin-taklif';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
 import { katalogRoutes } from './routes/katalog';
+import { adminKalkulyatorRoutes, kalkulyatorRoutes } from './routes/kalkulyator';
 import { katalogQiziqishHook } from './routes/katalog-qiziqish';
+import { kvizRoutes } from './routes/kviz';
 import { adminKontentRoutes, kontentRoutes } from './routes/kontent';
 import { miniAppRoutes } from './routes/mini-app';
 import { sevimlilarRoutes } from './routes/sevimlilar';
@@ -24,6 +29,7 @@ import { yozilishRoutes } from './routes/yozilish';
 import { adminYozilishRoutes } from './routes/admin-yozilish';
 import { createYozilishlar, type Yozilishlar } from './yozilish/yozilish';
 import { createSevimlilar } from './sevimlilar/sevimlilar';
+import { createTaklif } from './taklif/taklif';
 import { createUlashish } from './ulashish/ulashish';
 
 /** Everything the app needs from the outside world. Tests pass fakes. */
@@ -32,9 +38,10 @@ export interface AppDeps {
    * botApiSecret: shared secret apps/bot sends on /internal/bot/*.
    * aiApiKey: Bearer key of the AI-menejer for /ai/*; unset → /ai/* rejects everything.
    * miniAppLink: direct Mini App link (`https://t.me/<bot>/<app>`) «Ulashish» links are built on;
-   *   unset → POST /api/ulashish answers 503.
+   *   unset → POST /api/ulashish and GET /api/taklif answer 503 (the taklif bot link is derived from it).
+   * crmBaseUrl: amoCRM account URL (AMO_BASE_URL), for Bitim links in the admin-panel; unset → no links.
    */
-  config: { botToken: string; botApiSecret: string; aiApiKey?: string; miniAppLink?: string };
+  config: { botToken: string; botApiSecret: string; aiApiKey?: string; miniAppLink?: string; crmBaseUrl?: string };
   db: pg.Pool;
   clock: Clock;
   crm: Crm;
@@ -69,11 +76,14 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log });
   jobs.register('yozilish-crm', () => yozilishlar.syncCrm()); // after ariza-crm-retry: a move waits for its Ariza
   app.decorate('yozilishlar', yozilishlar);
+  const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
   const sevimlilar = createSevimlilar({ db: deps.db, katalog });
   const ulashish = createUlashish({ db: deps.db, katalog, miniAppLink: deps.config.miniAppLink });
 
+  const taklif = createTaklif({ db: deps.db, miniAppLink: deps.config.miniAppLink, crmBaseUrl: deps.config.crmBaseUrl });
+
   app.get('/health', async () => ({ ok: true }));
-  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish }), { prefix: '/api' });
+  app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish, taklif }), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, deps), { prefix: '/internal/bot' });
   app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });
   app.register((scope) => adminKatalogRoutes(scope, deps, katalog), { prefix: '/admin/api' });
@@ -88,7 +98,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
     async (scope) => {
       requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
       scope.addHook('preSerialization', katalogQiziqishHook(deps, katalog));
-      await katalogRoutes(scope, katalog);
+      await katalogRoutes(scope, katalog, deps);
     },
     { prefix: '/api/katalog' },
   );
@@ -98,6 +108,13 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       await arizaRoutes(scope, { db: deps.db, clock: deps.clock, arizalar });
     },
     { prefix: '/api/arizalar' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await kvizRoutes(scope, { db: deps.db, clock: deps.clock, arizalar });
+    },
+    { prefix: '/api/kviz' },
   );
   app.register(
     async (scope) => {
@@ -125,7 +142,7 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.register(
     async (scope) => {
       requireAiKey(scope, deps.config.aiApiKey);
-      await katalogRoutes(scope, katalog);
+      await katalogRoutes(scope, katalog, deps);
     },
     { prefix: '/ai/katalog' },
   );
@@ -134,8 +151,25 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
       requireAdmin(scope, deps);
       scope.addHook('preHandler', onlyRol('administrator'));
       await adminRassilkaRoutes(scope, deps);
+      await adminKalkulyatorRoutes(scope, deps);
+      await adminTaklifRoutes(scope, taklif);
     },
     { prefix: '/admin/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
+      await adminKvizRoutes(scope, deps, katalog);
+    },
+    { prefix: '/admin/api' },
+  );
+  app.register(
+    async (scope) => {
+      requireMiniAppUser(scope, { botToken: deps.config.botToken, clock: deps.clock });
+      await kalkulyatorRoutes(scope, { ...deps, kalkulyator });
+    },
+    { prefix: '/api' },
   );
 
   return app;

@@ -428,6 +428,14 @@
 .actions-pair > .button-secondary {
   height: var(--yh-button-h);
 }
+.actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-8);
+}
+.actions-stack .actions-pair > .button-secondary {
+  height: var(--yh-button-h-secondary);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .yz-day,

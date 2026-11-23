@@ -12,8 +12,8 @@ import type { Migration } from './index';
  * address) and, on the Ariza, the name a new Bitim gets and whether this
  * Ariza created it (only then does moving rename the Bitim).
  */
-export const m0009_t11_yozilish: Migration = {
-  name: '0009_t11_yozilish',
+export const m0011_t11_yozilish: Migration = {
+  name: '0011_t11_yozilish',
   sql: `
     ALTER TABLE loyiha ADD COLUMN korsatuv_manzili jsonb;
 

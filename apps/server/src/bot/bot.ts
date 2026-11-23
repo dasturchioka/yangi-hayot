@@ -4,6 +4,7 @@ import type { Clock } from '../clock';
 import { manbaFromStartParam } from '../mijoz/manba';
 import { chooseLang, ensureMijoz, markBotUnblocked, setBotStep, type MijozRecord } from '../mijoz/mijoz';
 import { getSetting, isAdmin, setSetting, type WelcomeContent } from '../settings/settings';
+import { taklifVisit } from '../taklif/taklif';
 import { beginBroadcast, continueBroadcast, isBroadcastStep, onBroadcastCallback } from './broadcast';
 import { texts } from './texts';
 
@@ -24,8 +25,9 @@ interface Ctx {
  */
 export async function handleBotEvent(deps: BotDeps, user: BotUser, event: BotEvent): Promise<BotAction[]> {
   const now = deps.clock.now();
-  const manba = event.type === 'start' ? manbaFromStartParam(event.payload) : null;
-  const mijoz = await ensureMijoz(deps.db, user, now, { manba });
+  const taklif = event.type === 'start' ? await taklifVisit(deps.db, event.payload, String(user.id)) : null;
+  const manba = taklif ? taklif.manba : event.type === 'start' ? manbaFromStartParam(event.payload) : null;
+  const mijoz = await ensureMijoz(deps.db, user, now, { manba, taklifQilganId: taklif?.taklifQilganId });
   // Any update from the Mijoz means the bot can reach them again.
   if (mijoz.botBlocked) await markBotUnblocked(deps.db, mijoz.telegramId);
   const ctx: Ctx = { deps, mijoz, now };
