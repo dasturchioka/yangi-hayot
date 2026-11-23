@@ -1,5 +1,5 @@
 /**
- * Background jobs (CRM retries; later: daily report, broadcasts, dojim).
+ * Background jobs (CRM retries; later: daily report, Rassilkalar, dojim).
  *
  * A job is a function that looks at the database and `clock.now()` and does
  * whatever is due — it keeps no timers of its own. Production calls `runAll()`

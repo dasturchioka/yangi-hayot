@@ -8,12 +8,16 @@ describe('dojim start parameter', () => {
       { dojimId: 7, ekran: { ekran: 'xonadon', xonadonId: 345 } },
       { dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3 } },
       { dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3, planirovkaId: 12 } },
+      { dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3, planirovkaId: 12, xonadonId: 345 } },
       { dojimId: 7, ekran: { ekran: 'kalkulyator' } },
       { dojimId: 7, ekran: { ekran: 'kalkulyator', planirovkaId: 12 } },
     ] as const) {
       expect(parseDojimParam(dojimStartParam(p))).toEqual(p);
     }
     expect(dojimStartParam({ dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3, planirovkaId: 12 } })).toBe('dj7_yz3p12');
+    expect(
+      dojimStartParam({ dojimId: 7, ekran: { ekran: 'yozilish', loyihaId: 3, planirovkaId: 12, xonadonId: 345 } }),
+    ).toBe('dj7_yz3p12x345');
   });
 
   it('rejects other parameters and overflowing ids', () => {

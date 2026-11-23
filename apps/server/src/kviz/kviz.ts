@@ -12,7 +12,7 @@ import type pg from 'pg';
 /**
  * «Xonadon tanlash» kvizi (#10): the step-by-step form of the filters. Its
  * answers become a bot_quiz Ariza (route kviz.ts) whose payload is
- * `{ kviz: KvizJavoblari }`; lead scoring (UF-4, #18) reads them back with
+ * `{ kviz: KvizJavoblari }`; Mijoz skoringi (Daraja, UF-4, #18) reads them back with
  * `oxirgiKvizJavoblari`.
  */
 
@@ -59,7 +59,7 @@ export function kvizFiltri(j: KvizJavoblari): PlanirovkaFiltr {
   };
 }
 
-/** Latest kviz answers of a Mijoz, or null if they never finished the kviz. For lead scoring (#18). */
+/** Latest kviz answers of a Mijoz, or null if they never finished the kviz. For Mijoz skoringi (Daraja, #18). */
 export async function oxirgiKvizJavoblari(db: pg.Pool, telegramId: string): Promise<KvizJavoblari | null> {
   const { rows } = await db.query<{ kviz: KvizJavoblari }>(
     `SELECT payload->'kviz' AS kviz FROM ariza

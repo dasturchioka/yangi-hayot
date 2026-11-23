@@ -1,7 +1,7 @@
 import type { Migration } from './index';
 
 /**
- * Lead skoringi (UF-4, #18).
+ * Mijoz skoringi (Daraja; UF-4, #18).
  * - `mijoz.daraja` / `daraja_ball` / `daraja_at`: the Mijoz's Daraja, recomputed on every Ariza and action.
  * - `mijoz.issiq_vazifa_kerak`: became issiq and the 5-minute «Qo'ng'iroq qilish» task is not in amoCRM yet.
  * - `mijoz_kirish`: days (Tashkent) the Mijoz opened the bot or the Mini App; later days are re-entries.

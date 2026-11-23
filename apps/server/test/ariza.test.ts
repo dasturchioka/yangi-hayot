@@ -250,7 +250,7 @@ describe('amoCRM is down', () => {
     t.crm.recover();
     await retryFor(60);
     expect(attempts()).toBe(1 + (24 * 60) / 5);
-  }, 60_000); // ~300 job ticks (every job, incl. yozilish-crm): slow under a parallel run
+  }, 180_000); // ~300 job ticks (every job): seconds alone, much slower under the full parallel run
 
   it('does not repeat steps that were already done (no second note or Bitim)', async () => {
     await postAriza({ name: 'Aziz', phone: '901234567' }); // first Ariza: all fine

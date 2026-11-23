@@ -5,6 +5,8 @@ import { recordShaharQiziqish } from '../src/mijoz/shahar-qiziqish';
 import { drainRassilkaQueue, recoverRassilkaQueue } from '../src/rassilka/worker';
 import { setSetting } from '../src/settings/settings';
 import { botEvent, sends, text } from './support/bot';
+import { signInitData, tmaAuth } from './support/init-data';
+import { blok, seedLoyiha } from './support/katalog';
 import { createTestApp, type TestApp } from './support/test-app';
 
 const admin: BotUser = { id: 700000099, first_name: 'Admin', language_code: 'uz' };
@@ -208,7 +210,15 @@ describe('audiences', () => {
     const now = t.clock.now();
     await recordShaharQiziqish(t.db, ru, 'toshkent', 'loyiha', now);
     await recordShaharQiziqish(t.db, uz, 'navoiy', 'kviz', now);
-    await recordShaharQiziqish(t.db, both, 'toshkent', 'ariza', now);
+    // An Ariza on a Toshkent Loyiha makes `both` interested in Toshkent.
+    const toshkent = await seedLoyiha(t.db, { shahar: 'toshkent', bloklar: [blok('A', [{}])] });
+    const ariza = await t.app.inject({
+      method: 'POST',
+      url: '/api/arizalar',
+      headers: tmaAuth(signInitData({ id: Number(both), first_name: 'B' }, { authDate: now })),
+      payload: { name: 'B', phone: '90 123 45 67', loyihaId: toshkent.id },
+    });
+    expect(ariza.statusCode).toBe(201);
     await recordShaharQiziqish(t.db, both, 'navoiy', 'loyiha', now);
     await recordShaharQiziqish(t.db, both, 'navoiy', 'kviz', now);
 
@@ -283,7 +293,7 @@ describe('queue', () => {
     for (let i = 25; i < sentAt.length; i++) {
       expect(sentAt[i]! - sentAt[i - 25]!).toBeGreaterThanOrEqual(1000);
     }
-  });
+  }, 120_000); // 60 Mijozlar through the bot + a 59-message queue: slow under the full parallel run
 
   it('continues after a server restart without sending anyone twice', async () => {
     for (let i = 0; i < 40; i++) await newMijoz('ru');

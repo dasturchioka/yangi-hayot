@@ -1,5 +1,5 @@
 /**
- * Lead skoringi (UF-4, #18): the Mijoz's Daraja from kviz and kalkulyator
+ * Mijoz skoringi (Daraja; UF-4, #18): the Mijoz's Daraja from kviz and kalkulyator
  * answers (xarid muddati, to'lov usuli, byudjet) and behaviour (kalkulyator,
  * ko'rishga yozilish, qayta kirishlar). Pure; the server gathers the signals,
  * the admin-panel previews the same function while the rules are edited.

@@ -8,7 +8,7 @@ import { requireAiKey } from './auth/ai-auth';
 import { requireMiniAppUser } from './auth/mini-app-auth';
 import { createArizalar, type Arizalar } from './ariza/ariza';
 import { foldLegacyArizalar } from './ariza/legacy';
-import { hisobotJob } from './hisobot/jadval';
+import { hisobotJob } from './hisobot/yuborish-job';
 import { davomatHodisasi } from './hodisa/hodisa';
 import { Jobs } from './jobs/jobs';
 import { createDojim } from './dojim/dojim';
@@ -61,7 +61,7 @@ declare module 'fastify' {
     jobs: Jobs;
     /** Ariza module: every entry point (form, quiz, booking, calculator, AI) creates Arizalar here. */
     arizalar: Arizalar;
-    /** Lead skoringi (#18): `harakat(telegramId)` after any action that may change the Daraja. */
+    /** Mijoz skoringi (Daraja; #18): `harakat(telegramId)` after any action that may change the Daraja. */
     skoring: Skoring;
     /** Ko'rishga yozilish (#11): `onDavomat` is the hook for dojim (#17) and the funnel (#20). */
     yozilishlar: Yozilishlar;

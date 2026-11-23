@@ -26,7 +26,12 @@ function dojimRoute(e: DojimEkran): Route {
     case 'xonadon':
       return { name: 'xonadon', id: e.xonadonId };
     case 'yozilish':
-      return { name: 'yozilish', loyihaId: e.loyihaId, ...(e.planirovkaId ? { planirovkaId: e.planirovkaId } : {}) };
+      return {
+        name: 'yozilish',
+        loyihaId: e.loyihaId,
+        ...(e.planirovkaId ? { planirovkaId: e.planirovkaId } : {}),
+        ...(e.xonadonId ? { xonadonId: e.xonadonId } : {}),
+      };
     case 'kalkulyator':
       return { name: 'kalkulyator', ...(e.planirovkaId ? { planirovkaId: e.planirovkaId } : {}) };
   }

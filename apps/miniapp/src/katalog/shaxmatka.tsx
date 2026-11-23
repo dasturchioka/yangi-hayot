@@ -1,4 +1,5 @@
 import {
+  XONADON_HOLATI_BADGE,
   namunaviyOylik,
   taqqoslashKaliti,
   xonadonFiltriBor,
@@ -8,7 +9,6 @@ import {
   type LoyihaDto,
   type PlanirovkaDto,
   type PlanirovkaFiltr,
-  type PlanirovkaHolati,
   type ShaxmatkaKatakDto,
   type ShaxmatkaResponse,
   type XonadonDto,
@@ -137,7 +137,6 @@ export function ShaxmatkaScreen({ route }: { route: ShaxmatkaRoute }) {
   );
 }
 
-const XONADON_BADGE: Record<XonadonHolati, PlanirovkaHolati> = { bosh: 'sotuvda', bron: 'band', sotilgan: 'sotilgan' };
 
 function BlokShaxmatka({ blokId, route }: { blokId: number; route: ShaxmatkaRoute }) {
   const load = useLoad(`shaxmatka:${blokId}`, () => api.shaxmatka(blokId));
@@ -433,7 +432,7 @@ function Xonadon({ x, p }: { x: XonadonDto; p: PlanirovkaDto }) {
           <p className="caption muted">
             {p.loyihaNomi} · {t('blok.nomi', { nomi: x.blokNomi })} · № {raqam}
           </p>
-          <HolatBadge holat={XONADON_BADGE[x.holat]} />
+          <HolatBadge holat={XONADON_HOLATI_BADGE[x.holat]} />
         </div>
         <h1 className="h1">{t('planirovka.title', { n: x.xonalar, maydon: formatMaydon(x.maydon) })}</h1>
         <p className="plan-price-line">

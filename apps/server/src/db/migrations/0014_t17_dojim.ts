@@ -1,7 +1,7 @@
 import type { Migration } from './index';
 
 /**
- * Dojim (UF-3, #17). One `dojim` row = one reminder the bot plans to send a
+ * Dojim (UF-3, #17). One `dojim` row = one dojim (eslatma) the bot plans to send a
  * Mijoz: written when its trigger happens (outbox), sent by the job `dojim`
  * when due, or skipped with a reason. Planning and sending are apart so the
  * «7 kunda ≤ 1» rule, «Yubormang» and a later Ariza are checked at send time.

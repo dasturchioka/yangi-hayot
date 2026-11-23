@@ -160,17 +160,17 @@
 .shx-cell.sotilgan,
 .shx-swatch.sotilgan {
   background:
-    repeating-linear-gradient(-45deg, transparent 0 5px, rgb(85 96 91 / 0.09) 5px 6px),
+    repeating-linear-gradient(-45deg, transparent 0 5px, var(--yh-status-sold-hatch) 5px 6px),
     var(--yh-status-sold-bg);
   color: var(--yh-status-sold-fg);
 }
 .shx-swatch.bosh {
   background: var(--yh-status-free-bg);
-  box-shadow: inset 0 0 0 1px rgb(10 107 46 / 0.25);
+  box-shadow: inset 0 0 0 1px var(--yh-status-free-ring);
 }
 .shx-swatch.bron {
   background: var(--yh-status-reserved-bg);
-  box-shadow: inset 0 0 0 1px rgb(138 26 105 / 0.2);
+  box-shadow: inset 0 0 0 1px var(--yh-status-reserved-ring);
 }
 .shx-cell.sotilgan {
   cursor: default;

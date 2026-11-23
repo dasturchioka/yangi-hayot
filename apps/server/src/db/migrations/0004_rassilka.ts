@@ -2,7 +2,7 @@ import type { Migration } from './index';
 
 /**
  * Rassilka (#14): "botni bloklagan" flag on Mijoz, city interest (shaharga
- * qiziqish) facts, broadcasts and their per-recipient queue.
+ * qiziqish) facts, Rassilkalar and their per-recipient queue.
  */
 export const m0004_rassilka: Migration = {
   name: '0004_rassilka',

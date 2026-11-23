@@ -55,7 +55,7 @@ export interface Settings {
    * Telegram chat ids (the head of sales, a group). Empty = the managers group.
    */
   hisobot: { qabulQiluvchilar: string[] };
-  /** Ball qoidalari of the lead skoringi (UF-4, #18); the Administrator edits them. */
+  /** Ball qoidalari of the Mijoz skoringi (Daraja; UF-4, #18); the Administrator edits them. */
   skoring: SkoringQoidalari;
   /** Dojim texts RU/UZ and on/off per ssenariy (UF-3, #17; admin «Dojim»). */
   dojim: DojimSozlamalari;

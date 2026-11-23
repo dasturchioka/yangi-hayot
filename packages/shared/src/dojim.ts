@@ -41,7 +41,7 @@ export const DOJIM_OZGARUVCHILAR: Record<DojimSsenariy, string[]> = {
 export type DojimEkran =
   | { ekran: 'planirovka'; planirovkaId: number }
   | { ekran: 'xonadon'; xonadonId: number }
-  | { ekran: 'yozilish'; loyihaId: number; planirovkaId?: number }
+  | { ekran: 'yozilish'; loyihaId: number; planirovkaId?: number; xonadonId?: number }
   | { ekran: 'kalkulyator'; planirovkaId?: number };
 
 export interface DojimParam {
@@ -50,7 +50,7 @@ export interface DojimParam {
 }
 
 /**
- * `dj<dojim>_pl<planirovka>` | `dj<dojim>_xn<xonadon>` | `dj<dojim>_yz<loyiha>[p<planirovka>]` | `dj<dojim>_kk[<planirovka>]`
+ * `dj<dojim>_pl<planirovka>` | `dj<dojim>_xn<xonadon>` | `dj<dojim>_yz<loyiha>[p<planirovka>[x<xonadon>]]` | `dj<dojim>_kk[<planirovka>]`
  * (≤ 64 chars, Telegram's startapp alphabet).
  */
 export function dojimStartParam(p: DojimParam): string {
@@ -61,13 +61,13 @@ export function dojimStartParam(p: DojimParam): string {
       : e.ekran === 'xonadon'
         ? `xn${e.xonadonId}`
         : e.ekran === 'yozilish'
-          ? `yz${e.loyihaId}${e.planirovkaId ? `p${e.planirovkaId}` : ''}`
+          ? `yz${e.loyihaId}${e.planirovkaId ? `p${e.planirovkaId}${e.xonadonId ? `x${e.xonadonId}` : ''}` : ''}`
           : `kk${e.planirovkaId ?? ''}`;
   return `dj${p.dojimId}_${tail}`;
 }
 
 const ID = '([1-9][0-9]{0,9})';
-const DOJIM = new RegExp(`^dj${ID}_(?:pl${ID}|yz${ID}(?:p${ID})?|kk${ID}?|xn${ID})$`);
+const DOJIM = new RegExp(`^dj${ID}_(?:pl${ID}|yz${ID}(?:p${ID}(?:x${ID})?)?|kk${ID}?|xn${ID})$`);
 const MAX_ID = 2_147_483_647;
 
 /** The dojim button in this start parameter, or null. */
@@ -76,10 +76,18 @@ export function parseDojimParam(param: string | null | undefined): DojimParam | 
   if (!m) return null;
   const ids = m.slice(1).map((s) => (s === undefined ? undefined : Number(s)));
   if (ids.some((n) => n !== undefined && n > MAX_ID)) return null;
-  const [dojimId, pl, yz, yzp, kk, xn] = ids as [number, number?, number?, number?, number?, number?];
+  const [dojimId, pl, yz, yzp, yzx, kk, xn] = ids as [number, number?, number?, number?, number?, number?, number?];
   if (xn !== undefined) return { dojimId, ekran: { ekran: 'xonadon', xonadonId: xn } };
   if (pl !== undefined) return { dojimId, ekran: { ekran: 'planirovka', planirovkaId: pl } };
   if (yz !== undefined)
-    return { dojimId, ekran: { ekran: 'yozilish', loyihaId: yz, ...(yzp !== undefined ? { planirovkaId: yzp } : {}) } };
+    return {
+      dojimId,
+      ekran: {
+        ekran: 'yozilish',
+        loyihaId: yz,
+        ...(yzp !== undefined ? { planirovkaId: yzp } : {}),
+        ...(yzx !== undefined ? { xonadonId: yzx } : {}),
+      },
+    };
   return { dojimId, ekran: { ekran: 'kalkulyator', ...(kk !== undefined ? { planirovkaId: kk } : {}) } };
 }

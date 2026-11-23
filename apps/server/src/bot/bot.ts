@@ -8,7 +8,7 @@ import { manbaFromStartParam } from '../mijoz/manba';
 import { chooseLang, ensureMijoz, markBotUnblocked, setBotStep, type MijozRecord } from '../mijoz/mijoz';
 import { getSetting, isAdmin, setSetting, type WelcomeContent } from '../settings/settings';
 import { taklifVisit } from '../taklif/taklif';
-import { beginBroadcast, continueBroadcast, isBroadcastStep, onBroadcastCallback } from './broadcast';
+import { beginRassilka, continueRassilka, isRassilkaStep, onRassilkaCallback } from './rassilka';
 import { texts } from './texts';
 
 export interface BotDeps {
@@ -56,7 +56,7 @@ async function onCommand(ctx: Ctx, name: string): Promise<BotAction[]> {
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginWelcomeEdit(ctx);
       return [fallbackReply(ctx)];
     case 'broadcast':
-      if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginBroadcast(bcCtx(ctx));
+      if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginRassilka(rassilkaCtx(ctx));
       return [fallbackReply(ctx)];
     case 'report':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) {
@@ -74,8 +74,8 @@ async function onMessage(ctx: Ctx, message: BotIncomingMessage): Promise<BotActi
   if (ctx.mijoz.botStep === WELCOME_STEP_RU || ctx.mijoz.botStep === WELCOME_STEP_UZ) {
     return continueWelcomeEdit(ctx, message);
   }
-  if (isBroadcastStep(ctx.mijoz.botStep) && (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId))) {
-    return continueBroadcast(bcCtx(ctx), message);
+  if (isRassilkaStep(ctx.mijoz.botStep) && (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId))) {
+    return continueRassilka(rassilkaCtx(ctx), message);
   }
   return [fallbackReply(ctx), ...(await toManagersGroup(ctx, message))];
 }
@@ -152,13 +152,13 @@ async function continueWelcomeEdit(ctx: Ctx, message: BotIncomingMessage): Promi
   return [{ type: 'send', chatId, text: t.welcomeSaved }, ...(await welcome(ctx, ctx.mijoz.lang))];
 }
 
-function bcCtx(ctx: Ctx) {
+function rassilkaCtx(ctx: Ctx) {
   return { db: ctx.deps.db, mijoz: ctx.mijoz, now: ctx.now };
 }
 
 async function onCallback(ctx: Ctx, data: string): Promise<BotAction[]> {
   if (data.startsWith('bc:')) {
-    return (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) ? onBroadcastCallback(bcCtx(ctx), data) : [];
+    return (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) ? onRassilkaCallback(rassilkaCtx(ctx), data) : [];
   }
   if (data === DOJIM_STOP_CALLBACK) {
     await toxtatDojim(ctx.deps.db, ctx.mijoz.telegramId, ctx.now);

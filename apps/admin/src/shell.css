@@ -396,7 +396,7 @@ button.danger {
   min-height: 220px;
   padding: var(--yh-space-20);
   border-radius: var(--yh-radius-control);
-  background: #dfe9e2;
+  background: var(--yh-telegram-chat-bg);
 }
 .tg-bubble {
   max-width: 92%;

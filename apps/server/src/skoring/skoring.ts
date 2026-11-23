@@ -15,7 +15,7 @@ import { oxirgiKvizJavoblari } from '../kviz/kviz';
 import { getSetting } from '../settings/settings';
 
 /**
- * Lead skoringi (UF-4, #18). The Daraja belongs to the Mijoz (`mijoz.daraja`);
+ * Mijoz skoringi (Daraja; UF-4, #18). The Daraja belongs to the Mijoz (`mijoz.daraja`);
  * a Bitim only shows it as a tag. Recomputed on every Ariza (Arizalar calls
  * `arizaOldidan`, its delivery writes the tag) and on every other action
  * (`harakat`, which updates the open Bitim itself).

@@ -1,14 +1,13 @@
 import {
+  XONADON_HOLATI_BADGE,
   namunaviyOylik,
   taqqoslashKaliti,
   type KalkulyatorSozlamalari,
   type Lang,
   type PlanirovkaDto,
-  type PlanirovkaHolati,
   type SevimliXonadonDto,
   type SevimlilarResponse,
   type TaqqoslashDto,
-  type XonadonHolati,
 } from '@yh/shared';
 import type pg from 'pg';
 import type { Katalog } from '../katalog/katalog';
@@ -110,7 +109,6 @@ export function createSevimlilar(deps: { db: pg.Pool; katalog: Katalog }) {
 
 export type Sevimlilar = ReturnType<typeof createSevimlilar>;
 
-const XONADON_HOLATI: Record<XonadonHolati, PlanirovkaHolati> = { bosh: 'sotuvda', bron: 'band', sotilgan: 'sotilgan' };
 
 const kvMetr = (narx: number | null, maydon: number) => (narx === null || maydon <= 0 ? null : Math.round(narx / maydon));
 
@@ -129,7 +127,7 @@ function xonadonUstuni({ xonadon: x, planirovka: p }: SevimliXonadonDto, sozlama
     boshlangichNarx: x.narx,
     kvMetrNarxi: kvMetr(x.narx, x.maydon),
     oylikTolov: namunaviyOylik(x.narx, sozlama),
-    holat: XONADON_HOLATI[x.holat],
+    holat: XONADON_HOLATI_BADGE[x.holat],
   };
 }
 

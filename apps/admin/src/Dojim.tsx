@@ -19,13 +19,16 @@ const LANGS: Lang[] = ['uz', 'ru'];
 const SSENARIY: Record<DojimSsenariy, { nomi: string; qachon: string; tugmalar: Record<Lang, string[]> }> = {
   korish: {
     nomi: "Ko'rdi, ariza qoldirmadi",
-    qachon: "Planirovkani ochgan yoki kalkulyatorda hisoblagan, 24 soat ichida ariza qoldirmagan Mijozga.",
-    tugmalar: { uz: ['🏠 Planirovkani ochish', "📅 Ko'rishga yozilish"], ru: ['🏠 Открыть планировку', '📅 Записаться на просмотр'] },
+    qachon: "Xonadon yoki planirovkani ochgan, kalkulyatorda hisoblagan va 24 soat ichida ariza qoldirmagan Mijozga.",
+    tugmalar: { uz: ['🏠 Xonadonni ochish', "📅 Ko'rishga yozilish"], ru: ['🏠 Открыть квартиру', '📅 Записаться на просмотр'] },
   },
   sevimliBand: {
-    nomi: "Sevimli planirovka band bo'ldi",
-    qachon: "Sevimlilarga qo'shilgan planirovkada bo'sh xonadon qolmaganda. Ostiga 3 tagacha o'xshash planirovka tugma bo'lib qo'shiladi.",
-    tugmalar: { uz: ['Sayhun · A · 52 m²', 'Sayhun · B · 56 m²'], ru: ['Sayhun · A · 52 м²', 'Sayhun · B · 56 м²'] },
+    nomi: "Sevimli xonadon band bo'ldi",
+    qachon: "Sevimlilarga qo'shilgan xonadon bron qilinganda yoki sotilganda (yoki sevimli planirovkada bo'sh xonadon qolmaganda). Ostiga 3 tagacha o'xshash xonadon tugma bo'lib qo'shiladi.",
+    tugmalar: {
+      uz: ['Sayhun · A-13 · 5-qavat · 54,5 m²', 'Sayhun · A-30 · 7-qavat · 52 m²'],
+      ru: ['Sayhun · A-13 · 5 эт. · 54,5 м²', 'Sayhun · A-30 · 7 эт. · 52 м²'],
+    },
   },
   kelmadi: {
     nomi: "Ko'rishga kelmadi",
@@ -43,8 +46,8 @@ const STOP: Record<Lang, string> = { uz: '🔕 Yubormang', ru: '🔕 Не при
 
 /** Sample values the preview fills placeholders with. */
 const NAMUNA: Record<Lang, Record<string, string>> = {
-  uz: { planirovka: "2 xonali, 54,5 m²", loyiha: 'Sayhun' },
-  ru: { planirovka: '2-комн., 54,5 м²', loyiha: 'Sayhun' },
+  uz: { planirovka: 'A-12, 2 xonali, 54,5 m²', loyiha: 'Sayhun' },
+  ru: { planirovka: 'A-12, 2-комн., 54,5 м²', loyiha: 'Sayhun' },
 };
 
 const fill = (s: string, p: Record<string, string>) => s.replace(/\{(\w+)\}/g, (m, k: string) => p[k] ?? m);

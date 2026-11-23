@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FakeClock, toTashkent } from './clock';
+import { FakeClock, toTashkent } from '../src/clock';
 
 describe('Tashkent time', () => {
   it('is UTC+5: 20:30 UTC on Dec 31 is 01:30 on Jan 1 (Thursday) in Tashkent', () => {

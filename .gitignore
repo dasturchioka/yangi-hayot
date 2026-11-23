@@ -8,6 +8,9 @@
 .env
 .env.*
 !.env.example
+deploy/server.env
+deploy/bot.env
+deploy/backups/
 node_modules/
 .DS_Store
 .scratch/

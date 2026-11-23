@@ -23,28 +23,31 @@ import { fill, texts, type Texts } from './texts';
  * `rassilka` row at the audience step, confirmed by `bc:send:<id>`.
  */
 
+// Stored in `mijoz.bot_step`; the values stay as they were so a step in progress survives a deploy.
+const CONTENT_STEP = 'broadcast_content';
+const BUTTON_STEP = 'broadcast_button';
 const AUDIENCE_STEP = 'broadcast_audience';
 
-interface BcCtx {
+interface RassilkaCtx {
   db: pg.Pool;
   mijoz: MijozRecord;
   now: Date;
 }
 
-export function isBroadcastStep(step: string | null): boolean {
-  return step === 'broadcast_content' || step === 'broadcast_button' || step === AUDIENCE_STEP;
+export function isRassilkaStep(step: string | null): boolean {
+  return step === CONTENT_STEP || step === BUTTON_STEP || step === AUDIENCE_STEP;
 }
 
-export async function beginBroadcast(ctx: BcCtx): Promise<BotAction[]> {
-  await setBotStep(ctx.db, ctx.mijoz.telegramId, 'broadcast_content', {}, ctx.now);
+export async function beginRassilka(ctx: RassilkaCtx): Promise<BotAction[]> {
+  await setBotStep(ctx.db, ctx.mijoz.telegramId, CONTENT_STEP, {}, ctx.now);
   return [send(ctx, texts(ctx.mijoz.lang).bcAskContent)];
 }
 
-export async function continueBroadcast(ctx: BcCtx, message: BotIncomingMessage): Promise<BotAction[]> {
+export async function continueRassilka(ctx: RassilkaCtx, message: BotIncomingMessage): Promise<BotAction[]> {
   const t = texts(ctx.mijoz.lang);
   const chatId = ctx.mijoz.telegramId;
 
-  if (ctx.mijoz.botStep === 'broadcast_content') {
+  if (ctx.mijoz.botStep === CONTENT_STEP) {
     const text = message.text?.trim();
     if (!text) return [send(ctx, t.bcNeedText)];
     const content: RassilkaContent =
@@ -54,11 +57,11 @@ export async function continueBroadcast(ctx: BcCtx, message: BotIncomingMessage)
     if (contentTooLong(content)) {
       return [send(ctx, fill(t.bcTooLong, { max: content.media ? MAX_CAPTION : MAX_TEXT }))];
     }
-    await setBotStep(ctx.db, chatId, 'broadcast_button', { content }, ctx.now);
+    await setBotStep(ctx.db, chatId, BUTTON_STEP, { content }, ctx.now);
     return [{ ...send(ctx, t.bcAskButton), buttons: [[{ text: t.btnNoButton, callbackData: 'bc:nobutton' }]] }];
   }
 
-  if (ctx.mijoz.botStep === 'broadcast_button') {
+  if (ctx.mijoz.botStep === BUTTON_STEP) {
     const button = message.kind === 'text' ? parseButton(message.text ?? '') : null;
     if (!button) return [send(ctx, t.bcBadButton)];
     return askAudience(ctx, { ...draftContent(ctx), button });
@@ -69,9 +72,9 @@ export async function continueBroadcast(ctx: BcCtx, message: BotIncomingMessage)
 }
 
 /** `bc:*` callbacks; the caller has checked the Mijoz is an administrator. */
-export async function onBroadcastCallback(ctx: BcCtx, data: string): Promise<BotAction[]> {
+export async function onRassilkaCallback(ctx: RassilkaCtx, data: string): Promise<BotAction[]> {
   const t = texts(ctx.mijoz.lang);
-  if (data === 'bc:nobutton' && ctx.mijoz.botStep === 'broadcast_button') {
+  if (data === 'bc:nobutton' && ctx.mijoz.botStep === BUTTON_STEP) {
     return askAudience(ctx, draftContent(ctx));
   }
 
@@ -115,12 +118,12 @@ export async function onBroadcastCallback(ctx: BcCtx, data: string): Promise<Bot
   return [];
 }
 
-async function askAudience(ctx: BcCtx, content: RassilkaContent): Promise<BotAction[]> {
+async function askAudience(ctx: RassilkaCtx, content: RassilkaContent): Promise<BotAction[]> {
   await setBotStep(ctx.db, ctx.mijoz.telegramId, AUDIENCE_STEP, { content }, ctx.now);
   return [await audienceQuestion(ctx, texts(ctx.mijoz.lang))];
 }
 
-async function audienceQuestion(ctx: BcCtx, t: Texts): Promise<BotAction> {
+async function audienceQuestion(ctx: RassilkaCtx, t: Texts): Promise<BotAction> {
   const label: Record<Audience, string> = {
     all: t.audAll,
     ru: t.audRu,
@@ -135,11 +138,11 @@ async function audienceQuestion(ctx: BcCtx, t: Texts): Promise<BotAction> {
   return { ...send(ctx, t.bcAskAudience), buttons };
 }
 
-function draftContent(ctx: BcCtx): RassilkaContent {
+function draftContent(ctx: RassilkaCtx): RassilkaContent {
   return (ctx.mijoz.botStepData as { content: RassilkaContent }).content;
 }
 
-function send(ctx: BcCtx, text: string): Extract<BotAction, { type: 'send' }> {
+function send(ctx: RassilkaCtx, text: string): Extract<BotAction, { type: 'send' }> {
   return { type: 'send', chatId: ctx.mijoz.telegramId, text };
 }
 

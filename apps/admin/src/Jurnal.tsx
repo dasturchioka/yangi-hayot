@@ -1,7 +1,7 @@
 import type { AdminLoyihaListItem, JurnalDto } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { adminApi, errorText } from './api';
-import { qachon } from './format';
+import { qachon, XONADON_HOLATI_LABEL } from './format';
 import { Select } from '@yh/ui/select';
 
 const PAGE = 50;
@@ -131,9 +131,7 @@ function Changes({ r }: { r: JurnalDto }) {
 }
 
 const QIYMAT_LABEL: Record<string, string> = {
-  bosh: "Bo'sh",
-  bron: 'Bron',
-  sotilgan: 'Sotilgan',
+  ...XONADON_HOLATI_LABEL,
   sotuvda: 'Sotuvda',
   topshirilgan: 'Topshirilgan',
 };

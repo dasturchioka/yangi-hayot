@@ -282,7 +282,7 @@ describe("dojim: sevimli Xonadon bronga o'tdi (#25)", () => {
     expect(msg!.text).toContain('A-12, 2 xonali, 54,5 m²');
     expect(startapps(msg!.buttons).map((p) => p!.ekran)).toEqual([
       { ekran: 'xonadon', xonadonId: id('A-12') },
-      { ekran: 'yozilish', loyihaId, planirovkaId: planirovkaOf('A-12') },
+      { ekran: 'yozilish', loyihaId, planirovkaId: planirovkaOf('A-12'), xonadonId: id('A-12') },
     ]);
   });
 });

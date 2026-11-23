@@ -1,4 +1,5 @@
 import {
+  XONADON_HOLATI_BADGE,
   TAQQOSLASH_MAX,
   taqqoslashKaliti,
   type PlanirovkaDto,
@@ -81,7 +82,6 @@ export function UlashishButton({ p, x }: { p: PlanirovkaDto; x?: XonadonDto }) {
 
 // ---------------------------------------------------------------- Sevimlilar
 
-const XONADON_BADGE: Record<XonadonDto['holat'], PlanirovkaHolati> = { bosh: 'sotuvda', bron: 'band', sotilgan: 'sotilgan' };
 
 /** One row of the list: what both kinds have in common. */
 interface Qator {
@@ -102,7 +102,7 @@ function xonadonQatori(t: Translate, { xonadon: x, planirovka: p }: SevimliXonad
     title: t('planirovka.short', { n: x.xonalar, maydon: formatMaydon(x.maydon) }),
     caption: [p.loyihaNomi, `№ ${x.blokNomi}-${x.raqam}`, t('shaxmatka.qavat', { n: x.qavat })].join(' · '),
     price: x.narx === null ? t('narx.onRequest') : formatSom(t, x.narx),
-    holat: XONADON_BADGE[x.holat],
+    holat: XONADON_HOLATI_BADGE[x.holat],
   };
 }
 

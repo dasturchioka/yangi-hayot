@@ -24,6 +24,24 @@
   --yh-status-sold-fg: #55605b;
   --yh-status-error-bg: #fde7e7; /* Xato / ogohlantirish */
   --yh-status-error-fg: #b3171a;
+  /* Holat chizmasi (Shaxmatka): sotilgan katak shtrixi, legend namunalari chegarasi */
+  --yh-status-sold-hatch: rgb(85 96 91 / 0.09);
+  --yh-status-free-ring: rgb(10 107 46 / 0.25);
+  --yh-status-reserved-ring: rgb(138 26 105 / 0.2);
+
+  /* Daraja (UF-4): o'rta ton — shkala va nuqtalar; chip — och fon + to'q matn (≥ 5:1) */
+  --yh-daraja-issiq: #e8875a;
+  --yh-daraja-issiq-bg: #fdeadf;
+  --yh-daraja-issiq-fg: #9a360b;
+  --yh-daraja-iliq: #e6bf55;
+  --yh-daraja-iliq-bg: #fbf1d3;
+  --yh-daraja-iliq-fg: #6e5108;
+  --yh-daraja-sovuq: #9fc1d8;
+  --yh-daraja-sovuq-bg: #e7f0f6;
+  --yh-daraja-sovuq-fg: #285677;
+
+  /* Telegram xabari ko'rinishi (admin preview): chat foni */
+  --yh-telegram-chat-bg: #dfe9e2;
 
   /* Tipografiya · Onest: o'lcham / qator balandligi / qalinlik */
   --yh-font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

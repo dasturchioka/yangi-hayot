@@ -242,6 +242,17 @@ export type LoyihaHolati = (typeof LOYIHA_HOLATLARI)[number];
 export const XONADON_HOLATLARI = ['bosh', 'bron', 'sotilgan'] as const;
 export type XonadonHolati = (typeof XONADON_HOLATLARI)[number];
 
+/**
+ * The holat badge a Xonadon shows — the same badges as a Planirovka
+ * (bo'sh → sotuvda, bron → band, sotilgan → sotilgan). One map for the
+ * server DTOs and every Mini App screen.
+ */
+export const XONADON_HOLATI_BADGE: Record<XonadonHolati, PlanirovkaHolati> = {
+  bosh: 'sotuvda',
+  bron: 'band',
+  sotilgan: 'sotilgan',
+};
+
 export interface AdminInfratuzilmaDto {
   kategoriya: string;
   nomi: LokalDto;

@@ -12,9 +12,9 @@ import type pg from 'pg';
 export type QiziqishSabab = 'loyiha' | 'kviz' | 'ariza';
 
 /**
- * Records that the Mijoz is interested in `shahar`. Idempotent. Call it from
- * the catalog (city opened — wired in routes/katalog-qiziqish.ts), the quiz and
- * Ariza handling. Does nothing for an unknown Mijoz.
+ * Records that the Mijoz is interested in `shahar`. Idempotent. Called from
+ * the catalog (routes/katalog-qiziqish.ts), the quiz (routes/kviz.ts) and
+ * Ariza creation (ariza/ariza.ts). Does nothing for an unknown Mijoz.
  */
 export async function recordShaharQiziqish(
   db: pg.Pool | pg.PoolClient,

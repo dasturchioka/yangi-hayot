@@ -22,7 +22,8 @@ apps/server     API: Fastify + PostgreSQL (pg). Biznes mantiq shu yerda.
   test/               API testlari (Vitest + Testcontainers PostgreSQL)
 apps/bot        Telegram-bot (grammY): yupqa adapter, update → serverga event → action'lar (ADR 0002)
 apps/miniapp    Mini App: React + Vite, RU/UZ lug'atlar (src/i18n)
-apps/admin      Admin-panel (hozircha bo'sh qobiq): React + Vite
+apps/admin      Admin-panel: React + Vite — Loyihalar va Xonadonlar, Excel import, Yozilishlar,
+                Rassilka, Matnlar (kontent, dojim, kviz, kalkulyator), Skoring, Voronka, Jurnal, foydalanuvchilar
 packages/shared Server va frontendlar uchun umumiy turlar (API DTO, Lang)
 packages/ui     UI kit «Yashil barg»: tokenlar (tokens.css), umumiy Select (@yh/ui/select + select.css)
 ```
@@ -54,4 +55,30 @@ pnpm build
 pnpm --filter @yh/server test:watch
 ```
 
-Asosiy seam — server HTTP API (`app.inject`), haqiqiy baza, CRM/Messenger fake'lari va soxta soat bilan. Har bir test o'z bazasini oladi (migratsiya qilingan shablondan klon). UI uchun avtomatik test yo'q. CI (`.github/workflows/ci.yml`) har push'da typecheck, test va build qiladi.
+Asosiy seam — server HTTP API (`app.inject`), haqiqiy baza, CRM/Messenger fake'lari va soxta soat bilan. Har bir test o'z bazasini oladi (migratsiya qilingan shablondan klon). Bu qoidadan ruxsat etilgan istisnolar — test infratuzilmasining o'z testlari: soat (`test/clock.test.ts`), fake'lar (`test/fakes.test.ts`) va adapter kontrakt testlari (`*.contract.test.ts`). UI uchun avtomatik test yo'q. CI (`.github/workflows/ci.yml`) har push'da typecheck, test va build qiladi.
+
+## Deploy
+
+`deploy/` — bitta serverda Docker Compose (`deploy/docker-compose.yml`, bitta `Dockerfile`dan uch image):
+
+| Servis | Nima |
+| --- | --- |
+| `postgres` | PostgreSQL 17, ma'lumotlar `pgdata` volume'da |
+| `server` | API (`node dist/main.js`); start'da migratsiyalar; kunlik zaxira `deploy/backups/`ga |
+| `bot` | Telegram-bot (long polling); `bot` profili bilan yoqiladi |
+| `web` | nginx: Mini App va admin-panel statikasi (`admin.` bilan boshlanuvchi Host → admin), `/api`, `/admin/api`, `/ai`, `/internal`, `/health` → `server`. `127.0.0.1:4380`da tinglaydi; TLS — tashqi nginx'da |
+
+Env fayllar (`deploy/` ichida, git'ga qo'shilmaydi, sirlar faqat serverda):
+
+- `.env` — compose o'zgaruvchilari: `POSTGRES_PASSWORD`;
+- `server.env` — `apps/server/.env.example`dagi o'zgaruvchilar (`DATABASE_URL`, `HOST`, `PORT`, `BACKUP_DIR` compose'da beriladi);
+- `bot.env` — `apps/bot/.env.example`dagi o'zgaruvchilar (`SERVER_URL` compose'da beriladi).
+
+```sh
+cd deploy
+docker compose --profile bot up -d --build      # hammasi, bot bilan
+docker compose up -d --build                    # botsiz (masalan, eski bot hali ishlayotganda)
+docker compose exec server node dist/katalog/seed-cli.js                 # boshlang'ich Katalog
+docker compose exec -it server node dist/admin/create-admin-cli.js <login> administrator "<Ism>"   # birinchi admin (parol so'raladi)
+docker compose exec server node dist/db/migrate-cli.js                   # migratsiyalar (start'da ham qo'llanadi)
+```

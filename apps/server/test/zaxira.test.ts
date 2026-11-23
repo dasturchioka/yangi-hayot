@@ -85,5 +85,5 @@ describe('Zaxira nusxa: daily, kept 14 days', () => {
     );
     await restored.end();
     expect(counts.rows[0]).toEqual({ mijozlar: 4, arizalar: 5, telefon: '+998901234567' });
-  });
+  }, 120_000); // real pg_dump + pg_restore: slow under the full parallel run
 });

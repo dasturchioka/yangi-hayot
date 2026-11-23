@@ -11,7 +11,7 @@ import {
 } from '@yh/shared';
 import type pg from 'pg';
 import { parseVideo } from '../katalog/katalog';
-import { JadvalError, readJadval } from './jadval';
+import { JadvalError, readJadval } from './jadval-oqish';
 import { type Muallif } from './jurnal';
 import { createBlokIn, createPlanirovkaIn, KatalogAdminError, setPlanirovkaIn, tx } from './katalog-admin';
 import { createXonadonIn, updateXonadonIn } from './xonadon-admin';

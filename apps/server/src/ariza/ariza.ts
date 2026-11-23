@@ -1,4 +1,4 @@
-import type { ArizaDto, ArizaTuri, XonadonHolati } from '@yh/shared';
+import type { ArizaDto, ArizaTuri, Shahar, XonadonHolati } from '@yh/shared';
 import type pg from 'pg';
 import type { Crm } from '../adapters/crm/crm';
 import { CrmAuthError } from '../adapters/crm/crm';
@@ -6,6 +6,7 @@ import type { Messenger } from '../adapters/messenger/messenger';
 import type { Clock } from '../clock';
 import { arizaHodisasi } from '../hodisa/hodisa';
 import { SHARED_MANBA } from '../mijoz/manba';
+import { recordShaharQiziqish } from '../mijoz/shahar-qiziqish';
 import { getSetting, setSetting } from '../settings/settings';
 import {
   boshqaDarajalar,
@@ -82,7 +83,7 @@ export interface ArizaDeps {
   messenger: Messenger;
   log?: { warn(obj: object, msg: string): void; error(obj: object, msg: string): void };
   /**
-   * Lead skoringi (#18): recomputes the Mijoz's Daraja after the Ariza is
+   * Mijoz skoringi (Daraja; #18): recomputes the Mijoz's Daraja after the Ariza is
    * stored; the delivery then writes it as a Bitim tag (issiq → 5-minute call).
    */
   skoring?: { arizaOldidan(telegramId: string): Promise<void> };
@@ -217,6 +218,7 @@ export function createArizalar(deps: ArizaDeps): Arizalar {
       if (phone) await db.query('UPDATE mijoz SET phone = $2 WHERE telegram_id = $1', [input.telegramId, phone]);
       const id = rows[0]!.id;
       await arizaHodisasi(db, id); // analytics (#15)
+      if (kontekst) await arizaShaharQiziqish(db, input.telegramId, kontekst.loyiha.id, now); // Rassilka audience (#14)
       await deps.skoring?.arizaOldidan(input.telegramId);
       await deliver(id);
       return { id, duplicate: false };
@@ -457,6 +459,12 @@ async function sharerLines(db: pg.Pool, telegramId: string): Promise<string[]> {
 
 function bitimName(row: Row): string {
   return [row.name, row.kontekst?.loyiha.nomi ?? 'Telegram bot'].join(' — ');
+}
+
+/** An Ariza on a Loyiha (or its Planirovka / Xonadon) counts as interest in the Loyiha's city. */
+async function arizaShaharQiziqish(db: pg.Pool, telegramId: string, loyihaId: number, now: Date): Promise<void> {
+  const { rows } = await db.query<{ shahar: Shahar }>('SELECT shahar FROM loyiha WHERE id = $1', [loyihaId]);
+  if (rows[0]) await recordShaharQiziqish(db, telegramId, rows[0].shahar, 'ariza', now);
 }
 
 /** Context of the Ariza from the catalog, frozen at creation. Only Sotuvdagi Loyihalar. */

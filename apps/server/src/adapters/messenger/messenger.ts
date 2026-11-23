@@ -1,6 +1,6 @@
 /**
  * Messenger adapter: sending Telegram messages from the bot (Bot API in
- * production). Used for broadcasts, reminders (dojim), manager-group
+ * production). Used for Rassilkalar, dojim, manager-group
  * notifications and reports. Business code depends on this interface only.
  *
  * `send` never throws for per-recipient outcomes; it reports them in the

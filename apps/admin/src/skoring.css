@@ -1,9 +1,5 @@
 /* ---- «Ball qoidalari» (UF-4, #18) ---- */
 .skoring {
-  /* Daraja mid tones for the scale and dots; chips (below) = pale fill + dark text (≥ 5:1). */
-  --daraja-issiq: #e8875a;
-  --daraja-iliq: #e6bf55;
-  --daraja-sovuq: #9fc1d8;
   --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
 
   display: grid;
@@ -112,10 +108,10 @@
   background: var(--dot);
 }
 .daraja-dot.issiq {
-  --dot: var(--daraja-issiq);
+  --dot: var(--yh-daraja-issiq);
 }
 .daraja-dot.iliq {
-  --dot: var(--daraja-iliq);
+  --dot: var(--yh-daraja-iliq);
 }
 
 /* The scale: zones and the test anketalar as numbered marks. */
@@ -167,13 +163,13 @@
   bottom: 0;
 }
 .zona.sovuq {
-  background: var(--daraja-sovuq);
+  background: var(--yh-daraja-sovuq);
 }
 .zona.iliq {
-  background: var(--daraja-iliq);
+  background: var(--yh-daraja-iliq);
 }
 .zona.issiq {
-  background: var(--daraja-issiq);
+  background: var(--yh-daraja-issiq);
 }
 .shkala-axis {
   position: relative;
@@ -255,16 +251,16 @@
     color 160ms ease;
 }
 .daraja-chip.issiq {
-  --bg: #fdeadf;
-  --fg: #9a360b;
+  --bg: var(--yh-daraja-issiq-bg);
+  --fg: var(--yh-daraja-issiq-fg);
 }
 .daraja-chip.iliq {
-  --bg: #fbf1d3;
-  --fg: #6e5108;
+  --bg: var(--yh-daraja-iliq-bg);
+  --fg: var(--yh-daraja-iliq-fg);
 }
 .daraja-chip.sovuq {
-  --bg: #e7f0f6;
-  --fg: #285677;
+  --bg: var(--yh-daraja-sovuq-bg);
+  --fg: var(--yh-daraja-sovuq-fg);
 }
 /* Inline next to a name (Yozilishlar). */
 .daraja-chip.inline {

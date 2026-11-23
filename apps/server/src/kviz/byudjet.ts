@@ -5,19 +5,28 @@ import { getSetting } from '../settings/settings';
 
 const MLN = 1_000_000;
 
+/** Rounding units for range bounds, coarsest first: whole millions read best («455–570 mln so'm»). */
+const UNITS = [MLN, 100_000, 10_000, 1_000, 1];
+
 /**
  * Automatic kviz budget answers (S13): 4 equal ranges from the cheapest to
- * the dearest Boshlang'ich narx, bounds rounded to whole millions so they
- * read well («455–570 mln so'm»). One range when prices are (almost) equal;
- * none without prices.
+ * the dearest Boshlang'ich narx. Bounds are rounded to the coarsest unit
+ * (whole millions, else 100 000, …) that still leaves 4 distinct ranges, so
+ * close prices give finer bounds rather than fewer ranges. One range only
+ * when every price is the same (or under 4 so'm apart); none without prices.
  */
 export function avtomatikByudjet(narx: { min: number; max: number } | null): ByudjetOraligi[] {
   if (!narx) return [];
-  const from = Math.floor(narx.min / MLN);
-  const to = Math.ceil(narx.max / MLN);
-  if (to - from < 4) return [{ dan: from * MLN, gacha: Math.max(to, from + 1) * MLN }];
+  const unit = UNITS.find((u) => Math.ceil(narx.max / u) - Math.floor(narx.min / u) >= 4);
+  if (unit === undefined) {
+    // Equal prices (or a few so'm apart): nothing to split.
+    const from = Math.floor(narx.min / MLN);
+    return [{ dan: from * MLN, gacha: Math.max(Math.ceil(narx.max / MLN), from + 1) * MLN }];
+  }
+  const from = Math.floor(narx.min / unit);
+  const to = Math.ceil(narx.max / unit);
   const step = (to - from) / 4;
-  const bounds = [0, 1, 2, 3, 4].map((i) => (i === 4 ? to : Math.round(from + i * step)) * MLN);
+  const bounds = [0, 1, 2, 3, 4].map((i) => (i === 4 ? to : Math.round(from + i * step)) * unit);
   return [0, 1, 2, 3].map((i) => ({ dan: bounds[i]!, gacha: bounds[i + 1]! }));
 }
 

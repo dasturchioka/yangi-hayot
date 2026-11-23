@@ -23,7 +23,7 @@ export const SkoringBody = z
   .strict()
   .refine((q) => q.chegara.iliq < q.chegara.issiq, { message: 'iliq must be below issiq', path: ['chegara'] });
 
-/** Ball qoidalari of the lead skoringi (UF-4, #18). Administrator only (mounted in an onlyRol scope). */
+/** Ball qoidalari of the Mijoz skoringi (Daraja; UF-4, #18). Administrator only (mounted in an onlyRol scope). */
 export async function adminSkoringRoutes(app: FastifyInstance, deps: Pick<AppDeps, 'db' | 'clock'>) {
   app.get('/skoring', async (): Promise<SkoringResponse> => ({ qoidalar: await getSetting(deps.db, 'skoring') }));
 

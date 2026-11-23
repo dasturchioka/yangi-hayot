@@ -169,6 +169,25 @@ describe('Filtr variantlari va byudjet oraliqlari', () => {
     ]);
   });
 
+  it('still 4 equal ranges when the prices are close (finer rounding)', async () => {
+    await seedLoyiha(t.db, {
+      bloklar: [blok('A', [{ boshlangichNarx: mln(400) }, { xonalar: 3, boshlangichNarx: mln(402) }])],
+    });
+    expect((await get('/api/katalog/filtr')).json().byudjet).toEqual([
+      { dan: 400_000_000, gacha: 400_500_000 },
+      { dan: 400_500_000, gacha: 401_000_000 },
+      { dan: 401_000_000, gacha: 401_500_000 },
+      { dan: 401_500_000, gacha: 402_000_000 },
+    ]);
+  });
+
+  it('one range when every price is the same', async () => {
+    await seedLoyiha(t.db, {
+      bloklar: [blok('A', [{ boshlangichNarx: mln(400) }, { xonalar: 3, boshlangichNarx: mln(400) }])],
+    });
+    expect((await get('/api/katalog/filtr')).json().byudjet).toEqual([{ dan: mln(400), gacha: mln(401) }]);
+  });
+
   it('no prices → no budget ranges', async () => {
     await seedLoyiha(t.db, { bloklar: [blok('A', [{}])] });
     const body = (await get('/api/katalog/filtr')).json();

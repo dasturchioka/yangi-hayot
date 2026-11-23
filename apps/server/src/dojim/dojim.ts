@@ -300,7 +300,7 @@ export function createDojim(deps: DojimDeps): Dojim {
               text: fill(matn, { planirovka: xonadonMatni(x, d.lang), loyiha: x.loyihaNomi }),
               buttons: [
                 [btn(t.btnDojimXonadon, { ekran: 'xonadon', xonadonId: x.id })],
-                [btn(t.btnBooking, { ekran: 'yozilish', loyihaId: x.loyihaId, planirovkaId: x.planirovkaId })],
+                [btn(t.btnBooking, { ekran: 'yozilish', loyihaId: x.loyihaId, planirovkaId: x.planirovkaId, xonadonId: x.id })],
               ],
             },
           };
