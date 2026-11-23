@@ -2,7 +2,7 @@ import { m0001_mijoz } from './0001_mijoz';
 import { m0002_bot_mijoz_manba } from './0002_bot_mijoz_manba';
 import { m0003_katalog } from './0003_katalog';
 import { m0004_rassilka } from './0004_rassilka';
-import { m0006_t9_ariza } from './0006_t9_ariza';
+import { m0007_t9_ariza } from './0007_t9_ariza';
 
 export interface Migration {
   /** Unique, sortable: `NNNN_short_name`. */
@@ -16,5 +16,5 @@ export const migrations: Migration[] = [
   m0002_bot_mijoz_manba,
   m0003_katalog,
   m0004_rassilka,
-  m0006_t9_ariza,
+  m0007_t9_ariza,
 ];

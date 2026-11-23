@@ -476,3 +476,100 @@ a {
   background: var(--yh-bg);
   box-shadow: var(--yh-shadow-sticky);
 }
+
+/* ---------------------------------------------------------------- Ariza */
+
+.ariza-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+  min-height: 100%;
+}
+
+.ariza-kontekst {
+  margin: 0;
+  padding: var(--yh-space-12);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-ink-2);
+  font: var(--yh-body);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--yh-button-h);
+  padding: 0 var(--yh-space-12);
+  border: 1.5px solid var(--yh-line);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  /* 16px+: iOS does not zoom the page on focus */
+  font-size: 16px;
+}
+
+.input:focus,
+.input-phone:focus-within {
+  outline: none;
+  border-color: var(--yh-primary);
+  background: var(--yh-bg);
+}
+
+.input-phone {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-8);
+}
+
+.input-phone input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.input-prefix {
+  color: var(--yh-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.input-phone:has(input[aria-invalid='true']) {
+  border-color: var(--yh-status-error-fg);
+}
+
+.button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ariza-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding-top: var(--yh-space-32);
+  text-align: center;
+}
+
+.ariza-done-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+  font: var(--yh-h2);
+}

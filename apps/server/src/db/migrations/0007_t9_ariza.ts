@@ -9,8 +9,8 @@ import type { Migration } from './index';
  * Also: the Mijoz's phone (form prefill), the Loyiha mas'ul in amoCRM, and the
  * amoCRM OAuth tokens (only when OAuth is used instead of a long-lived token).
  */
-export const m0006_t9_ariza: Migration = {
-  name: '0006_t9_ariza',
+export const m0007_t9_ariza: Migration = {
+  name: '0007_t9_ariza',
   sql: `
     ALTER TABLE mijoz ADD COLUMN phone text;
 

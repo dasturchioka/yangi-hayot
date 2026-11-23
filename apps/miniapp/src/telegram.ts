@@ -3,7 +3,7 @@ import type { Lang } from '@yh/shared';
 /** The parts of Telegram.WebApp we use. Full API: https://core.telegram.org/bots/webapps */
 interface TelegramWebApp {
   initData: string;
-  initDataUnsafe: { user?: { language_code?: string } };
+  initDataUnsafe: { user?: { language_code?: string }; start_param?: string };
   ready(): void;
   expand(): void;
   openLink?(url: string): void;
@@ -28,6 +28,15 @@ const webApp = (): TelegramWebApp | undefined => window.Telegram?.WebApp;
 /** Signed initData; empty when opened outside Telegram. `VITE_DEV_INIT_DATA` overrides it in dev. */
 export function getInitData(): string {
   return import.meta.env.VITE_DEV_INIT_DATA || webApp()?.initData || '';
+}
+
+/**
+ * Screen the Mini App was opened for: `startapp=` of a web_app button (bot
+ * buttons put it in the URL) or of a t.me link (initData start_param).
+ */
+export function getStartApp(): string {
+  const fromUrl = new URLSearchParams(window.location.search).get('startapp');
+  return fromUrl ?? webApp()?.initDataUnsafe.start_param ?? '';
 }
 
 /** Language to show before the server answers. */

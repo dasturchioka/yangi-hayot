@@ -1,4 +1,13 @@
-import type { Lang, LoyihaResponse, LoyihalarResponse, MeResponse, PlanirovkaResponse } from '@yh/shared';
+import type {
+  ArizaCreatedResponse,
+  ArizaFormRequest,
+  ArizalarResponse,
+  Lang,
+  LoyihaResponse,
+  LoyihalarResponse,
+  MeResponse,
+  PlanirovkaResponse,
+} from '@yh/shared';
 import { getInitData } from './telegram';
 
 export class ApiError extends Error {
@@ -10,6 +19,16 @@ export class ApiError extends Error {
 /** Calls the server API with the Mini App initData. Every Mini App request goes through here. */
 async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`/api${path}`, { headers: { authorization: `tma ${getInitData()}` } });
+  if (!res.ok) throw new ApiError(res.status);
+  return (await res.json()) as T;
+}
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method: 'POST',
+    headers: { authorization: `tma ${getInitData()}`, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!res.ok) throw new ApiError(res.status);
   return (await res.json()) as T;
 }
@@ -37,4 +56,8 @@ export const api = {
   loyihalar: (lang: Lang) => cachedGet<LoyihalarResponse>(`/katalog/loyihalar?lang=${lang}`),
   loyiha: (id: number, lang: Lang) => cachedGet<LoyihaResponse>(`/katalog/loyihalar/${id}?lang=${lang}`),
   planirovka: (id: number, lang: Lang) => cachedGet<PlanirovkaResponse>(`/katalog/planirovkalar/${id}?lang=${lang}`),
+  /** Own Arizalar + name/phone to prefill forms. */
+  arizalar: () => apiGet<ArizalarResponse>('/arizalar'),
+  /** 400 = bad phone/context, 429 = too many Arizalar. */
+  createAriza: (body: ArizaFormRequest) => apiPost<ArizaCreatedResponse>('/arizalar', body),
 };

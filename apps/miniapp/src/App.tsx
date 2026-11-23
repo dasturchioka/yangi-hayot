@@ -2,9 +2,13 @@ import type { MijozDto } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { I18nProvider, useT } from './i18n';
+import { ArizaScreen } from './ariza/ArizaScreen';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
 import { navigate, useRoute, type Route } from './router';
-import { getInitData, guessLang, setBackButton } from './telegram';
+import { getInitData, getStartApp, guessLang, setBackButton } from './telegram';
+
+// Opened from the bot's «Ariza qoldirish» button (startapp=ariza): start on the form.
+if (getStartApp() === 'ariza' && !window.location.hash) navigate({ name: 'ariza' });
 
 export function App() {
   const inTelegram = Boolean(getInitData());
@@ -53,5 +57,7 @@ function Screen({ route }: { route: Route }) {
       return <PlanirovkalarScreen key={route.loyihaId} loyihaId={route.loyihaId} />;
     case 'planirovka':
       return <PlanirovkaScreen key={route.id} id={route.id} />;
+    case 'ariza':
+      return <ArizaScreen key={`${route.loyihaId}:${route.planirovkaId}`} {...route} />;
   }
 }
