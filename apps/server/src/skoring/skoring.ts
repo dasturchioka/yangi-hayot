@@ -59,7 +59,9 @@ export async function skoringSignallari(db: pg.Pool, telegramId: string): Promis
     qaytishlar: number;
   }>(
     `SELECT
-       (SELECT count(*)::int FROM ariza WHERE mijoz_id = m.telegram_id AND tur = 'visit') AS yozilishlar,
+       -- A booking counts unless it was cancelled (#11); its yozilish row comes after the Ariza.
+       (SELECT count(*)::int FROM ariza a LEFT JOIN yozilish y ON y.ariza_id = a.id
+         WHERE a.mijoz_id = m.telegram_id AND a.tur = 'visit' AND y.holat IS DISTINCT FROM 'bekor') AS yozilishlar,
        (SELECT count(*)::int FROM ariza WHERE mijoz_id = m.telegram_id AND tur = 'calc') AS yuborilgan,
        (SELECT count(*)::int FROM kalkulyator_hisob WHERE mijoz_id = m.telegram_id) AS hisoblar,
        (SELECT s.sxema FROM (

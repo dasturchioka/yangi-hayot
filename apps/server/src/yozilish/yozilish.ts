@@ -1,4 +1,4 @@
-import type { AdminYozilishDto, Davomat, Lang, YozilishDto, YozilishHolati } from '@yh/shared';
+import type { AdminYozilishDto, Daraja, Davomat, Lang, YozilishDto, YozilishHolati } from '@yh/shared';
 import type pg from 'pg';
 import type { Crm } from '../adapters/crm/crm';
 import type { Messenger } from '../adapters/messenger/messenger';
@@ -87,6 +87,8 @@ export interface YozilishDeps {
   messenger: Messenger;
   arizalar: Arizalar;
   log?: { warn(obj: object, msg: string): void; error(obj: object, msg: string): void };
+  /** Lead skoringi (#18): a cancelled booking no longer counts for the Daraja. */
+  skoring?: { harakat(telegramId: string): Promise<unknown> };
 }
 
 const HAFTA = ['dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba', 'yakshanba'];
@@ -133,6 +135,7 @@ interface Row {
   phone: string | null;
   manba: string;
   username: string | null;
+  daraja: Daraja | null;
 }
 
 const SELECT = `
@@ -140,7 +143,7 @@ const SELECT = `
          y.kochirildi, y.davomat, y.davomat_at, au.nomi AS davomat_admin,
          l.nomi AS loyiha_nomi, COALESCE(l.korsatuv_manzili, l.manzil) AS manzil, l.lat, l.lng,
          p.xonalar, p.maydon, p.boshlangich_narx AS narx, b.nomi AS blok_nomi,
-         a.name, a.phone, a.manba, m.username
+         a.name, a.phone, a.manba, m.username, m.daraja
     FROM yozilish y
     JOIN loyiha l ON l.id = y.loyiha_id
     JOIN ariza a ON a.id = y.ariza_id
@@ -200,6 +203,7 @@ export function createYozilishlar(deps: YozilishDeps): Yozilishlar {
       loyiha: { id: r.loyiha_id, nomi: r.loyiha_nomi },
       planirovka: planirovkaMatni(r),
       manba: r.manba,
+      daraja: r.daraja,
       holat: r.holat,
       davomat: r.davomat,
       kochirildi: r.kochirildi,
@@ -310,6 +314,7 @@ export function createYozilishlar(deps: YozilishDeps): Yozilishlar {
     await outbox(id, 'bekor', r.vaqt, r.vaqt, now);
     await toGroup([`❌ Ko'rish bekor qilindi #${id}`, `Vaqt edi: ${vaqtMatni(r.vaqt)}`, ...tafsilot(r)].join('\n'));
     await syncCrm(id);
+    await deps.skoring?.harakat(r.mijoz_id);
   }
 
   async function outbox(id: number, amal: 'kochirish' | 'bekor', oldingi: Date, vaqt: Date, now: Date) {

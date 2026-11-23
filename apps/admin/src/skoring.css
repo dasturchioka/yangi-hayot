@@ -1,15 +1,9 @@
 /* ---- «Ball qoidalari» (UF-4, #18) ---- */
 .skoring {
-  /* Daraja colours: chip = pale fill + dark text (≥ 5:1), zone/dot = mid tone. */
+  /* Daraja mid tones for the scale and dots; chips (below) = pale fill + dark text (≥ 5:1). */
   --daraja-issiq: #e8875a;
-  --daraja-issiq-bg: #fdeadf;
-  --daraja-issiq-fg: #9a360b;
   --daraja-iliq: #e6bf55;
-  --daraja-iliq-bg: #fbf1d3;
-  --daraja-iliq-fg: #6e5108;
   --daraja-sovuq: #9fc1d8;
-  --daraja-sovuq-bg: #e7f0f6;
-  --daraja-sovuq-fg: #285677;
   --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
 
   display: grid;
@@ -261,16 +255,22 @@
     color 160ms ease;
 }
 .daraja-chip.issiq {
-  --bg: var(--daraja-issiq-bg);
-  --fg: var(--daraja-issiq-fg);
+  --bg: #fdeadf;
+  --fg: #9a360b;
 }
 .daraja-chip.iliq {
-  --bg: var(--daraja-iliq-bg);
-  --fg: var(--daraja-iliq-fg);
+  --bg: #fbf1d3;
+  --fg: #6e5108;
 }
 .daraja-chip.sovuq {
-  --bg: var(--daraja-sovuq-bg);
-  --fg: var(--daraja-sovuq-fg);
+  --bg: #e7f0f6;
+  --fg: #285677;
+}
+/* Inline next to a name (Yozilishlar). */
+.daraja-chip.inline {
+  margin-left: var(--yh-space-8);
+  padding: 1px 8px;
+  vertical-align: 1px;
 }
 
 @media (max-width: 1100px) {

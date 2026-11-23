@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setSetting } from '../src/settings/settings';
 import { adminLogin } from './support/admin';
 import { botEvent } from './support/bot';
+import { blok, seedLoyiha } from './support/katalog';
 import { signInitData, tmaAuth, type TelegramTestUser } from './support/init-data';
 import { createTestApp, type TestApp } from './support/test-app';
 
@@ -216,6 +217,42 @@ describe('Daraja on an action without an Ariza', () => {
 
     expect(daraja).toBe('sovuq');
     expect(darajaTags()).toEqual(['sovuq']);
+  });
+});
+
+describe("Ko'rishga yozilish (#11)", () => {
+  async function yozil() {
+    const l = await seedLoyiha(t.db, { nomi: 'Jozibali Maskan', bloklar: [blok('B', [{ xonalar: 2, maydon: 54.5 }])] });
+    const res = await t.app.inject({
+      method: 'POST',
+      url: '/api/yozilishlar?lang=uz',
+      headers: auth(),
+      payload: { loyihaId: l.id, sana: '2026-11-25', vaqt: '12:00', name: 'Aziz', phone: '90 123 45 67' },
+    });
+    expect(res.statusCode).toBe(201);
+    return res.json().yozilish.id as number;
+  }
+
+  it('a booking makes the Mijoz warmer; cancelling it takes the ball back and replaces the tag', async () => {
+    await postKviz({ muddat: '1_3_oy' }); // 45 → iliq
+    const id = await yozil(); // +30 = 75 → issiq
+    expect(darajaTags()).toEqual(['issiq']);
+    expect(groupMarks()).toHaveLength(1);
+
+    const res = await t.app.inject({ method: 'POST', url: `/api/yozilishlar/${id}/bekor`, headers: auth() });
+
+    expect(res.statusCode).toBe(200);
+    expect(darajaTags()).toEqual(['iliq']);
+  });
+
+  it('the admin «Yozilishlar» list shows the Daraja of each Mijoz', async () => {
+    await postKviz({ muddat: 'shu_oy', tolov: 'toliq' }); // 65 → issiq
+    await yozil();
+    const headers = await adminLogin(t, 'menejer');
+
+    const res = await t.app.inject({ method: 'GET', url: '/admin/api/yozilishlar?dan=2026-11-25&gacha=2026-11-25', headers });
+
+    expect(res.json().yozilishlar).toEqual([expect.objectContaining({ daraja: 'issiq' })]);
   });
 });
 

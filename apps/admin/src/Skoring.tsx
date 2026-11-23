@@ -245,8 +245,13 @@ export function SkoringForm() {
   );
 }
 
-function DarajaChip({ daraja }: { daraja: Daraja }) {
-  return <span className={`daraja-chip ${daraja}`}>{DARAJA_NOMI[daraja]}</span>;
+/** Issiq / Iliq / Sovuq pill; `inline` sits after a name in a table cell. */
+export function DarajaChip({ daraja, inline = false }: { daraja: Daraja; inline?: boolean }) {
+  return (
+    <span className={`daraja-chip ${daraja}${inline ? ' inline' : ''}`} title={inline ? 'Mijoz darajasi' : undefined}>
+      {DARAJA_NOMI[daraja]}
+    </span>
+  );
 }
 
 /** 0 … max with the three Daraja zones and the test anketalar as numbered marks. */

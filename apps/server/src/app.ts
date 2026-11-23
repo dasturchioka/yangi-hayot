@@ -79,7 +79,9 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   app.decorate('jobs', jobs);
   app.decorate('arizalar', arizalar);
   app.decorate('skoring', skoring);
-  const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log });
+  const yozilishlar = createYozilishlar({ ...deps, arizalar, log: app.log, skoring });
+  // Attendance (keldi / kelmadi) is an action too: recompute (rules may use it later).
+  yozilishlar.onDavomat((e) => skoring.harakat(e.mijozId).then(() => undefined));
   jobs.register('yozilish-crm', () => yozilishlar.syncCrm()); // after ariza-crm-retry: a move waits for its Ariza
   app.decorate('yozilishlar', yozilishlar);
   const kalkulyator = createKalkulyator({ db: deps.db, clock: deps.clock, arizalar });
