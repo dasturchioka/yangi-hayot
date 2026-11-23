@@ -7,6 +7,7 @@ import type {
   ImportXato,
 } from '@yh/shared';
 import { useEffect, useRef, useState } from 'react';
+import { Select } from '@yh/ui/select';
 import { adminApi, adminUpload, ApiError, errorText } from './api';
 import { soum } from './format';
 
@@ -113,23 +114,16 @@ export function ImportScreen() {
           <h1 className="h2">Excel'dan import</h1>
           <p className="muted">Blok Planirovkalarini shablon bo'yicha yuklang: avval tekshiramiz, keyin siz tasdiqlaysiz</p>
         </div>
-        <label className="field">
-          <span>Loyiha</span>
-          <select
-            value={loyihaId ?? ''}
-            disabled={busy}
-            onChange={(e) => {
-              setLoyihaId(Number(e.target.value));
-              reset();
-            }}
-          >
-            {loyihalar.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nomi}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="Loyiha"
+          value={loyihaId ?? null}
+          disabled={busy}
+          options={loyihalar.map((l) => ({ value: l.id, label: l.nomi }))}
+          onChange={(id) => {
+            setLoyihaId(id);
+            reset();
+          }}
+        />
       </header>
 
       <section className="card import-setup">

@@ -18,9 +18,137 @@ body {
   min-height: 100dvh;
   padding: var(--yh-space-20);
   padding-top: max(var(--yh-space-20), env(safe-area-inset-top));
+  padding-left: max(var(--yh-space-20), env(safe-area-inset-left));
+  padding-right: max(var(--yh-space-20), env(safe-area-inset-right));
   display: flex;
   flex-direction: column;
   gap: var(--yh-space-12);
+}
+
+/* Root tabs: room for the bottom tab bar */
+.screen-tab {
+  padding-bottom: calc(var(--yh-tabbar-h) + env(safe-area-inset-bottom) + var(--yh-space-20));
+}
+
+::selection {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Outside Telegram: a calm branded card instead of a bare sentence */
+.outside {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.outside .muted {
+  max-width: 28ch;
+}
+
+/* Kit «Yuklanish (skeleton)» */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+.skeleton-card {
+  display: flex;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-8);
+  border-radius: var(--yh-radius-card);
+  box-shadow: var(--yh-shadow-card);
+}
+.skeleton-block,
+.skeleton-line {
+  display: block;
+  border-radius: 8px;
+  background: var(--yh-surface);
+  animation: pulse 1.1s ease-in-out infinite alternate;
+}
+.skeleton-thumb {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--yh-radius-leaf);
+}
+.skeleton-hero {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--yh-radius-leaf);
+}
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--yh-space-8);
+}
+.skeleton-line {
+  height: 14px;
+}
+.skeleton-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--yh-space-8);
+}
+.skeleton-row .skeleton-block {
+  height: 60px;
+  border-radius: 14px;
+}
+
+/* Kit «Bo'sh holat» */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--yh-space-8);
+  padding: var(--yh-space-32) var(--yh-space-20);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-surface);
+  text-align: center;
+}
+.empty-state .title {
+  margin: var(--yh-space-4) 0 0;
+  text-wrap: balance;
+}
+.empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--yh-space-4);
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-status-free-bg);
+  color: var(--yh-primary);
+}
+.empty-state-text {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--yh-ink-2);
+  text-wrap: pretty;
+}
+.empty-state .button-fit {
+  margin-top: var(--yh-space-8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block,
+  .skeleton-line {
+    animation: none;
+  }
 }
 
 .h1 {
@@ -106,13 +234,11 @@ a {
 }
 .price {
   font: var(--yh-price);
-  font-variant-numeric: tabular-nums;
   color: var(--yh-primary);
   margin: 0;
 }
 .price-sm {
   font: var(--yh-h3);
-  font-variant-numeric: tabular-nums;
   margin: var(--yh-space-4) 0 0;
 }
 .row-between {
@@ -216,22 +342,81 @@ a {
   overflow: hidden;
 }
 
+.chip-count {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.segmented-sm {
+  flex: none;
+  padding: 3px;
+}
+.segmented-sm button {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  font: var(--yh-caption);
+  font-weight: 600;
+}
+.segmented-count {
+}
+
 .chip-on-photo {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   height: 30px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--yh-radius-pill);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgb(255 255 255 / 0.94);
   color: var(--yh-ink);
   font: var(--yh-caption);
   font-weight: 600;
+  white-space: nowrap;
+}
+/* On busy photos: ink glass, white text (kit p.6 «20 foto», «Xaritada») */
+.chip-on-photo-dark {
+  background: rgb(11 61 42 / 0.72);
+  color: var(--yh-on-primary);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+button.chip-on-photo {
+  cursor: pointer;
+}
+.chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--yh-primary);
 }
 
+/* ---- Loyihalar: big cards (kit p.5) ---- */
+.loyiha-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-20);
+}
+.loyiha-card {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-bg);
+  box-shadow: var(--yh-shadow-card);
+  transition: transform 160ms var(--yh-ease-out);
+}
+.loyiha-card:active,
+.loyiha-row:active,
+.tile:active,
+.quick-button:active,
+.menu-row:active,
+.plan-link:active {
+  transform: scale(0.98);
+}
 .loyiha-cover {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 11;
   background: var(--yh-surface);
 }
 .loyiha-cover img {
@@ -240,19 +425,34 @@ a {
   object-fit: cover;
   display: block;
 }
-.loyiha-cover .chip-on-photo {
+.loyiha-cover-chips {
   position: absolute;
   top: var(--yh-space-12);
   left: var(--yh-space-12);
+  display: flex;
+  gap: var(--yh-space-8);
 }
 .loyiha-cover-text {
   position: absolute;
   inset: auto 0 0 0;
   display: flex;
   flex-direction: column;
-  padding: 40px var(--yh-space-20) var(--yh-space-12);
-  background: linear-gradient(transparent, rgba(11, 61, 42, 0.85));
+  gap: 2px;
+  padding: 56px var(--yh-space-20) var(--yh-space-12);
+  background: linear-gradient(rgb(11 61 42 / 0), rgb(11 61 42 / 0.88));
   color: var(--yh-on-primary);
+}
+.loyiha-cover-text .h2 {
+  text-wrap: balance;
+}
+.loyiha-cover-place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yh-space-4);
+  color: rgb(255 255 255 / 0.86);
+}
+.loyiha-cover-place svg {
+  flex: none;
 }
 .loyiha-card-foot {
   display: flex;
@@ -260,6 +460,9 @@ a {
   align-items: center;
   gap: var(--yh-space-12);
   padding: var(--yh-space-12) var(--yh-space-20) var(--yh-space-20);
+}
+.loyiha-card-foot-text {
+  min-width: 0;
 }
 .loyiha-card-foot p {
   margin: 0;
@@ -269,6 +472,7 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 60px;
   padding: var(--yh-space-8) var(--yh-space-12);
   border-radius: 12px;
   background: var(--yh-status-free-bg);
@@ -279,9 +483,63 @@ a {
   font: var(--yh-h3);
 }
 
+/* ---- Home: compact Loyiha card (kit p.4 «Loyiha kartochkasi») ---- */
+.loyiha-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+}
+.loyiha-row {
+  display: flex;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-8);
+  padding-right: var(--yh-space-12);
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-bg);
+  box-shadow: var(--yh-shadow-card);
+  transition: transform 160ms var(--yh-ease-out);
+}
+.loyiha-row-thumb {
+  flex: none;
+  width: 92px;
+  height: 92px;
+  overflow: hidden;
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-surface);
+}
+.loyiha-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.loyiha-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+}
+.loyiha-row-meta {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.loyiha-row .badge {
+  padding: 1px 8px;
+  font-size: 12px;
+}
+.loyiha-row-price {
+  font: var(--yh-title);
+}
+
+/* ---- Loyiha (kit p.6) ---- */
 .gallery-wrap {
   position: relative;
-  margin: calc(-1 * var(--yh-space-20)) calc(-1 * var(--yh-space-20)) 0;
+  margin: 0 calc(-1 * var(--yh-space-8));
 }
 .gallery {
   display: flex;
@@ -289,8 +547,11 @@ a {
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   aspect-ratio: 4 / 3;
-  border-radius: 0 0 var(--yh-radius-card) var(--yh-radius-card);
+  border-radius: var(--yh-radius-leaf);
   background: var(--yh-surface);
+}
+.gallery::-webkit-scrollbar {
+  display: none;
 }
 .gallery img,
 .gallery-empty {
@@ -307,15 +568,45 @@ a {
   display: flex;
   gap: var(--yh-space-8);
 }
+.gallery-dots {
+  position: absolute;
+  right: var(--yh-space-20);
+  bottom: 24px;
+  display: flex;
+  gap: 4px;
+}
+.gallery-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.55);
+  transition:
+    width 200ms var(--yh-ease-out),
+    background-color 200ms ease;
+}
+.gallery-dots span.active {
+  width: 16px;
+  background: var(--yh-on-primary);
+}
+.loyiha-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+  margin-top: var(--yh-space-8);
+}
+.loyiha-head .h1 {
+  text-wrap: balance;
+}
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: var(--yh-space-8);
 }
 .stat {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   padding: var(--yh-space-12);
   border-radius: 14px;
   background: var(--yh-surface);
@@ -323,9 +614,38 @@ a {
 .stat b {
   font: var(--yh-h3);
 }
+.stat .caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--yh-ink-2);
+}
+@media (max-width: 380px) {
+  .stat {
+    padding: 10px;
+  }
+  .stat .caption {
+    font-size: 12px;
+  }
+}
 .stat-accent {
   background: var(--yh-status-free-bg);
   color: var(--yh-status-free-fg);
+}
+.stat-accent .caption {
+  color: var(--yh-status-free-fg);
+}
+
+.loyiha-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
+  margin-top: var(--yh-space-8);
+}
+.loyiha-video {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
 }
 
 .infra-list {
@@ -335,38 +655,91 @@ a {
 }
 .infra-list li {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--yh-space-12);
-  padding: var(--yh-space-12) 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--yh-line);
 }
+.infra-list li:last-child {
+  border-bottom: 0;
+}
+.infra-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px 4px 10px 4px;
+  background: var(--yh-surface);
+  color: var(--yh-primary);
+}
+.infra-name {
+  flex: 1;
+  min-width: 0;
+}
+.infra-masofa {
+  flex: none;
+  text-align: right;
+}
 
+.note-info {
+  background: var(--yh-surface);
+  color: var(--yh-ink-2);
+}
+
+/* ---- Planirovkalar ---- */
+.screen-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.plan-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-20);
+}
 .group {
   display: flex;
   flex-direction: column;
   gap: var(--yh-space-8);
 }
+.group > .h3 {
+  margin-bottom: var(--yh-space-4);
+}
+
+/* Kit «Xonadon qatori»: plan thumb, text, heart */
 .plan-row {
   display: flex;
   align-items: center;
-  gap: var(--yh-space-12);
-  padding: var(--yh-space-12);
+  gap: var(--yh-space-8);
+  padding: var(--yh-space-8);
+  padding-right: var(--yh-space-12);
   border-radius: var(--yh-radius-card);
   background: var(--yh-bg);
   box-shadow: var(--yh-shadow-card);
 }
+.plan-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  transition: transform 160ms var(--yh-ease-out);
+}
 .plan-row-sold {
-  opacity: 0.55;
   box-shadow: none;
   background: var(--yh-surface);
+}
+.plan-row-sold .plan-link {
+  opacity: 0.6;
 }
 .plan-thumb {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 14px;
   background: var(--yh-surface);
   color: var(--yh-primary);
@@ -375,6 +748,7 @@ a {
 .plan-thumb img {
   width: 100%;
   height: 100%;
+  padding: 6px;
   object-fit: contain;
 }
 .plan-text {
@@ -382,43 +756,196 @@ a {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 .plan-text .caption {
   color: var(--yh-muted);
 }
 .plan-price {
   font: var(--yh-title);
-  font-variant-numeric: tabular-nums;
+}
+.plan-holat {
+  font: var(--yh-caption);
+  font-weight: 600;
+}
+.plan-holat-sotuvda {
+  color: var(--yh-status-free-fg);
+}
+.plan-holat-band {
+  color: var(--yh-status-reserved-fg);
+}
+.plan-holat-sotilgan {
+  color: var(--yh-status-sold-fg);
+}
+.row-heart {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--yh-icon-button);
+  height: var(--yh-icon-button);
+  border: 0;
+  border-radius: 50%;
+  background: var(--yh-surface);
+  color: var(--yh-primary);
+  cursor: pointer;
+  transition:
+    transform 160ms var(--yh-ease-out),
+    background-color 200ms ease;
+}
+.row-heart:active {
+  transform: scale(0.9);
+}
+.row-heart.active {
+  background: var(--yh-status-free-bg);
+}
+.row-heart.active svg,
+.button-icon.active svg {
+  animation: heart-pop 320ms var(--yh-ease-out);
+}
+@keyframes heart-pop {
+  50% {
+    transform: scale(1.22);
+  }
 }
 
+/* ---- Planirovka (kit p.9) ---- */
 .chizma {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 1;
-  padding: var(--yh-space-20);
-  border: 0;
-  border-radius: var(--yh-radius-card);
+  aspect-ratio: 1 / 0.92;
+  border-radius: var(--yh-radius-leaf);
   background: var(--yh-surface);
   color: var(--yh-primary);
+}
+.chizma-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 36px var(--yh-space-20) var(--yh-space-20);
+  border: 0;
+  background: none;
   cursor: zoom-in;
 }
-.chizma img {
+.chizma-open img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
-.chizma-empty svg {
-  width: 72px;
-  height: 72px;
-}
-.chizma-hint {
+.chizma-actions {
   position: absolute;
-  bottom: var(--yh-space-12);
-  color: var(--yh-muted);
+  top: var(--yh-space-12);
+  right: var(--yh-space-12);
+  display: flex;
+  gap: var(--yh-space-8);
 }
+.chizma-actions .button-icon {
+  width: var(--yh-icon-button);
+  height: var(--yh-icon-button);
+  border: 0;
+  box-shadow: 0 2px 8px rgb(11 61 42 / 0.1);
+}
+.plan-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-4);
+  margin-top: var(--yh-space-8);
+}
+.plan-price-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--yh-space-4) var(--yh-space-12);
+  margin: var(--yh-space-4) 0 0;
+}
+.plan-price-line .price {
+  font-size: 24px;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--yh-space-8);
+}
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px var(--yh-space-12);
+  border-radius: 14px;
+  background: var(--yh-surface);
+}
+.fact b {
+  font: var(--yh-title);
+}
+.fact-accent {
+  background: var(--yh-status-free-bg);
+  color: var(--yh-status-free-fg);
+}
+
+/* Dark ink card: typical monthly payment, brand «Hisoblash» (kit p.9) */
+.oylik-card {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-12) var(--yh-space-12) var(--yh-space-12) var(--yh-space-20);
+  border-radius: var(--yh-radius-leaf);
+  background: var(--yh-ink);
+  color: var(--yh-on-primary);
+}
+.oylik-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.oylik-card-text .caption {
+  color: rgb(255 255 255 / 0.76);
+}
+.oylik-card-sum {
+  font: var(--yh-h3);
+}
+.oylik-card-button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--yh-radius-pill);
+  background: var(--yh-brand);
+  color: var(--yh-ink);
+  font: var(--yh-title);
+  font-size: 14px;
+  transition: transform 160ms var(--yh-ease-out);
+}
+.oylik-card-button:active {
+  transform: scale(0.96);
+}
+
+/* Sticky bar of a Planirovka: a square «call me» + the main step */
+.actions-call {
+  display: flex;
+  gap: var(--yh-space-8);
+}
+.button-square {
+  flex: none;
+  width: var(--yh-button-h);
+  height: var(--yh-button-h);
+  padding: 0;
+  border-color: transparent;
+  background: var(--yh-surface);
+}
+.actions-call .button-primary {
+  flex: 1;
+}
+.button-fit {
+  width: auto;
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
@@ -789,16 +1316,63 @@ a {
 }
 .sevimli-row {
   gap: var(--yh-space-8);
-  border: 1.5px solid transparent;
+  padding-left: var(--yh-space-12);
+  box-shadow:
+    inset 0 0 0 1.5px transparent,
+    var(--yh-shadow-card);
+  transition: box-shadow 200ms ease;
 }
 .sevimli-row.checked {
-  border-color: var(--yh-primary);
+  box-shadow:
+    inset 0 0 0 1.5px var(--yh-primary),
+    var(--yh-shadow-card);
 }
+/* Round check in the kit's green; the native box is too small to hit and off-brand */
 .sevimli-check {
   flex: none;
-  width: 22px;
-  height: 22px;
-  accent-color: var(--yh-primary);
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 1.5px solid var(--yh-line);
+  border-radius: 50%;
+  background: var(--yh-bg);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms var(--yh-ease-out);
+}
+.sevimli-check::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  margin-top: -2px;
+  border: solid var(--yh-on-primary);
+  border-width: 0 0 2px 2px;
+  transform: rotate(-45deg) scale(0.6);
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 200ms var(--yh-ease-out);
+}
+.sevimli-check:checked {
+  border-color: var(--yh-primary);
+  background: var(--yh-primary);
+}
+.sevimli-check:checked::after {
+  opacity: 1;
+  transform: rotate(-45deg) scale(1);
+}
+.sevimli-check:active {
+  transform: scale(0.9);
+}
+.sevimli-check:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 .sevimli-link {
   display: flex;
@@ -809,29 +1383,88 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* Taqqoslash: label column + up to three Planirovka columns; the best value of a row is green */
 .taqqoslash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yh-space-12);
   overflow-x: auto;
 }
 .taqqoslash table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
+}
+.taqqoslash col.taqqoslash-label {
+  width: 26%;
 }
 .taqqoslash th,
 .taqqoslash td {
-  padding: var(--yh-space-8) var(--yh-space-4);
+  padding: 10px var(--yh-space-8);
   border-bottom: 1px solid var(--yh-line);
   text-align: left;
   vertical-align: middle;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  font-weight: 400;
 }
-.taqqoslash thead th a {
-  color: var(--yh-primary);
+.taqqoslash tbody th {
+  padding-left: 0;
+}
+.taqqoslash thead th {
+  padding-top: 0;
+  vertical-align: bottom;
+}
+.taqqoslash-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--yh-space-8) 10px;
+  border-radius: 14px;
+  background: var(--yh-surface);
+  color: var(--yh-ink);
+}
+.taqqoslash-head .title {
+  white-space: nowrap;
+}
+.taqqoslash-head .caption {
+  overflow: hidden;
+  color: var(--yh-muted);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+@media (max-width: 380px) {
+  .taqqoslash th,
+  .taqqoslash td {
+    padding-inline: 6px;
+    font-size: 14px;
+  }
+  .taqqoslash col.taqqoslash-label {
+    width: 23%;
+  }
+  .taqqoslash-head {
+    padding-inline: 8px;
+  }
 }
 .taqqoslash td.best {
-  background: var(--yh-status-free-bg);
   color: var(--yh-status-free-fg);
   font-weight: 600;
+}
+.taqqoslash td.best::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--yh-primary);
+  vertical-align: 2px;
+}
+.taqqoslash tr:last-child > * {
+  border-bottom: 0;
 }
 
 /* ---- «Do'stingni taklif qil» (#19, kit screen 18) ---- */
@@ -1112,4 +1745,8 @@ a {
   .taklif-copy > span {
     transform: none !important;
   }
+}
+.taqqoslash .badge {
+  padding: 2px 8px;
+  font-size: 12px;
 }

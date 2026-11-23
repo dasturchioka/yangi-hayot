@@ -2,12 +2,11 @@ import type { KontentResponse } from '@yh/shared';
 import { api } from '../api';
 import { useLang, useT } from '../i18n';
 import { ArizaButton, Loaded } from '../katalog/parts';
-import { href } from '../router';
 import { openExternal } from '../telegram';
 import { useLoad } from '../useLoad';
 import './kontent.css';
 import { HisoblashButton, YozilishButton } from './cta';
-import { ArrowIcon, ChevronIcon, ClockIcon, DocIcon, PhoneIcon, PinIcon, SendIcon } from './icons';
+import { ChevronIcon, ClockIcon, DocIcon, PhoneIcon, PinIcon, SendIcon } from './icons';
 
 function useKontent() {
   const lang = useLang();
@@ -19,59 +18,6 @@ export const telHref = (telefon: string) => `tel:${telefon.replace(/[^\d+]/g, ''
 
 const xaritaUrl = ({ lat, lng }: { lat: number; lng: number }) =>
   `https://yandex.uz/maps/?pt=${lng},${lat}&z=16&l=map`;
-
-// ---------------------------------------------------------------- entry links (home)
-
-/** Rows under the katalog: «Qanday sotib olish», «Biz haqimizda», «Do'stingni taklif qil» (#19). */
-export function KontentLinks() {
-  const t = useT();
-  return (
-    <nav className="kontent-links">
-      <a className="kontent-link" href={href({ name: 'yozilish' })}>
-        <span>
-          <span className="title">{t('kontent.yozilish')}</span>
-          <span className="caption muted">{t('yozilish.menuHint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-      <a className="kontent-link" href={href({ name: 'mening' })}>
-        <span>
-          <span className="title">{t('mening.title')}</span>
-          <span className="caption muted">{t('mening.hint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-      <a className="kontent-link" href={href({ name: 'sotibOlish' })}>
-        <span>
-          <span className="title">{t('kontent.sotibOlish')}</span>
-          <span className="caption muted">{t('kontent.sotibOlishHint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-      <a className="kontent-link" href={href({ name: 'kalkulyator' })}>
-        <span>
-          <span className="title">{t('kalk.open')}</span>
-          <span className="caption muted">{t('kalk.openHint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-      <a className="kontent-link" href={href({ name: 'bizHaqimizda' })}>
-        <span>
-          <span className="title">{t('kontent.bizHaqimizda')}</span>
-          <span className="caption muted">{t('kontent.bizHaqimizdaHint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-      <a className="kontent-link" href={href({ name: 'taklif' })}>
-        <span>
-          <span className="title">{t('taklif.open')}</span>
-          <span className="caption muted">{t('taklif.openHint')}</span>
-        </span>
-        <ArrowIcon />
-      </a>
-    </nav>
-  );
-}
 
 // ---------------------------------------------------------------- «Qanday sotib olish»
 

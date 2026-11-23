@@ -1,88 +1,147 @@
-import { SHAHARLAR, type LoyihaCardDto, type LoyihaDto, type Shahar } from '@yh/shared';
-import { useState } from 'react';
+import {
+  namunaviyOylik,
+  SHAHARLAR,
+  type KalkulyatorSozlamalari,
+  type LoyihaCardDto,
+  type LoyihaDto,
+  type PlanirovkaDto,
+  type Shahar,
+} from '@yh/shared';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
-import { useLang, useT, type MessageKey } from '../i18n';
+import { useLang, useT, type MessageKey, type Translate } from '../i18n';
+import { InfraIcon, PhoneIcon, PhotoIcon, PinIcon, PlayIcon } from '../icons';
 import { href } from '../router';
-import { openExternal } from '../telegram';
-import { useLoad } from '../useLoad';
-import { formatMaydon, formatNarx } from './format';
-import { KontentLinks } from '../kontent/screens';
 import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { VideoYozilishLink, YozilishButton } from '../kontent/cta';
 import '../yozilish/yozilish.css';
-import { KvizKirish } from '../kviz/KvizScreen';
-import { TanlashQidiruv } from '../tanlash/TanlashScreen';
+import { openExternal } from '../telegram';
+import { useLoad, type Load } from '../useLoad';
+import { formatMaydon, formatNarx, joyNomi } from './format';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
 
-// ---------------------------------------------------------------- Loyihalar
+// ---------------------------------------------------------------- city choice, shared by Bosh and Loyihalar
+
+/** The city the Mijoz last picked: the home list and the Loyihalar tab follow each other. */
+let tanlanganShahar: Shahar = 'toshkent';
+
+export function useShahar(): [Shahar, (s: Shahar) => void] {
+  const [shahar, setShahar] = useState<Shahar>(tanlanganShahar);
+  return [
+    shahar,
+    (s) => {
+      tanlanganShahar = s;
+      setShahar(s);
+    },
+  ];
+}
+
+export function useLoyihalar(): Load<{ loyihalar: LoyihaCardDto[] }> {
+  const lang = useLang();
+  return useLoad(`loyihalar:${lang}`, () => api.loyihalar(lang));
+}
+
+export function ShaharSegment({
+  shahar,
+  onChange,
+  loyihalar,
+  compact = false,
+}: {
+  shahar: Shahar;
+  onChange: (s: Shahar) => void;
+  loyihalar: LoyihaCardDto[];
+  compact?: boolean;
+}) {
+  const t = useT();
+  return (
+    <div className={compact ? 'segmented segmented-sm' : 'segmented'} role="tablist">
+      {SHAHARLAR.map((s) => (
+        <button
+          key={s}
+          role="tab"
+          aria-selected={s === shahar}
+          className={s === shahar ? 'active' : undefined}
+          onClick={() => onChange(s)}
+        >
+          {t(`shahar.${s}`)}
+          {!compact && <span className="segmented-count"> · {loyihalar.filter((l) => l.shahar === s).length}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Loyihalar tab
 
 export function LoyihalarScreen() {
   const t = useT();
-  const lang = useLang();
-  const load = useLoad(`loyihalar:${lang}`, () => api.loyihalar(lang));
-  const [shahar, setShahar] = useState<Shahar>('toshkent');
+  const load = useLoyihalar();
+  const [shahar, setShahar] = useShahar();
 
   return (
     <>
-      <div className="row-between">
-        <h1 className="h1">{t('katalog.title')}</h1>
-        <a className="button-icon" href={href({ name: 'sevimlilar' })} aria-label={t('sevimli.open')}>
-          ♡
-        </a>
-      </div>
-      <TanlashQidiruv />
-      <KvizKirish />
+      <h1 className="h1">{t('katalog.title')}</h1>
       <Loaded load={load}>
         {({ loyihalar }) => {
           const shown = loyihalar.filter((l) => l.shahar === shahar);
           return (
             <>
-              <div className="segmented" role="tablist">
-                {SHAHARLAR.map((s) => (
-                  <button
-                    key={s}
-                    role="tab"
-                    aria-selected={s === shahar}
-                    className={s === shahar ? 'active' : undefined}
-                    onClick={() => setShahar(s)}
-                  >
-                    {t(`shahar.${s}`)} · {loyihalar.filter((l) => l.shahar === s).length}
-                  </button>
+              <ShaharSegment shahar={shahar} onChange={setShahar} loyihalar={loyihalar} />
+              {shown.length === 0 && <p className="muted">{t('katalog.empty')}</p>}
+              <div className="loyiha-list" key={shahar}>
+                {shown.map((l, i) => (
+                  <LoyihaCard key={l.id} l={l} eager={i < 2} />
                 ))}
               </div>
-              {shown.length === 0 && <p className="muted">{t('katalog.empty')}</p>}
-              {shown.map((l, i) => (
-                <LoyihaCard key={l.id} l={l} eager={i < 2} />
-              ))}
             </>
           );
         }}
       </Loaded>
-      <KontentLinks />
     </>
   );
 }
 
-function LoyihaCard({ l, eager }: { l: LoyihaCardDto; eager: boolean }) {
-  const t = useT();
-  const facts = [
+function cardFacts(t: Translate, l: LoyihaCardDto): string {
+  return [
     l.bloklarSoni ? t('loyiha.bloklar', { n: l.bloklarSoni }) : null,
     l.qavatlarSoni ? t('loyiha.qavat', { n: l.qavatlarSoni }) : null,
     l.qisqaTavsif,
-  ].filter(Boolean);
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/** Big card of the Loyihalar tab (kit p.5): photo with chips and name, then facts, price and bo'sh count. */
+function LoyihaCard({ l, eager }: { l: LoyihaCardDto; eager: boolean }) {
+  const t = useT();
+  const facts = cardFacts(t, l);
   return (
-    <a className="card loyiha-card" href={href({ name: 'loyiha', id: l.id })}>
+    <a className="loyiha-card" href={href({ name: 'loyiha', id: l.id })}>
       <div className="loyiha-cover">
         {l.foto && <img src={l.foto} alt="" loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : 'auto'} />}
-        {l.video && <span className="chip-on-photo">▶ Video</span>}
+        <div className="loyiha-cover-chips">
+          <span className="chip-on-photo">
+            <span className="chip-dot" aria-hidden />
+            {t('loyiha.tayyor')}
+          </span>
+          {l.video && (
+            <span className="chip-on-photo chip-on-photo-dark">
+              <PlayIcon size={12} />
+              {t('loyiha.tab.video')}
+            </span>
+          )}
+        </div>
         <div className="loyiha-cover-text">
           <span className="h2">{l.nomi}</span>
-          <span className="caption">{l.manzil}</span>
+          <span className="caption loyiha-cover-place">
+            <PinIcon size={14} />
+            {l.manzil}
+          </span>
         </div>
       </div>
       <div className="loyiha-card-foot">
-        <div>
-          {facts.length > 0 && <p className="caption muted">{facts.join(' · ')}</p>}
+        <div className="loyiha-card-foot-text">
+          {facts && <p className="caption muted">{facts}</p>}
           <p className="price-sm">{formatNarx(t, l.boshlangichNarx)}</p>
         </div>
         {l.boshXonadonlar > 0 && (
@@ -96,12 +155,33 @@ function LoyihaCard({ l, eager }: { l: LoyihaCardDto; eager: boolean }) {
   );
 }
 
+/** Compact row card of the home screen (kit p.4, «Loyiha kartochkasi»). */
+export function LoyihaRowCard({ l }: { l: LoyihaCardDto }) {
+  const t = useT();
+  const meta = [l.manzil, l.bloklarSoni ? t('loyiha.bloklar', { n: l.bloklarSoni }) : null].filter(Boolean).join(' · ');
+  return (
+    <a className="loyiha-row" href={href({ name: 'loyiha', id: l.id })}>
+      <span className="loyiha-row-thumb">{l.foto && <img src={l.foto} alt="" loading="lazy" />}</span>
+      <span className="loyiha-row-text">
+        <span className="title">{l.nomi}</span>
+        <span className="caption muted loyiha-row-meta">{meta}</span>
+        {l.boshXonadonlar > 0 && <BoshBadge n={l.boshXonadonlar} />}
+        <span className="loyiha-row-price">{formatNarx(t, l.boshlangichNarx)}</span>
+      </span>
+    </a>
+  );
+}
+
 // ---------------------------------------------------------------- Loyiha
 
 export function LoyihaScreen({ id }: { id: number }) {
   const lang = useLang();
   const load = useLoad(`loyiha:${id}:${lang}`, () => api.loyiha(id, lang));
-  return <Loaded load={load}>{({ loyiha }) => <Loyiha l={loyiha} />}</Loaded>;
+  return (
+    <Loaded load={load} skeleton="detail">
+      {({ loyiha }) => <Loyiha l={loyiha} />}
+    </Loaded>
+  );
 }
 
 const INFRA_KEYS: Record<string, MessageKey> = {
@@ -114,109 +194,142 @@ const INFRA_KEYS: Record<string, MessageKey> = {
   tibbiyot: 'infra.tibbiyot',
 };
 
+type LoyihaTab = 'infratuzilma' | 'haqida' | 'video';
+
+function Gallery({ l }: { l: LoyihaDto }) {
+  const t = useT();
+  const ref = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+  const onScroll = () => {
+    const el = ref.current;
+    if (el) setIndex(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  return (
+    <div className="gallery-wrap">
+      <div className="gallery" ref={ref} onScroll={onScroll}>
+        {l.fotolar.length ? (
+          l.fotolar.map((src, i) => <img key={src} src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'} />)
+        ) : (
+          <div className="gallery-empty" />
+        )}
+      </div>
+      <div className="gallery-chips">
+        {l.fotolar.length > 1 && (
+          <span className="chip-on-photo chip-on-photo-dark">
+            <PhotoIcon size={14} />
+            {t('loyiha.fotolar', { n: l.fotolar.length })}
+          </span>
+        )}
+        {l.xarita && (
+          <button
+            className="chip-on-photo chip-on-photo-dark"
+            onClick={() => openExternal(`https://yandex.uz/maps/?pt=${l.xarita!.lng},${l.xarita!.lat}&z=16&l=map`)}
+          >
+            <PinIcon size={14} />
+            {t('loyiha.xarita')}
+          </button>
+        )}
+      </div>
+      {l.fotolar.length > 1 && (
+        <div className="gallery-dots" aria-hidden>
+          {l.fotolar.slice(0, 8).map((src, i) => (
+            <span key={src} className={i === Math.min(index, 7) ? 'active' : undefined} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Loyiha({ l }: { l: LoyihaDto }) {
   const t = useT();
-  const [tab, setTab] = useState<'infratuzilma' | 'haqida'>(l.infratuzilma.length ? 'infratuzilma' : 'haqida');
+  const tabs: LoyihaTab[] = [
+    ...(l.infratuzilma.length > 0 ? (['infratuzilma'] as const) : []),
+    ...(l.tavsif ? (['haqida'] as const) : []),
+    ...(l.video ? (['video'] as const) : []),
+  ];
+  const [tab, setTab] = useState<LoyihaTab | undefined>(tabs[0]);
   const [kategoriya, setKategoriya] = useState<string | null>(null);
   const kategoriyalar = [...new Set(l.infratuzilma.map((i) => i.kategoriya))];
   const hasPlanirovkalar = l.bloklar.some((b) => b.guruhlar.length > 0);
+  const TAB_KEY: Record<LoyihaTab, MessageKey> = {
+    infratuzilma: 'loyiha.tab.infratuzilma',
+    haqida: 'loyiha.tab.haqida',
+    video: 'loyiha.tab.video',
+  };
 
   return (
     <>
-      <div className="gallery-wrap">
-        <div className="gallery">
-          {l.fotolar.length ? (
-            l.fotolar.map((src, i) => <img key={src} src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'} />)
-          ) : (
-            <div className="gallery-empty" />
-          )}
-        </div>
-        <div className="gallery-chips">
-          {l.fotolar.length > 1 && <span className="chip-on-photo">{t('loyiha.fotolar', { n: l.fotolar.length })}</span>}
-          {l.xarita && (
-            <button
-              className="chip-on-photo"
-              onClick={() => openExternal(`https://yandex.uz/maps/?pt=${l.xarita!.lng},${l.xarita!.lat}&z=16&l=map`)}
-            >
-              {t('loyiha.xarita')}
-            </button>
-          )}
-        </div>
-      </div>
+      <Gallery l={l} />
 
-      <div>
+      <div className="loyiha-head">
         <h1 className="h1">{l.nomi}</h1>
-        <p className="muted">
-          {t(`shahar.${l.shahar}`)}, {l.manzil}
-        </p>
+        <p className="muted">{joyNomi(t(`shahar.${l.shahar}`), l.manzil)}</p>
       </div>
 
-      <div className="stats">
-        {l.bloklarSoni > 0 && <Stat n={l.bloklarSoni} label={t('loyiha.stat.blok')} />}
-        {l.qavatlarSoni && <Stat n={l.qavatlarSoni} label={t('loyiha.stat.qavat')} />}
-        {l.jamiXonadonlar > 0 && <Stat n={l.jamiXonadonlar} label={t('loyiha.stat.xonadon')} />}
-        {l.jamiXonadonlar > 0 && <Stat n={l.boshXonadonlar} label={t('loyiha.stat.bosh')} accent />}
-      </div>
+      {l.jamiXonadonlar > 0 && (
+        <div className="stats">
+          {l.bloklarSoni > 0 && <Stat n={l.bloklarSoni} label={t('loyiha.stat.blok')} />}
+          {l.qavatlarSoni && <Stat n={l.qavatlarSoni} label={t('loyiha.stat.qavat')} />}
+          <Stat n={l.jamiXonadonlar} label={t('loyiha.stat.xonadon')} />
+          <Stat n={l.boshXonadonlar} label={t('loyiha.stat.bosh')} accent />
+        </div>
+      )}
 
       <p className="price">{formatNarx(t, l.boshlangichNarx)}</p>
-      <VideoButton video={l.video} />
-      {l.video && <VideoYozilishLink loyihaId={l.id} />}
 
-      {(l.infratuzilma.length > 0 || l.tavsif) && (
-        <>
+      {tabs.length > 0 && tab && (
+        <section className="loyiha-tabs">
           <div className="tabs" role="tablist">
-            {l.infratuzilma.length > 0 && (
-              <button
-                role="tab"
-                aria-selected={tab === 'infratuzilma'}
-                className={tab === 'infratuzilma' ? 'active' : undefined}
-                onClick={() => setTab('infratuzilma')}
-              >
-                {t('loyiha.tab.infratuzilma')}
+            {tabs.map((k) => (
+              <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'active' : undefined} onClick={() => setTab(k)}>
+                {t(TAB_KEY[k])}
               </button>
-            )}
-            {l.tavsif && (
-              <button
-                role="tab"
-                aria-selected={tab === 'haqida'}
-                className={tab === 'haqida' ? 'active' : undefined}
-                onClick={() => setTab('haqida')}
-              >
-                {t('loyiha.tab.haqida')}
-              </button>
-            )}
+            ))}
           </div>
-          {tab === 'infratuzilma' && l.infratuzilma.length > 0 && (
+          {tab === 'infratuzilma' && (
             <>
-              <div className="chips">
-                <button className={kategoriya === null ? 'chip active' : 'chip'} onClick={() => setKategoriya(null)}>
-                  {t('infra.all')}
-                </button>
-                {kategoriyalar.map((k) => (
-                  <button key={k} className={kategoriya === k ? 'chip active' : 'chip'} onClick={() => setKategoriya(k)}>
-                    {INFRA_KEYS[k] ? t(INFRA_KEYS[k]) : k}
+              {kategoriyalar.length > 1 && (
+                <div className="chips">
+                  <button className={kategoriya === null ? 'chip active' : 'chip'} onClick={() => setKategoriya(null)}>
+                    {t('infra.all')}
                   </button>
-                ))}
-              </div>
+                  {kategoriyalar.map((k) => (
+                    <button key={k} className={kategoriya === k ? 'chip active' : 'chip'} onClick={() => setKategoriya(k)}>
+                      {INFRA_KEYS[k] ? t(INFRA_KEYS[k]) : k}
+                    </button>
+                  ))}
+                </div>
+              )}
               <ul className="infra-list">
                 {l.infratuzilma
                   .filter((i) => !kategoriya || i.kategoriya === kategoriya)
                   .map((i) => (
                     <li key={`${i.kategoriya}:${i.nomi}`}>
-                      <span>{i.nomi}</span>
-                      {i.masofa && <span className="caption muted">{i.masofa}</span>}
+                      <span className="infra-icon">
+                        <InfraIcon kategoriya={i.kategoriya} />
+                      </span>
+                      <span className="infra-name">{i.nomi}</span>
+                      {i.masofa && <span className="caption muted infra-masofa">{i.masofa}</span>}
                     </li>
                   ))}
               </ul>
             </>
           )}
-          {tab === 'haqida' && l.tavsif && <p className="body-text">{l.tavsif}</p>}
-        </>
+          {tab === 'haqida' && <p className="body-text">{l.tavsif}</p>}
+          {tab === 'video' && (
+            <div className="loyiha-video">
+              <p className="caption muted">{t('loyiha.videoHint')}</p>
+              <VideoButton video={l.video} />
+              <VideoYozilishLink loyihaId={l.id} />
+            </div>
+          )}
+        </section>
       )}
 
-      {!hasPlanirovkalar && <p className="muted">{t('loyiha.noPlanirovkalar')}</p>}
+      {!hasPlanirovkalar && <p className="note note-info">{t('loyiha.noPlanirovkalar')}</p>}
 
-      <div className="sticky-actions actions-pair">
+      <div className="sticky-actions actions-split">
         <YozilishButton loyihaId={l.id} label="yozilish.qisqa" />
         {hasPlanirovkalar ? (
           <a className="button-primary" href={href({ name: 'planirovkalar', loyihaId: l.id })}>
@@ -254,10 +367,11 @@ export function PlanirovkalarScreen({ loyihaId }: { loyihaId: number }) {
         const blok = bloklar.find((b) => b.id === blokId) ?? bloklar[0];
         return (
           <>
-            <div>
-              <p className="label">{loyiha.nomi}</p>
+            <div className="screen-head">
+              <p className="caption muted">{loyiha.nomi}</p>
               <h1 className="h1">{t('loyiha.xonadonlar', { n: loyiha.boshXonadonlar })}</h1>
             </div>
+            {/* Blok row; a «Shaxmatka | Planirovkalar» view switch (#22–#25) belongs right under it. */}
             {bloklar.length > 1 && (
               <div className="chips" role="tablist">
                 {bloklar.map((b) => (
@@ -268,20 +382,28 @@ export function PlanirovkalarScreen({ loyihaId }: { loyihaId: number }) {
                     className={b === blok ? 'chip active' : 'chip'}
                     onClick={() => setBlokId(b.id)}
                   >
-                    {t('blok.nomi', { nomi: b.nomi })} · {b.boshXonadonlar}
+                    {t('blok.nomi', { nomi: b.nomi })}
+                    <span className="chip-count">{b.boshXonadonlar}</span>
                   </button>
                 ))}
               </div>
             )}
             {!blok && <p className="muted">{t('loyiha.noPlanirovkalar')}</p>}
-            {blok?.guruhlar.map((g) => (
-              <section key={g.xonalar} className="group">
-                <h2 className="h3">{t('planirovka.guruh', { n: g.xonalar })}</h2>
-                {g.planirovkalar.map((p) => (
-                  <PlanirovkaRow key={p.id} p={p} />
-                ))}
-              </section>
-            ))}
+            <div className="plan-groups" key={blok?.id}>
+              {blok?.guruhlar.map((g) => (
+                <section key={g.xonalar} className="group">
+                  <h2 className="h3">{t('planirovka.guruh', { n: g.xonalar })}</h2>
+                  {g.planirovkalar.map((p) => (
+                    <PlanirovkaRow key={p.id} p={p} />
+                  ))}
+                </section>
+              ))}
+            </div>
+            <div className="sticky-actions">
+              <a className="button-secondary" href={href({ name: 'ariza', loyihaId: loyiha.id })}>
+                {t('planirovkalar.yordam')}
+              </a>
+            </div>
           </>
         );
       }}
@@ -292,45 +414,114 @@ export function PlanirovkalarScreen({ loyihaId }: { loyihaId: number }) {
 // ---------------------------------------------------------------- Planirovka
 
 export function PlanirovkaScreen({ id }: { id: number }) {
-  const t = useT();
   const lang = useLang();
   const load = useLoad(`planirovka:${id}:${lang}`, () => api.planirovka(id, lang));
+  return (
+    <Loaded load={load} skeleton="detail">
+      {({ planirovka }) => <Planirovka p={planirovka} />}
+    </Loaded>
+  );
+}
+
+const mln = (n: number) =>
+  new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n / 1_000_000).replace('.', ',');
+
+function Planirovka({ p }: { p: PlanirovkaDto }) {
+  const t = useT();
+  const [sozlama, setSozlama] = useState<KalkulyatorSozlamalari | null>(null);
+  useEffect(() => {
+    if (p.boshlangichNarx === null) return;
+    api.kalkulyator().then(({ sozlama }) => setSozlama(sozlama), () => {});
+  }, [p.boshlangichNarx]);
+
+  const sold = p.holat === 'sotilgan';
+  const kvMetr = p.boshlangichNarx !== null ? p.boshlangichNarx / p.maydon : null;
 
   return (
-    <Loaded load={load}>
-      {({ planirovka: p }) => (
+    <>
+      <Chizma src={p.chizma}>
+        <div className="chizma-actions">
+          <UlashishButton p={p} />
+          <SevimliButton id={p.id} />
+        </div>
+      </Chizma>
+
+      <div className="plan-head">
+        <div className="row-between">
+          <p className="caption muted">
+            {p.loyihaNomi} · {t('blok.nomi', { nomi: p.blokNomi })}
+            {p.nomi ? ` · ${p.nomi}` : ''}
+          </p>
+          {p.holat === 'sotuvda' ? <HolatBadge holat="sotuvda" /> : <HolatBadge holat={p.holat} />}
+        </div>
+        <h1 className="h1">{t('planirovka.title', { n: p.xonalar, maydon: formatMaydon(p.maydon) })}</h1>
+        <p className="plan-price-line">
+          <span className="price">{formatNarx(t, p.boshlangichNarx)}</span>
+          {kvMetr !== null && <span className="caption muted">{t('planirovka.kvMetr', { narx: mln(kvMetr) })}</span>}
+        </p>
+      </div>
+
+      <div className="facts">
+        <div className="fact">
+          <span className="caption muted">{t('planirovka.fakt.blok')}</span>
+          <b>{p.blokNomi}</b>
+        </div>
+        <div className="fact">
+          <span className="caption muted">{t('planirovka.fakt.xonalar')}</span>
+          <b>{p.xonalar}</b>
+        </div>
+        <div className={p.bosh > 0 ? 'fact fact-accent' : 'fact'}>
+          <span className="caption">{t('planirovka.fakt.bosh')}</span>
+          <b>{t('planirovka.fakt.boshN', { n: p.bosh })}</b>
+        </div>
+      </div>
+
+      {p.holat === 'band' && <p className="note note-band">{t('holat.bandHint')}</p>}
+
+      {!sold && sozlama && <OylikCard p={p} sozlama={sozlama} />}
+
+      {p.video && (
         <>
-          <Chizma src={p.chizma} />
-          <div className="row-actions">
-            <SevimliButton id={p.id} />
-            <UlashishButton p={p} />
-          </div>
-          <div className="row-between">
-            <p className="muted">
-              {p.loyihaNomi} · {t('blok.nomi', { nomi: p.blokNomi })}
-              {p.nomi ? ` · ${p.nomi}` : ''}
-            </p>
-            {p.holat === 'sotuvda' ? <BoshBadge n={p.bosh} /> : <HolatBadge holat={p.holat} />}
-          </div>
-          <h1 className="h1">{t('planirovka.title', { n: p.xonalar, maydon: formatMaydon(p.maydon) })}</h1>
-          <p className="price">{formatNarx(t, p.boshlangichNarx)}</p>
-          {p.holat === 'band' && <p className="note note-band">{t('holat.bandHint')}</p>}
           <VideoButton video={p.video} />
-          {p.video && p.holat !== 'sotilgan' && <VideoYozilishLink loyihaId={p.loyihaId} planirovkaId={p.id} />}
-          {p.holat !== 'sotilgan' && (
-            <div className="sticky-actions actions-stack">
-              {/* Main step from a Planirovka is seeing it (kit p.9); calculating and an Ariza sit above as equals */}
-              <div className="actions-pair">
-                <a className="button-secondary" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
-                  {t('kalk.hisoblash')}
-                </a>
-                <ArizaButton planirovkaId={p.id} primary={false} />
-              </div>
-              <YozilishButton primary loyihaId={p.loyihaId} planirovkaId={p.id} />
-            </div>
-          )}
+          {!sold && <VideoYozilishLink loyihaId={p.loyihaId} planirovkaId={p.id} />}
         </>
       )}
-    </Loaded>
+
+      {!sold && (
+        <div className="sticky-actions actions-call">
+          <a
+            className="button-secondary button-square"
+            href={href({ name: 'ariza', planirovkaId: p.id })}
+            aria-label={t('planirovka.qongiroq')}
+            title={t('planirovka.qongiroq')}
+          >
+            <PhoneIcon />
+          </a>
+          <YozilishButton primary loyihaId={p.loyihaId} planirovkaId={p.id} />
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Dark card (kit p.9): a typical monthly payment for this narx, «Hisoblash» opens the calculator with it. */
+function OylikCard({ p, sozlama }: { p: PlanirovkaDto; sozlama: KalkulyatorSozlamalari }) {
+  const t = useT();
+  const oylik = namunaviyOylik(p.boshlangichNarx, sozlama);
+  if (oylik === null) return null;
+  const bank = sozlama.banklar[0];
+  const sharti = sozlama.muddatli.yoqilgan
+    ? t('planirovka.oylik.muddatli', { n: sozlama.muddatli.maxMuddatOy })
+    : t('planirovka.oylik.ipoteka', { bank: bank?.nomi ?? '' });
+  return (
+    <div className="oylik-card">
+      <span className="oylik-card-text">
+        <span className="caption">{sharti}</span>
+        <span className="oylik-card-sum">{t('planirovka.oylik', { narx: t('narx.som', { narx: t('narx.mln', { n: mln(oylik) }) }) })}</span>
+      </span>
+      <a className="oylik-card-button" href={href({ name: 'kalkulyator', planirovkaId: p.id })}>
+        {t('kalk.hisoblash')}
+      </a>
+    </div>
   );
 }

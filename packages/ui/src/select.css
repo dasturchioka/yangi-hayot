@@ -1,0 +1,225 @@
+/* «Yashil barg» Select (Select.tsx). Uses tokens.css variables only. */
+
+.yh-select {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.yh-select-label {
+  font: 600 13px/18px var(--yh-font);
+  color: var(--yh-ink);
+}
+
+.yh-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-8);
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--yh-line);
+  border-radius: 12px;
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  font: 400 14px/20px var(--yh-font);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.yh-select-md .yh-select-trigger {
+  min-width: 160px;
+}
+.yh-select-sm .yh-select-trigger {
+  height: 36px;
+  min-height: 36px;
+  font-size: 13px;
+}
+.yh-select-trigger:focus-visible,
+.yh-select-trigger[aria-expanded='true'] {
+  outline: none;
+  border-color: var(--yh-primary);
+  box-shadow: 0 0 0 3px var(--yh-status-free-bg);
+}
+@media (hover: hover) {
+  .yh-select-trigger:not(:disabled):hover {
+    border-color: var(--yh-primary);
+  }
+}
+.yh-select-trigger:disabled {
+  background: var(--yh-surface);
+  color: var(--yh-muted);
+  cursor: default;
+}
+.yh-select-value {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.yh-select-placeholder {
+  color: var(--yh-muted);
+}
+.yh-select-chevron {
+  flex: none;
+  color: var(--yh-muted);
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.yh-select-trigger[aria-expanded='true'] .yh-select-chevron {
+  transform: rotate(180deg);
+  color: var(--yh-primary);
+}
+
+/* ---- Popover (desktop) ---- */
+.yh-select-popover {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  min-width: 100%;
+  max-width: min(420px, 90vw);
+  padding: 6px;
+  border: 1px solid var(--yh-line);
+  border-radius: 14px;
+  background: var(--yh-bg);
+  box-shadow: 0 12px 32px rgb(11 61 42 / 0.14);
+  animation: yh-select-in 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.yh-select-down {
+  top: 100%;
+  margin-top: 6px;
+  transform-origin: top center;
+}
+.yh-select-up {
+  bottom: 44px;
+  margin-bottom: 6px;
+  transform-origin: bottom center;
+}
+@keyframes yh-select-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+}
+
+.yh-select-list {
+  max-height: 300px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  outline: none;
+  overscroll-behavior: contain;
+}
+
+.yh-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yh-space-12);
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--yh-ink);
+  font: 400 14px/20px var(--yh-font);
+  cursor: pointer;
+  user-select: none;
+}
+.yh-select-option.active {
+  background: var(--yh-surface);
+}
+.yh-select-option[aria-selected='true'] {
+  color: var(--yh-status-free-fg);
+  font-weight: 600;
+}
+.yh-select-option[aria-disabled='true'] {
+  color: var(--yh-muted);
+  opacity: 0.55;
+  cursor: default;
+}
+.yh-select-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.yh-select-hint {
+  color: var(--yh-muted);
+  font: 400 12px/16px var(--yh-font);
+}
+.yh-select-check {
+  flex: none;
+  color: var(--yh-primary);
+}
+
+/* ---- Bottom sheet (phones, Mini App) ---- */
+.yh-select-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.yh-select-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(11 61 42 / 0.32);
+  animation: yh-select-fade 200ms ease both;
+}
+.yh-select-sheet {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 72vh;
+  padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--yh-bg);
+  box-shadow: var(--yh-shadow-sheet);
+  animation: yh-select-up 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.yh-select-grabber {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+  background: var(--yh-line);
+}
+.yh-select-sheet-title {
+  margin: 4px 8px 8px;
+  font: var(--yh-h3);
+  color: var(--yh-ink);
+}
+.yh-select-sheet .yh-select-list {
+  max-height: none;
+  flex: 1;
+}
+.yh-select-sheet .yh-select-option {
+  min-height: 52px;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 16px;
+}
+@keyframes yh-select-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes yh-select-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yh-select-popover,
+  .yh-select-sheet {
+    animation: yh-select-fade 150ms ease both;
+  }
+  .yh-select-chevron {
+    transition: none;
+  }
+}

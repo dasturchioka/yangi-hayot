@@ -3,7 +3,6 @@
   text-wrap: balance;
 }
 .tabular {
-  font-variant-numeric: tabular-nums;
 }
 .kontent-section {
   display: flex;
@@ -13,35 +12,6 @@
 }
 .kontent-section > .h3 {
   margin: 0;
-}
-
-/* Home entry rows */
-.kontent-links {
-  display: flex;
-  flex-direction: column;
-  margin-top: var(--yh-space-20);
-  border-radius: var(--yh-radius-card);
-  background: var(--yh-surface);
-}
-.kontent-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--yh-space-12);
-  min-height: 64px;
-  padding: var(--yh-space-12) var(--yh-space-20);
-  color: var(--yh-ink);
-}
-.kontent-link + .kontent-link {
-  border-top: 1px solid var(--yh-line);
-}
-.kontent-link > span {
-  display: flex;
-  flex-direction: column;
-}
-.kontent-link svg {
-  flex: none;
-  color: var(--yh-primary);
 }
 
 /* Stages: numbered because the order is the content */
@@ -79,7 +49,6 @@
   background: var(--yh-primary);
   color: var(--yh-on-primary);
   font: var(--yh-title);
-  font-variant-numeric: tabular-nums;
 }
 /* The last stage (keys / kadastr) is the goal: brand accent, ink text (never white on brand). */
 .step:last-child .step-n {
@@ -215,7 +184,6 @@
 }
 .about-stats .stat b {
   font: var(--yh-h2);
-  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .about-text {

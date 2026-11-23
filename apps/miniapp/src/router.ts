@@ -4,6 +4,9 @@ import { filtrQuery, parseFiltr } from './tanlash/filtr';
 
 /** Screens of the Mini App, addressed by the URL hash so Back works and links can point at them. */
 export type Route =
+  /** Home tab: search, quick buttons, Loyihalar of a city, menu tiles. */
+  | { name: 'bosh' }
+  /** «Loyihalar» tab: big Loyiha cards by city. */
   | { name: 'loyihalar' }
   | { name: 'loyiha'; id: number }
   | { name: 'planirovkalar'; loyihaId: number }
@@ -63,6 +66,7 @@ export function parseRoute(hash: string): Route {
     return { name: 'yozilish', ...(loyihaId ? { loyihaId } : {}), ...(planirovkaId ? { planirovkaId } : {}) };
   }
   if (parts[0] === 'mening') return { name: 'mening' };
+  if (parts[0] === 'loyihalar') return { name: 'loyihalar' };
   if (parts[0] === 'loyiha' && id > 0) {
     return parts[2] === 'planirovkalar' ? { name: 'planirovkalar', loyihaId: id } : { name: 'loyiha', id };
   }
@@ -79,13 +83,15 @@ export function parseRoute(hash: string): Route {
     const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
     if (ids.length > 0) return { name: 'taqqoslash', ids };
   }
-  return { name: 'loyihalar' };
+  return { name: 'bosh' };
 }
 
 export function href(route: Route): string {
   switch (route.name) {
-    case 'loyihalar':
+    case 'bosh':
       return '#/';
+    case 'loyihalar':
+      return '#/loyihalar';
     case 'loyiha':
       return `#/loyiha/${route.id}`;
     case 'planirovkalar':

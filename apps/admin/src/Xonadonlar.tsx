@@ -10,6 +10,7 @@ import {
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { adminApi, errorText } from './api';
 import { parseNumber, PLANIROVKA_HOLATI_LABEL, qachon, soum, XONADON_HOLATI_LABEL } from './format';
+import { Select } from '@yh/ui/select';
 
 /**
  * «Xonadonlar» (UI kit, admin page 2), Planirovka level (ADR 0001): no № and
@@ -76,17 +77,16 @@ export function XonadonlarScreen({ admin }: { admin: AdminDto }) {
           <h1 className="h2">Xonadonlar</h1>
           <p className="muted">Holat va narx o'zgarishi Mini App'da 1 daqiqada ko'rinadi</p>
         </div>
-        <label className="field">
-          <span>Loyiha</span>
-          <select value={loyihaId ?? ''} onChange={(e) => setLoyihaId(Number(e.target.value))}>
-            {loyihalar.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nomi}
-                {l.holat === 'topshirilgan' ? ' (topshirilgan)' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="Loyiha"
+          value={loyihaId ?? null}
+          options={loyihalar.map((l) => ({
+            value: l.id,
+            label: l.nomi,
+            hint: l.holat === 'topshirilgan' ? 'Topshirilgan' : undefined,
+          }))}
+          onChange={setLoyihaId}
+        />
       </header>
 
       {error && <p className="error">{error}</p>}
@@ -113,17 +113,15 @@ export function XonadonlarScreen({ admin }: { admin: AdminDto }) {
               </button>
             ))}
           </div>
-          <label className="field inline">
-            <span>Holat</span>
-            <select value={filter} onChange={(e) => setFilter(e.target.value as '' | PlanirovkaHolati)}>
-              <option value="">hammasi</option>
-              {(['sotuvda', 'band', 'sotilgan'] as const).map((h) => (
-                <option key={h} value={h}>
-                  {PLANIROVKA_HOLATI_LABEL[h]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select<'' | PlanirovkaHolati>
+            aria-label="Holat"
+            value={filter}
+            options={[
+              { value: '', label: 'Holat: hammasi' },
+              ...(['sotuvda', 'band', 'sotilgan'] as const).map((h) => ({ value: h, label: PLANIROVKA_HOLATI_LABEL[h] })),
+            ]}
+            onChange={setFilter}
+          />
         </div>
 
         {loyiha && loyiha.bloklar.length === 0 && (
@@ -299,21 +297,21 @@ function PlanirovkaRow({
                 onChange={(e) => setSoni(e.target.value)}
               />
               <span>ta xonadon</span>
-              <select aria-label="Qaysi holatdan" value={dan} onChange={(e) => setDan(e.target.value as XonadonHolati)}>
-                {XONADON_HOLATLARI.map((h) => (
-                  <option key={h} value={h}>
-                    {XONADON_HOLATI_LABEL[h]} ({p[h]})
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                aria-label="Qaysi holatdan"
+                value={dan}
+                options={XONADON_HOLATLARI.map((h) => ({ value: h, label: `${XONADON_HOLATI_LABEL[h]} (${p[h]})` }))}
+                onChange={setDan}
+              />
               <span>→</span>
-              <select aria-label="Qaysi holatga" value={ga} onChange={(e) => setGa(e.target.value as XonadonHolati)}>
-                {XONADON_HOLATLARI.map((h) => (
-                  <option key={h} value={h}>
-                    {XONADON_HOLATI_LABEL[h]}
-                  </option>
-                ))}
-              </select>
+              <Select
+                size="sm"
+                aria-label="Qaysi holatga"
+                value={ga}
+                options={XONADON_HOLATLARI.map((h) => ({ value: h, label: XONADON_HOLATI_LABEL[h] }))}
+                onChange={setGa}
+              />
               <button className="primary small" disabled={busy} onClick={move}>
                 Saqlash
               </button>

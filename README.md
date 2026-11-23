@@ -24,7 +24,7 @@ apps/bot        Telegram-bot (grammY): yupqa adapter, update → serverga event 
 apps/miniapp    Mini App: React + Vite, RU/UZ lug'atlar (src/i18n)
 apps/admin      Admin-panel (hozircha bo'sh qobiq): React + Vite
 packages/shared Server va frontendlar uchun umumiy turlar (API DTO, Lang)
-packages/ui     UI kit «Yashil barg» tokenlari (tokens.css)
+packages/ui     UI kit «Yashil barg»: tokenlar (tokens.css), umumiy Select (@yh/ui/select + select.css)
 ```
 
 ## Ishga tushirish
@@ -35,6 +35,7 @@ pnpm install
 cp apps/server/.env.example apps/server/.env   # DATABASE_URL, BOT_TOKEN, BOT_API_SECRET, ADMIN_TELEGRAM_IDS
 cp apps/bot/.env.example apps/bot/.env         # BOT_TOKEN, SERVER_URL, BOT_API_SECRET (o'sha), MINIAPP_URL
 pnpm dev:server            # API :3000 (start'da migratsiyalar qo'llanadi)
+pnpm --filter @yh/server seed:demo   # DEMO katalog (narxlar, chizmalar — namuna; import:legacy bilan aralashtirmang)
 pnpm dev:bot               # bot, long polling (server ishlab turishi kerak)
 pnpm dev:miniapp           # Mini App :5173, /api → :3000
 pnpm dev:admin             # admin-panel :5174

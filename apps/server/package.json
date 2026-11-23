@@ -9,6 +9,7 @@
     "build": "tsup",
     "migrate": "tsx --env-file-if-exists=.env src/db/migrate-cli.ts",
     "seed": "tsx --env-file-if-exists=.env src/katalog/seed-cli.ts",
+    "seed:demo": "tsx --env-file-if-exists=.env src/katalog/seed-cli.ts --demo",
     "admin:create": "tsx --env-file-if-exists=.env src/admin/create-admin-cli.ts",
     "import:legacy": "tsx --env-file-if-exists=.env src/kochirish/cli.ts",
     "zaxira": "tsx --env-file-if-exists=.env src/zaxira/cli.ts",

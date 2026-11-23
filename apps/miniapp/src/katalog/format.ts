@@ -14,3 +14,8 @@ export function formatNarx(t: Translate, narx: number | null): string {
 export function formatMaydon(m2: number): string {
   return decimal(m2, 1);
 }
+
+/** «Toshkent, Mirzo Ulug'bek tumani»; no «Navoiy, Navoiy shahri» when the address already names the city. */
+export function joyNomi(shahar: string, manzil: string): string {
+  return manzil.toLowerCase().includes(shahar.toLowerCase().slice(0, 4)) ? manzil : `${shahar}, ${manzil}`;
+}

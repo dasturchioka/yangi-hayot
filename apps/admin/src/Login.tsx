@@ -26,14 +26,19 @@ export function LoginScreen({ onLogin }: { onLogin: (admin: AdminDto) => void })
   return (
     <div className="login">
       <section className="login-hero">
-        <p className="brand on-dark">Yangi Hayot</p>
         <div>
           <h1 className="h1">Xonadonlar, narxlar va yozilishlar — bitta joyda</h1>
           <p>O'zgarishlar Mini App va AI-menejerda 1 daqiqada ko'rinadi</p>
         </div>
       </section>
       <form className="login-form stack" onSubmit={submit}>
-        <p className="brand">Yangi Hayot</p>
+        <div className="login-brand">
+          <img src="/logo.png" alt="" width={40} height={40} />
+          <span>
+            <strong>Yangi Hayot</strong>
+            <span className="muted small">Sotuv bo'limi paneli</span>
+          </span>
+        </div>
         <h2 className="h2">Kirish</h2>
         <label className="field">
           <span>Login</span>

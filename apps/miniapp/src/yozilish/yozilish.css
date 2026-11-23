@@ -68,7 +68,6 @@
 }
 .yz-day-num {
   font: var(--yh-h2);
-  font-variant-numeric: tabular-nums;
 }
 .yz-day[aria-checked='true'] {
   border-color: var(--yh-primary);
@@ -105,7 +104,6 @@
   background: var(--yh-bg);
   color: var(--yh-ink);
   font: var(--yh-title);
-  font-variant-numeric: tabular-nums;
 }
 /* The booking's current time while moving it */
 .yz-time[data-current] {
@@ -225,7 +223,6 @@
   overflow-wrap: anywhere;
 }
 .yz-detail-value {
-  font-variant-numeric: tabular-nums;
 }
 .yz-detail-value[data-off] {
   color: var(--yh-muted);
@@ -325,7 +322,6 @@
   flex-direction: column;
 }
 .yz-me-text .caption {
-  font-variant-numeric: tabular-nums;
 }
 
 .yz-list {
@@ -355,7 +351,6 @@
   border-radius: 12px;
 }
 .yz-card-when {
-  font-variant-numeric: tabular-nums;
 }
 .yz-card:not([data-holat='faol']) .yz-card-when {
   color: var(--yh-ink-2);

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { api } from '../api';
 import { useLang, useT, type MessageKey, type Translate } from '../i18n';
 import { formatMaydon, formatNarx } from '../katalog/format';
-import { HolatBadge, Loaded, PlanIcon } from '../katalog/parts';
+import { EmptyState, HolatBadge, Loaded, PlanIcon } from '../katalog/parts';
+import { HeartIcon, ShareIcon } from '../icons';
 import { href, navigate } from '../router';
 import { shareToChat, showAlert } from '../telegram';
 import { useLoad } from '../useLoad';
@@ -54,26 +55,12 @@ export function UlashishButton({ p }: { p: PlanirovkaDto }) {
           .finally(() => setBusy(false));
       }}
     >
-      <ShareIcon />
+      <ShareIcon size={20} />
     </button>
   );
 }
 
-function Heart({ filled }: { filled: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ShareIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 3v12M7 8l5-5 5 5M5 14v5h14v-5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const Heart = ({ filled }: { filled: boolean }) => <HeartIcon size={20} filled={filled} />;
 
 // ---------------------------------------------------------------- Sevimlilar
 
@@ -93,7 +80,20 @@ export function SevimlilarScreen() {
       <h1 className="h1">{t('sevimli.title')}</h1>
       <Loaded load={load}>
         {({ planirovkalar }) => {
-          if (planirovkalar.length === 0) return <p className="muted">{t('sevimli.empty')}</p>;
+          if (planirovkalar.length === 0) {
+            return (
+              <EmptyState
+                icon={<HeartIcon size={26} />}
+                title={t('sevimli.emptyTitle')}
+                text={t('sevimli.empty')}
+                action={
+                  <a className="button-secondary button-fit" href={href({ name: 'loyihalar' })}>
+                    {t('sevimli.emptyAction')}
+                  </a>
+                }
+              />
+            );
+          }
           const chosen = tanlangan.filter((id) => planirovkalar.some((p) => p.id === id));
           return (
             <>
@@ -148,18 +148,18 @@ export function SevimlilarScreen() {
 
 /** Rows of the table; the lowest narx and m² narxi are highlighted. No qavat (ADR 0001). */
 const ROWS: { key: MessageKey; value: (t: Translate, p: TaqqoslashDto) => string; best?: (p: TaqqoslashDto) => number | null }[] = [
-  { key: 'taqqoslash.loyiha', value: (_t, p) => p.loyihaNomi },
   { key: 'taqqoslash.blok', value: (_t, p) => p.blokNomi },
-  { key: 'taqqoslash.xonalar', value: (_t, p) => String(p.xonalar) },
   { key: 'taqqoslash.maydon', value: (_t, p) => `${formatMaydon(p.maydon)} m²` },
-  { key: 'taqqoslash.narx', value: (t, p) => formatNarx(t, p.boshlangichNarx), best: (p) => p.boshlangichNarx },
+  { key: 'taqqoslash.narx', value: (t, p) => formatSom(t, p.boshlangichNarx), best: (p) => p.boshlangichNarx },
   { key: 'taqqoslash.kvMetr', value: (t, p) => formatSom(t, p.kvMetrNarxi), best: (p) => p.kvMetrNarxi },
   { key: 'taqqoslash.oylik', value: (t, p) => formatSom(t, p.oylikTolov), best: (p) => p.oylikTolov },
 ];
 
+/** «10,5 mln so'm»: short enough for three columns at 360px. */
 function formatSom(t: Translate, n: number | null): string {
   if (n === null) return '—';
-  return t('narx.som', { narx: new Intl.NumberFormat('ru-RU').format(n) });
+  const mln = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n / 1_000_000).replace('.', ',');
+  return t('narx.som', { narx: t('narx.mln', { n: mln }) });
 }
 
 export function TaqqoslashScreen({ ids }: { ids: number[] }) {
@@ -175,12 +175,22 @@ export function TaqqoslashScreen({ ids }: { ids: number[] }) {
         {({ planirovkalar: ps }) => (
           <div className="taqqoslash">
             <table>
+              <colgroup>
+                <col className="taqqoslash-label" />
+                {ps.map((p) => (
+                  <col key={p.id} />
+                ))}
+              </colgroup>
               <thead>
                 <tr>
                   <th />
                   {ps.map((p) => (
                     <th key={p.id}>
-                      <a href={href({ name: 'planirovka', id: p.id })}>{t('planirovka.xonalar', { n: p.xonalar })}</a>
+                      <a className="taqqoslash-head" href={href({ name: 'planirovka', id: p.id })}>
+                        <span className="title">{t('planirovka.xonalar', { n: p.xonalar })}</span>
+                        <span className="caption">{p.loyihaNomi}</span>
+                        {p.nomi && <span className="caption">{p.nomi}</span>}
+                      </a>
                     </th>
                   ))}
                 </tr>

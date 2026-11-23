@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { seedKatalog } from '../src/katalog/seed';
-import { SEED_LOYIHALAR } from '../src/katalog/seed-data';
+import { DEMO_LOYIHALAR, SEED_LOYIHALAR } from '../src/katalog/seed-data';
 import { signInitData, tmaAuth } from './support/init-data';
 import { createTestApp, type TestApp } from './support/test-app';
 
@@ -36,5 +36,32 @@ describe('Starting Katalog (seed)', () => {
 
     expect(again).toEqual([]);
     expect((await get('/api/katalog/loyihalar?shahar=toshkent')).json().loyihalar).toHaveLength(2);
+  });
+
+  it('leaves Sayhun and Navoiy without Planirovkalar (they come from import:legacy)', async () => {
+    await seedKatalog(t.db, SEED_LOYIHALAR);
+
+    const { loyihalar } = (await get('/api/katalog/loyihalar')).json();
+
+    expect(loyihalar.filter((l: { boshlangichNarx: number | null }) => l.boshlangichNarx !== null).map((l: { slug: string }) => l.slug)).toEqual([
+      'jozibali-maskan',
+    ]);
+  });
+
+  it('DEMO seed: every Loyiha on sale has priced Planirovkalar with drawings, Topshirilganlar make the portfolio', async () => {
+    await seedKatalog(t.db, DEMO_LOYIHALAR);
+
+    const { loyihalar } = (await get('/api/katalog/loyihalar')).json();
+    const { bizHaqimizda } = (await get('/api/kontent')).json();
+
+    expect(loyihalar).toHaveLength(7);
+    for (const l of loyihalar) {
+      expect(l.boshlangichNarx, l.slug).toBeGreaterThan(0);
+      expect(l.boshXonadonlar, l.slug).toBeGreaterThan(0);
+    }
+    const { loyiha } = (await get(`/api/katalog/loyihalar/${loyihalar[0].id}`)).json();
+    const planirovka = loyiha.bloklar[0].guruhlar[0].planirovkalar[0];
+    expect(planirovka.chizma).toMatch(/^\/media\/chizma\/.+\.svg$/);
+    expect(bizHaqimizda.portfolio.map((p: { nomi: string }) => p.nomi)).toEqual(['Kamalak', 'Nur', 'Qizilqum', 'Tarobiy']);
   });
 });

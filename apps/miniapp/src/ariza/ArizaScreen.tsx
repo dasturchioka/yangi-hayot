@@ -4,6 +4,7 @@ import { useLang, useT } from '../i18n';
 import { formatMaydon, formatNarx } from '../katalog/format';
 import { PlanIcon } from '../katalog/parts';
 import { href } from '../router';
+import { CheckIcon } from '../icons';
 
 type Sending = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'failed'; reason: 'limit' | 'other' };
 
@@ -153,9 +154,7 @@ export function Sent({ text }: { text?: string }) {
     <div className="ariza-done" role="status">
       <div className="ariza-done-mark" aria-hidden>
         <span>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12.5l4.5 4.5L19 7.5" />
-          </svg>
+          <CheckIcon size={28} />
         </span>
       </div>
       <h1 className="h2">{t('ariza.sent.title')}</h1>

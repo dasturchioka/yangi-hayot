@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
 import { formatLocal, Kontekst, localDigits } from '../ariza/ArizaScreen';
 import { useLang, useT, type MessageKey } from '../i18n';
-import { formatMaydon } from '../katalog/format';
+import { formatMaydon, joyNomi } from '../katalog/format';
 import { Loaded, PlanIcon } from '../katalog/parts';
 import { PinIcon } from '../kontent/icons';
 import { href, replaceRoute } from '../router';
@@ -12,6 +12,7 @@ import { useLoad } from '../useLoad';
 import { haftaNomi, haftaQisqa, kunRaqami, sanaQisqa, sanaToliq, xaritaUrl } from './format';
 import { CalendarIcon, CheckIcon, HomeIcon } from './icons';
 import './yozilish.css';
+import { CheckIcon as CheckMark } from '../icons';
 
 type Sending = { kind: 'idle' } | { kind: 'sending' } | { kind: 'failed'; reason: 'slot' | 'limit' | 'other' };
 
@@ -310,7 +311,7 @@ function LoyihaPicker({ value, onChange }: { value: number | null; onChange: (id
                 <span className="ariza-kontekst-text">
                   <span className="title">{l.nomi}</span>
                   <span className="caption">
-                    {t(`shahar.${l.shahar}`)}, {l.manzil}
+                    {joyNomi(t(`shahar.${l.shahar}`), l.manzil)}
                   </span>
                 </span>
                 <span className="yz-loyiha-check" aria-hidden>
@@ -457,9 +458,7 @@ function Korish({ initial, yangi }: { initial: YozilishDto; yangi?: 'yozildi' | 
         <>
           <div className="ariza-done-mark" aria-hidden>
             <span>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12.5l4.5 4.5L19 7.5" />
-              </svg>
+              <CheckMark size={28} />
             </span>
           </div>
           <h1 className="h2" role="status">

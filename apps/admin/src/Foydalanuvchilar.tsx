@@ -2,6 +2,7 @@ import { ADMIN_ROLLAR, type AdminDto, type AdminRol } from '@yh/shared';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { adminApi, errorText } from './api';
 import { ROL_LABEL } from './format';
+import { Select } from '@yh/ui/select';
 
 /** «Foydalanuvchilar» (Administrator): admin-panel logins, roles, deactivation, new password. */
 export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
@@ -73,17 +74,14 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
                 <td>{u.nomi}</td>
                 <td>{u.login}</td>
                 <td>
-                  <select
+                  <Select
+                    size="sm"
+                    aria-label={`${u.nomi}: rol`}
                     value={u.rol}
                     disabled={u.id === me.id}
-                    onChange={(e) => void act(() => adminApi('PATCH', `/users/${u.id}`, { rol: e.target.value }))}
-                  >
-                    {ADMIN_ROLLAR.map((r) => (
-                      <option key={r} value={r}>
-                        {ROL_LABEL[r]}
-                      </option>
-                    ))}
-                  </select>
+                    options={ADMIN_ROLLAR.map((r) => ({ value: r, label: ROL_LABEL[r] }))}
+                    onChange={(rol) => void act(() => adminApi('PATCH', `/users/${u.id}`, { rol }))}
+                  />
                 </td>
                 <td>{u.faol ? 'Faol' : "O'chirilgan"}</td>
                 <td className="actions">
@@ -112,16 +110,12 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
             <span>Login (lotin harf, raqam, . _ -)</span>
             <input value={login} onChange={(e) => setLogin(e.target.value)} required pattern="[a-zA-Z0-9._\-]{3,32}" />
           </label>
-          <label className="field">
-            <span>Rol</span>
-            <select value={rol} onChange={(e) => setRol(e.target.value as AdminRol)}>
-              {ADMIN_ROLLAR.map((r) => (
-                <option key={r} value={r}>
-                  {ROL_LABEL[r]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Rol"
+            value={rol}
+            options={ADMIN_ROLLAR.map((r) => ({ value: r, label: ROL_LABEL[r] }))}
+            onChange={setRol}
+          />
           <label className="field grow">
             <span>Parol (kamida 8 belgi)</span>
             <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />

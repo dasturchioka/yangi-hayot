@@ -1,4 +1,5 @@
 import '@yh/ui/tokens.css';
+import '@yh/ui/select.css';
 import './global.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

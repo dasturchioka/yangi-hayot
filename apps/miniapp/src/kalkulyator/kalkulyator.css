@@ -28,7 +28,6 @@
   font: var(--yh-caption);
   font-weight: 700;
   color: var(--yh-ink);
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -76,7 +75,6 @@
   font: var(--yh-title);
   /* 16px+: iOS does not zoom on focus */
   font-size: 16px;
-  font-variant-numeric: tabular-nums;
 }
 .kalk-input input::placeholder {
   color: var(--yh-muted);
@@ -171,7 +169,6 @@
   background: var(--yh-bg);
   color: var(--yh-ink);
   font: var(--yh-title);
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -241,13 +238,11 @@
 .kalk-natija-big {
   font: 700 32px/38px var(--yh-font);
   letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .kalk-natija-sub {
   font: var(--yh-caption);
   color: #d6e8de;
-  font-variant-numeric: tabular-nums;
 }
 .kalk-natija-grid {
   display: grid;
@@ -267,7 +262,6 @@
 .kalk-natija-grid dd {
   margin: 2px 0 0;
   font: var(--yh-title);
-  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .kalk-natija-empty {
@@ -303,7 +297,6 @@
   color: var(--yh-ink-2);
 }
 .kalk-xulosa .title {
-  font-variant-numeric: tabular-nums;
 }
 .kalk-link {
   margin-top: 6px;

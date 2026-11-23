@@ -2,8 +2,25 @@
   "name": "@yh/ui",
   "version": "0.0.0",
   "private": true,
-  "description": "UI kit «Yashil barg» design tokens shared by the Mini App and the admin-panel",
+  "type": "module",
+  "description": "UI kit «Yashil barg»: design tokens and shared React components (Select) for the Mini App and the admin-panel",
   "exports": {
-    "./tokens.css": "./tokens.css"
+    "./tokens.css": "./tokens.css",
+    "./select": "./src/Select.tsx",
+    "./select.css": "./src/select.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "lucide-react": "0.468.0"
+  },
+  "peerDependencies": {
+    "react": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.1",
+    "typescript": "^7.0.2"
   }
 }
