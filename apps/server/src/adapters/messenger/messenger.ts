@@ -14,7 +14,8 @@ export interface OutgoingMessage {
   /** Telegram chat id (Mijoz telegram id or a group id). */
   chatId: string;
   text?: string;
-  media?: { kind: 'photo' | 'video'; url: string };
+  /** Photo/video with `text` as caption; `fileId` is a Telegram file_id or an https URL. */
+  media?: { kind: 'photo' | 'video'; fileId: string };
   /** Inline keyboard: rows of buttons. */
   buttons?: MessageButton[][];
 }
