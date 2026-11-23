@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from './api';
 import { I18nProvider, useT } from './i18n';
 import { LoyihaScreen, LoyihalarScreen, PlanirovkalarScreen, PlanirovkaScreen } from './katalog/screens';
+import { BizHaqimizdaScreen, SotibOlishScreen } from './kontent/screens';
 import { navigate, useRoute, type Route } from './router';
 import { SevimlilarScreen, TaqqoslashScreen } from './sevimlilar/screens';
 import { openStartScreen } from './start';
@@ -66,5 +67,9 @@ function Screen({ route }: { route: Route }) {
       return <SevimlilarScreen />;
     case 'taqqoslash':
       return <TaqqoslashScreen key={route.ids.join(',')} ids={route.ids} />;
+    case 'sotibOlish':
+      return <SotibOlishScreen />;
+    case 'bizHaqimizda':
+      return <BizHaqimizdaScreen />;
   }
 }

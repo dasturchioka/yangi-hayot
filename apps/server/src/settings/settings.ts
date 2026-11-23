@@ -1,12 +1,13 @@
-import type { BotMedia, Lang } from '@yh/shared';
+import type { BizHaqimizdaKontent, BotMedia, KontaktlarKontent, Lang, SotibOlishKontent } from '@yh/shared';
+import { DEFAULT_BIZ_HAQIMIZDA, DEFAULT_KONTAKTLAR, DEFAULT_SOTIB_OLISH } from '../kontent/defaults';
 import type pg from 'pg';
 
 /** Welcome (salomlashish) set by an administrator with /welcome. */
 export type WelcomeContent = Record<Lang, { text: string; media?: BotMedia }>;
 
 /**
- * Settings changed without code (by administrators in the bot, later in the
- * admin-panel). Stored as JSON in the `settings` table, one row per key.
+ * Settings changed without code (by administrators in the bot or in the
+ * admin-panel). New keys: add a field + default here, no migration needed. Stored as JSON in the `settings` table, one row per key.
  */
 export interface Settings {
   /** Telegram IDs of administrators (/welcome, /broadcast, /report). */
@@ -15,9 +16,22 @@ export interface Settings {
   managersGroupId: string | null;
   /** Welcome text and media; null = built-in default text. */
   welcome: WelcomeContent | null;
+  /** «Qanday sotib olish» + FAQ (admin-panel → Kontent, #13). */
+  sotibOlish: SotibOlishKontent;
+  /** «Biz haqimizda» text and company numbers (#13). */
+  bizHaqimizda: BizHaqimizdaKontent;
+  /** Phone (1349), office address, working hours, map (#13). */
+  kontaktlar: KontaktlarKontent;
 }
 
-const DEFAULTS: Settings = { admins: [], managersGroupId: null, welcome: null };
+const DEFAULTS: Settings = {
+  admins: [],
+  managersGroupId: null,
+  welcome: null,
+  sotibOlish: DEFAULT_SOTIB_OLISH,
+  bizHaqimizda: DEFAULT_BIZ_HAQIMIZDA,
+  kontaktlar: DEFAULT_KONTAKTLAR,
+};
 
 export async function getSetting<K extends keyof Settings>(db: pg.Pool, key: K): Promise<Settings[K]> {
   const { rows } = await db.query<{ value: Settings[K] }>('SELECT value FROM settings WHERE key = $1', [key]);

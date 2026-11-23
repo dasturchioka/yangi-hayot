@@ -7,7 +7,9 @@ export type Route =
   | { name: 'planirovkalar'; loyihaId: number }
   | { name: 'planirovka'; id: number }
   | { name: 'sevimlilar' }
-  | { name: 'taqqoslash'; ids: number[] };
+  | { name: 'taqqoslash'; ids: number[] }
+  | { name: 'sotibOlish' }
+  | { name: 'bizHaqimizda' };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/');
@@ -17,6 +19,8 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'planirovka' && id > 0) return { name: 'planirovka', id };
   if (parts[0] === 'sevimlilar') return { name: 'sevimlilar' };
+  if (parts[0] === 'qanday-sotib-olish') return { name: 'sotibOlish' };
+  if (parts[0] === 'biz-haqimizda' || parts[0] === 'kontaktlar') return { name: 'bizHaqimizda' };
   if (parts[0] === 'taqqoslash') {
     const ids = (parts[1] ?? '').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0);
     if (ids.length > 0) return { name: 'taqqoslash', ids };
@@ -38,6 +42,10 @@ export function href(route: Route): string {
       return '#/sevimlilar';
     case 'taqqoslash':
       return `#/taqqoslash/${route.ids.join(',')}`;
+    case 'sotibOlish':
+      return '#/qanday-sotib-olish';
+    case 'bizHaqimizda':
+      return '#/biz-haqimizda';
   }
 }
 
