@@ -95,8 +95,8 @@ describe('/broadcast in the bot', () => {
     const m = await newMijoz('uz');
     const user = { id: Number(m), first_name: 'X' };
 
-    const reply = sends(await botEvent(t, user, { type: 'command', name: 'broadcast' }));
-    expect(reply[0]!.text).toContain('Rahmat'); // the ordinary fallback reply
+    // not an admin: /broadcast is ignored, as any unknown command
+    expect(await botEvent(t, user, { type: 'command', name: 'broadcast' })).toEqual([]);
     await botEvent(t, user, text('Spam'));
     expect(await botEvent(t, user, { type: 'callback', data: 'bc:aud:all' })).toEqual([]);
 
@@ -110,8 +110,8 @@ describe('/broadcast in the bot', () => {
   it('/restart abandons an unfinished /broadcast', async () => {
     await botEvent(t, admin, { type: 'command', name: 'broadcast' });
     await botEvent(t, admin, { type: 'command', name: 'restart' });
-    const reply = sends(await botEvent(t, admin, text('Salom')));
-    expect(reply[0]!.text).toContain('Rahmat');
+    // an ordinary message again: no rassilka prompt (and no automatic reply)
+    expect(sends(await botEvent(t, admin, text('Salom')))).toEqual([]);
   });
 });
 

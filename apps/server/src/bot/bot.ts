@@ -54,18 +54,19 @@ async function onCommand(ctx: Ctx, name: string): Promise<BotAction[]> {
       return restart(ctx);
     case 'welcome':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginWelcomeEdit(ctx);
-      return [fallbackReply(ctx)];
+      return [];
     case 'broadcast':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) return beginRassilka(rassilkaCtx(ctx));
-      return [fallbackReply(ctx)];
+      return [];
     case 'report':
       if (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId)) {
         const sana = toTashkent(ctx.now).date;
         return [{ type: 'send', chatId: ctx.mijoz.telegramId, text: kunlikMatn(await kunlikHisobot(ctx.deps.db, sana)) }];
       }
-      return [fallbackReply(ctx)];
+      return [];
+    // Unknown commands (and admin ones from a Mijoz): no reply.
     default:
-      return [fallbackReply(ctx)];
+      return [];
   }
 }
 
@@ -83,7 +84,8 @@ async function onMessage(ctx: Ctx, message: BotIncomingMessage): Promise<BotActi
   if (isRassilkaStep(ctx.mijoz.botStep) && (await isAdmin(ctx.deps.db, ctx.mijoz.telegramId))) {
     return continueRassilka(rassilkaCtx(ctx), message);
   }
-  return [fallbackReply(ctx), ...(await toManagersGroup(ctx, message))];
+  // A free message gets no automatic reply: it only goes to the managers group, who answer themselves.
+  return toManagersGroup(ctx, message);
 }
 
 const RESTART_LABELS = LANGS.map((l) => texts(l).btnRestart);
@@ -108,12 +110,6 @@ async function restart(ctx: Ctx): Promise<BotAction[]> {
     { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).restarted, keyboard: mainKeyboard(lang) },
     ...(await welcome(ctx, lang)),
   ];
-}
-
-/** Reply to a message the bot cannot answer yet (until the AI manager, 9-b.); points at the bottom keyboard. */
-function fallbackReply(ctx: Ctx): BotAction {
-  const lang = ctx.mijoz.lang;
-  return { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).fallback, keyboard: mainKeyboard(lang) };
 }
 
 /** Header with who wrote + a copy of the message, to the managers group (if configured). */

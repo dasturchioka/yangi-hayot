@@ -9,7 +9,6 @@ export const TEXTS = {
     defaultWelcome:
       'Здравствуйте! Это Yangi Hayot — строим жилые комплексы в Ташкенте и Навои.\n' +
       'Смотрите планировки и цены в меню или просто напишите вопрос — менеджер ответит.',
-    fallback: 'Спасибо! Передали ваше сообщение менеджеру. А пока можно открыть меню или оставить заявку 👇',
     btnMenu: '📱 Открыть меню',
     btnBooking: '📅 Записаться на просмотр',
     btnAriza: '📝 Оставить заявку',
@@ -57,7 +56,6 @@ export const TEXTS = {
     defaultWelcome:
       'Assalomu alaykum! Bu Yangi Hayot — Toshkent va Navoiyda turar-joy majmualarini quramiz.\n' +
       "Planirovka va narxlarni menyuda ko'ring yoki savolingizni yozing — menejer javob beradi.",
-    fallback: "Rahmat! Xabaringizni menejerga yubordik. Hozircha menyuni ochishingiz yoki ariza qoldirishingiz mumkin 👇",
     btnMenu: '📱 Menyuni ochish',
     btnBooking: "📅 Ko'rishga yozilish",
     btnAriza: '📝 Ariza qoldirish',

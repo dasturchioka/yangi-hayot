@@ -285,6 +285,8 @@ describe('/restart and the permanent restart button', () => {
 });
 
 describe('text and voice messages (until the AI manager is connected)', () => {
+  const toMijoz = (actions: Awaited<ReturnType<typeof botEvent>>) => actions.filter((a) => a.chatId === String(aziz.id));
+
   const GROUP = '-1001234567890';
 
   beforeEach(async () => {
@@ -293,12 +295,16 @@ describe('text and voice messages (until the AI manager is connected)', () => {
     await botEvent(t, aziz, { type: 'callback', data: 'lang:uz' });
   });
 
-  it('answers with the «Menyuni ochish» / «Ariza qoldirish» bottom keyboard in the Mijoz language', async () => {
+  it('sends no automatic reply to the Mijoz', async () => {
     const actions = await botEvent(t, aziz, text('Narxlar qancha?', 11));
 
-    const reply = sends(actions).find((a) => a.chatId === String(aziz.id))!;
-    expect(reply.buttons).toBeUndefined();
-    expect(reply.keyboard).toEqual([['📱 Menyuni ochish', '📝 Ariza qoldirish']]);
+    expect(toMijoz(actions)).toEqual([]);
+  });
+
+  it('ignores an unknown command or an admin command from a Mijoz', async () => {
+    for (const name of ['help', 'broadcast', 'welcome', 'report']) {
+      expect(await botEvent(t, aziz, { type: 'command', name })).toEqual([]);
+    }
   });
 
   it.each([
@@ -331,14 +337,12 @@ describe('text and voice messages (until the AI manager is connected)', () => {
     });
 
     expect(actions).toContainEqual({ type: 'copy', chatId: GROUP, fromChatId: '700000001', messageId: 12 });
-    expect(sends(actions).some((a) => a.chatId === String(aziz.id))).toBe(true);
+    expect(toMijoz(actions)).toEqual([]);
   });
 
-  it('still answers the Mijoz when no managers group is configured', async () => {
+  it('does nothing when no managers group is configured', async () => {
     await setSetting(t.db, 'managersGroupId', null, t.clock.now());
-    const actions = await botEvent(t, aziz, text('Salom', 13));
 
-    expect(actions).toHaveLength(1);
-    expect(actions[0]).toMatchObject({ type: 'send', chatId: '700000001' });
+    expect(await botEvent(t, aziz, text('Salom', 13))).toEqual([]);
   });
 });
