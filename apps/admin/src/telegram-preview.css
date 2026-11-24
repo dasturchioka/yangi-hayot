@@ -1,19 +1,26 @@
 /*
- * TelegramPreview: the bot chat exactly as Telegram iOS (Day theme) draws it.
+ * TelegramPreview: the bot chat exactly as Telegram iOS (Night theme) draws it on an iPhone.
  * Colours are Telegram's, not the kit's — kept as local --tgm-* tokens on the root.
  * Prefix tgm-: Dojim's own preview already owns .tg-* (that clash once broke this screen).
  */
 .tgm {
   --tgm-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, var(--yh-font);
-  --tgm-accent: #007aff;
-  --tgm-text: #000;
-  --tgm-secondary: #8e8e93;
-  --tgm-bar: rgb(248 248 248 / 0.92);
-  --tgm-hairline: rgb(0 0 0 / 0.16);
-  --tgm-bubble: #fff;
-  --tgm-time: #a3acb5;
-  /* translucent chips over the wallpaper: date, service message, inline buttons */
-  --tgm-chip: rgb(58 88 48 / 0.3);
+  --tgm-accent: #6ab3f3;
+  --tgm-text: #fff;
+  --tgm-secondary: #7d93a8;
+  --tgm-bar: #191b20;
+  --tgm-bar-line: #2b2d32;
+  --tgm-input-bar: #1c1c1d;
+  --tgm-input-line: #2c2c2e;
+  --tgm-icon: #8e8e93;
+  --tgm-wall-top: #152536;
+  --tgm-wall-bottom: #101c2a;
+  --tgm-bubble: #182533;
+  --tgm-bubble-text: #f2f5f7;
+  --tgm-time: #6d8195;
+  /* translucent chips over the wallpaper: date, service message */
+  --tgm-chip: rgb(12 20 31 / 0.82);
+  --tgm-frame: #1c1f1e;
   --tgm-ease: cubic-bezier(0.23, 1, 0.32, 1);
 
   position: relative;
@@ -21,56 +28,68 @@
   flex-direction: column;
   width: 100%;
   max-width: 360px;
-  height: 680px;
+  height: 760px;
   overflow: hidden;
-  border: 9px solid #121413;
-  border-radius: 46px;
+  border: 10px solid var(--tgm-frame);
+  border-radius: 54px;
   background: var(--tgm-bar);
+  /* the metal rim: dark inner line, light outer edge, then the drop shadow */
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.06) inset,
-    0 2px 4px rgb(11 61 42 / 0.12),
-    0 24px 56px rgb(11 61 42 / 0.2);
+    0 0 0 1px #2e3532,
+    0 0 0 2px #7f8181,
+    0 2px 6px rgb(0 0 0 / 0.18),
+    0 28px 60px rgb(11 30 22 / 0.32);
   font-family: var(--tgm-font);
   color: var(--tgm-text);
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
 
-/* ---- Status bar + navigation bar ---- */
+/* ---- Dynamic Island + status bar ---- */
+.tgm-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 3;
+  width: 96px;
+  height: 28px;
+  margin-left: -48px;
+  border-radius: 14px;
+  background: #000;
+}
 .tgm-status {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 34px;
-  padding: 6px 22px 0 26px;
-  font: 600 14px/1 var(--tgm-font);
+  height: 48px;
+  padding: 4px 24px 0 34px;
+  font: 600 15px/1 var(--tgm-font);
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 .tgm-status-icons {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-}
-.tgm-status-icons svg {
-  stroke-width: 2.2;
+  gap: 6px;
 }
 
+/* ---- Navigation bar ---- */
 .tgm-nav {
   position: relative;
   z-index: 2;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  height: 50px;
-  padding: 0 10px 0 8px;
-  border-bottom: 0.5px solid var(--tgm-hairline);
+  height: 54px;
+  padding: 0 12px 4px 10px;
+  border-bottom: 0.5px solid var(--tgm-bar-line);
 }
 .tgm-back {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   color: var(--tgm-accent);
-  font: 400 16px/1 var(--tgm-font);
+  font: 400 17px/1 var(--tgm-font);
 }
 .tgm-peer {
   display: grid;
@@ -79,7 +98,7 @@
   min-width: 0;
 }
 .tgm-peer b {
-  font: 600 16px/20px var(--tgm-font);
+  font: 600 17px/21px var(--tgm-font);
   white-space: nowrap;
 }
 .tgm-peer small {
@@ -125,31 +144,29 @@
 .tgm-avatar {
   justify-self: end;
   box-sizing: border-box;
+  width: 38px;
+  height: 38px;
   padding: 6px;
   border-radius: 50%;
   background: linear-gradient(160deg, #e9f8ec, #cfeed6);
   object-fit: contain;
 }
 
-/* ---- Chat: Telegram's default gradient wallpaper with a light doodle layer ---- */
+/* ---- Chat: the Night wallpaper with its line doodles ---- */
 .tgm-chat {
   position: relative;
   flex: 1;
   min-height: 0;
-  background:
-    radial-gradient(circle at 8% 6%, #dbddbb 0, transparent 58%),
-    radial-gradient(circle at 96% 22%, #6ba587 0, transparent 56%),
-    radial-gradient(circle at 10% 92%, #88b884 0, transparent 60%),
-    radial-gradient(circle at 92% 96%, #d5d88d 0, transparent 58%),
-    #a8c68c;
+  background: linear-gradient(180deg, var(--tgm-wall-top), var(--tgm-wall-bottom));
 }
 .tgm-chat::before {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.12;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%23163a20' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 18c4-6 12-6 14 0s-6 10-14 0z'/%3E%3Ccircle cx='70' cy='16' r='6'/%3E%3Cpath d='M98 30l6-10 6 10-6 10z'/%3E%3Cpath d='M20 70h14M27 63v14'/%3E%3Cpath d='M60 58c6 0 10 5 10 10s-4 10-10 10'/%3E%3Cpath d='M92 74c3-5 9-5 12 0'/%3E%3Ccircle cx='40' cy='104' r='3'/%3E%3Cpath d='M78 100l8 8M86 100l-8 8'/%3E%3Cpath d='M6 44c6 2 10-2 12-6'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
+  opacity: 0.075;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='170' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='22' cy='22' r='9'/%3E%3Cpath d='M70 14l8 16 8-16'/%3E%3Cpath d='M130 12v20M120 22h20'/%3E%3Cpath d='M14 80c8-8 16 8 24 0s16 8 24 0'/%3E%3Crect x='98' y='68' width='26' height='22' rx='6'/%3E%3Cpath d='M10 140l22-10'/%3E%3Ccircle cx='70' cy='134' r='8'/%3E%3Cpath d='M128 124l12 8-12 8z'/%3E%3C/svg%3E");
+  background-size: 180px 170px;
+  background-position: 6px 6px;
   pointer-events: none;
 }
 .tgm-scroll {
@@ -163,12 +180,12 @@
   scrollbar-width: none;
 }
 
-/* date and service messages: a translucent chip over the wallpaper */
+/* date and service messages: a dark translucent chip over the wallpaper */
 .tgm-date,
 .tgm-service {
   align-self: center;
   margin: 0;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: 12px;
   background: var(--tgm-chip);
   -webkit-backdrop-filter: blur(12px);
@@ -213,7 +230,6 @@
   min-width: 64px;
   border-radius: 17px 17px 17px 4px;
   background: var(--tgm-bubble);
-  box-shadow: 0 1px 0.5px rgb(0 0 0 / 0.13);
 }
 .tgm-tail {
   position: absolute;
@@ -224,9 +240,9 @@
 .tgm-text {
   position: relative;
   margin: 0;
-  padding: 6px 10px 7px 12px;
+  padding: 7px 11px 8px 12px;
   font: 400 15px/20px var(--tgm-font);
-  letter-spacing: -0.01em;
+  color: var(--tgm-bubble-text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
@@ -242,8 +258,8 @@
 }
 .tgm-time {
   position: absolute;
-  right: 10px;
-  bottom: 5px;
+  right: 11px;
+  bottom: 6px;
   font: 400 11px/14px var(--tgm-font);
   font-variant-numeric: tabular-nums;
   color: var(--tgm-time);
@@ -253,7 +269,7 @@
   bottom: 7px;
   padding: 1px 6px;
   border-radius: 9px;
-  background: rgb(0 0 0 / 0.4);
+  background: rgb(0 0 0 / 0.45);
   color: #fff;
 }
 
@@ -264,7 +280,7 @@
   margin: 2px 2px 0;
   overflow: hidden;
   border-radius: 15px 15px 5px 5px;
-  background: #e4e9ec;
+  background: #22303f;
 }
 .media-only .tgm-media {
   margin: 2px;
@@ -275,7 +291,7 @@
 }
 .tgm-media.video {
   aspect-ratio: 16 / 9;
-  background: linear-gradient(160deg, #2b3a33, #121714);
+  background: linear-gradient(160deg, #24313d, #0d131a);
 }
 .tgm-media img {
   position: absolute;
@@ -310,7 +326,7 @@
   height: 48px;
   padding-left: 3px;
   border-radius: 50%;
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(0 0 0 / 0.5);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   color: #fff;
@@ -326,7 +342,7 @@
   min-height: 38px;
   padding: 9px 22px;
   border-radius: 10px 10px 14px 14px;
-  background: var(--tgm-chip);
+  background: rgb(24 37 51 / 0.78);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: #fff;
@@ -348,27 +364,39 @@
   position: absolute;
   top: 5px;
   right: 5px;
+  color: var(--tgm-secondary);
 }
 
-/* ---- Input bar ---- */
+/* ---- Input bar + home indicator ---- */
 .tgm-input {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 7px 12px 9px;
-  border-top: 0.5px solid var(--tgm-hairline);
-  color: var(--tgm-secondary);
+  min-height: 54px;
+  padding: 8px 12px 26px;
+  border-top: 0.5px solid var(--tgm-input-line);
+  background: var(--tgm-input-bar);
+  color: var(--tgm-icon);
 }
 .tgm-field {
   flex: 1;
   height: 34px;
   padding: 0 13px;
-  border: 0.5px solid #d9d9de;
+  border: 0.5px solid #3a3a3c;
   border-radius: 17px;
-  background: #fff;
-  color: #c2c2c7;
+  background: var(--tgm-input-bar);
+  color: #76767a;
   font: 400 16px/33px var(--tgm-font);
+}
+.tgm-home {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 124px;
+  height: 5px;
+  margin-left: -62px;
+  border-radius: 3px;
+  background: #ddddde;
 }
 
 @media (prefers-reduced-motion: reduce) {

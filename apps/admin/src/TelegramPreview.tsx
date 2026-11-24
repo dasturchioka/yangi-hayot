@@ -10,8 +10,9 @@ export interface TelegramMessage {
 }
 
 /**
- * The bot's chat as Telegram (iOS, Day theme) shows it: status bar, navigation bar, the default
- * wallpaper, a date pill, the incoming bubble with its tail, time and inline button, the input bar.
+ * The bot's chat as Telegram (iOS, Night theme) shows it on an iPhone: Dynamic Island and status bar,
+ * navigation bar, the dark doodle wallpaper, a date pill, the incoming bubble with its tail, time and
+ * inline button, the input bar and the home indicator.
  *
  * Motion is reserved for moments, never per keystroke:
  * - while the admin types, the header says the bot is «yozmoqda…» (as Telegram shows a typing peer);
@@ -37,12 +38,27 @@ export function TelegramPreview({
 
   return (
     <div className="tgm" role="img" aria-label={empty ? placeholder : `Telegram xabari: ${text}`}>
+      <span className="tgm-island" aria-hidden="true" />
       <div className="tgm-status" aria-hidden="true">
-        <span className="tgm-status-time">{now}</span>
+        <span className="tgm-status-time">9:41</span>
+        {/* iOS glyphs: filled signal bars, wifi arcs, a solid battery */}
         <span className="tgm-status-icons">
-          <Icon name="signal" size={15} />
-          <Icon name="wifi" size={15} />
-          <Icon name="battery" size={20} />
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor">
+            <rect x="0" y="7" width="3" height="4" rx="0.8" />
+            <rect x="4.6" y="5" width="3" height="6" rx="0.8" />
+            <rect x="9.2" y="2.6" width="3" height="8.4" rx="0.8" />
+            <rect x="13.8" y="0" width="3" height="11" rx="0.8" />
+          </svg>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor">
+            <path d="M7.5 2.2c2.1 0 4 .8 5.5 2.1l1.1-1.1A9.4 9.4 0 0 0 7.5.6 9.4 9.4 0 0 0 .9 3.2L2 4.3a7.8 7.8 0 0 1 5.5-2.1z" />
+            <path d="M7.5 5.3c1.3 0 2.4.5 3.3 1.2l1.1-1.1a6.3 6.3 0 0 0-8.8 0l1.1 1.1c.9-.7 2-1.2 3.3-1.2z" />
+            <path d="M7.5 8.3c.5 0 .9.2 1.2.5L7.5 10 6.3 8.8c.3-.3.7-.5 1.2-.5z" />
+          </svg>
+          <svg width="26" height="12" viewBox="0 0 26 12" fill="none">
+            <rect x="0.5" y="0.5" width="22" height="11" rx="3.4" stroke="currentColor" strokeOpacity="0.4" />
+            <rect x="2" y="2" width="19" height="8" rx="2.2" fill="currentColor" />
+            <path d="M24 4v4c.8-.3 1.3-1.1 1.3-2S24.8 4.3 24 4z" fill="currentColor" fillOpacity="0.45" />
+          </svg>
         </span>
       </div>
 
@@ -112,6 +128,7 @@ export function TelegramPreview({
         <span className="tgm-field">Xabar</span>
         <Icon name="mic" size={22} />
       </footer>
+      <span className="tgm-home" aria-hidden="true" />
     </div>
   );
 }
