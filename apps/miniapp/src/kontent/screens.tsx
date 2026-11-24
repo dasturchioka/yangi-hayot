@@ -1,8 +1,10 @@
 import type { KontentResponse } from '@yh/shared';
+import { useRef } from 'react';
 import { api } from '../api';
 import { useLang, useT } from '../i18n';
 import { ArizaButton, Loaded } from '../katalog/parts';
 import { openExternal } from '../telegram';
+import { useAutoSlide } from '../useAutoSlide';
 import { useLoad } from '../useLoad';
 import './kontent.css';
 import { HisoblashButton, YozilishButton } from './cta';
@@ -95,6 +97,26 @@ function Hujjatlar({ title, items }: { title: string; items: string[] }) {
 
 // ---------------------------------------------------------------- «Biz haqimizda» + kontaktlar
 
+/** Delivered Loyihalar: a sideways strip that moves on by itself (see useAutoSlide). */
+function Portfolio({ items }: { items: KontentResponse['bizHaqimizda']['portfolio'] }) {
+  const t = useT();
+  const ref = useRef<HTMLDivElement>(null);
+  useAutoSlide(ref, items.length);
+  return (
+    <div className="portfolio" role="list" ref={ref}>
+      {items.map((l) => (
+        <article key={l.id} className="portfolio-card" role="listitem">
+          <div className="portfolio-photo">{l.foto && <img src={l.foto} alt="" loading="lazy" />}</div>
+          <p className="title">{l.nomi}</p>
+          <p className="caption muted">
+            {t(`shahar.${l.shahar}`)} · {t('kontent.topshirilgan')}
+          </p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export function BizHaqimizdaScreen() {
   const load = useKontent();
   return <Loaded load={load}>{(k) => <BizHaqimizda k={k} />}</Loaded>;
@@ -126,17 +148,7 @@ function BizHaqimizda({ k }: { k: KontentResponse }) {
       {b.portfolio.length > 0 && (
         <section className="kontent-section">
           <h2 className="h3">{t('kontent.portfolio', { n: b.portfolio.length })}</h2>
-          <div className="portfolio" role="list">
-            {b.portfolio.map((l) => (
-              <article key={l.id} className="portfolio-card" role="listitem">
-                <div className="portfolio-photo">{l.foto && <img src={l.foto} alt="" loading="lazy" />}</div>
-                <p className="title">{l.nomi}</p>
-                <p className="caption muted">
-                  {t(`shahar.${l.shahar}`)} · {t('kontent.topshirilgan')}
-                </p>
-              </article>
-            ))}
-          </div>
+          <Portfolio items={b.portfolio} />
         </section>
       )}
 

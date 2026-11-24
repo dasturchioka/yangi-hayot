@@ -18,6 +18,7 @@ import { SevimliButton, UlashishButton } from '../sevimlilar/screens';
 import { VideoYozilishLink, YozilishButton } from '../kontent/cta';
 import '../yozilish/yozilish.css';
 import { openExternal } from '../telegram';
+import { useAutoSlide } from '../useAutoSlide';
 import { useLoad, type Load } from '../useLoad';
 import { formatMaydon, formatNarx, joyNomi } from './format';
 import { ArizaButton, BoshBadge, Chizma, HolatBadge, Loaded, PlanirovkaRow, VideoButton } from './parts';
@@ -206,6 +207,7 @@ function Gallery({ l }: { l: LoyihaDto }) {
     const el = ref.current;
     if (el) setIndex(Math.round(el.scrollLeft / el.clientWidth));
   };
+  useAutoSlide(ref, l.fotolar.length);
   return (
     <div className="gallery-wrap">
       <div className="gallery" ref={ref} onScroll={onScroll}>
