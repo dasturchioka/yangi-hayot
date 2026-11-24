@@ -11,6 +11,10 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
   const [users, setUsers] = useState<AdminDto[]>([]);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [parolUchun, setParolUchun] = useState<AdminDto | null>(null);
+  // The modal keeps its user while it closes.
+  const [parolShown, setParolShown] = useState<AdminDto | null>(null);
+  if (parolUchun && parolUchun !== parolShown) setParolShown(parolUchun);
 
   const reload = useCallback(async () => {
     try {
@@ -32,11 +36,6 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
     } catch (e) {
       setError(errorText(e));
     }
-  }
-
-  function newPassword(u: AdminDto) {
-    const p = window.prompt(`${u.nomi} uchun yangi parol (kamida 8 belgi)`);
-    if (p) void act(() => adminApi('PATCH', `/users/${u.id}`, { password: p }));
   }
 
   return (
@@ -80,7 +79,7 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
                 </td>
                 <td>{u.faol ? 'Faol' : "O'chirilgan"}</td>
                 <td className="actions">
-                  <button className="link" onClick={() => newPassword(u)}>
+                  <button className="link" onClick={() => setParolUchun(u)}>
                     Yangi parol
                   </button>
                   {u.id !== me.id && (
@@ -94,6 +93,17 @@ export function FoydalanuvchilarScreen({ me }: { me: AdminDto }) {
           </tbody>
         </table>
       </section>
+      <Modal open={parolUchun !== null} onClose={() => setParolUchun(null)} title={`${parolShown?.nomi ?? ''} uchun yangi parol`}>
+        {parolShown && (
+          <NewPasswordForm
+            user={parolShown}
+            onDone={() => {
+              setParolUchun(null);
+              setError('');
+            }}
+          />
+        )}
+      </Modal>
       <Modal open={creating} onClose={() => setCreating(false)} title="Yangi foydalanuvchi">
         <NewUserForm
           onCreated={async () => {
@@ -140,7 +150,51 @@ function NewUserForm({ onCreated }: { onCreated: () => Promise<void> }) {
       <Select label="Rol" value={rol} options={ADMIN_ROLLAR.map((r) => ({ value: r, label: ROL_LABEL[r] }))} onChange={setRol} />
       <label className="field">
         <span>Parol (kamida 8 belgi)</span>
-        <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+        <input
+          data-autofocus
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={8}
+        />
+      </label>
+    </ModalForm>
+  );
+}
+
+function NewPasswordForm({ user, onDone }: { user: AdminDto; onDone: () => void }) {
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function save() {
+    setBusy(true);
+    try {
+      await adminApi('PATCH', `/users/${user.id}`, { password });
+      setBusy(false);
+      onDone();
+    } catch (e) {
+      setError(errorText(e));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <ModalForm onSubmit={() => void save()} busy={busy} error={error || undefined}>
+      <input type="text" name="username" autoComplete="username" value={user.login} readOnly hidden />
+      <label className="field">
+        <span>Parol (kamida 8 belgi)</span>
+        <input
+          data-autofocus
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={8}
+        />
       </label>
     </ModalForm>
   );
