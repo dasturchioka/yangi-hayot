@@ -1,0 +1,213 @@
+/*
+ * Admin modal (Modal.tsx). Centred dialog; bottom sheet at ≤640px.
+ * The root is both the backdrop and the scroll container, so a tall form scrolls as a whole
+ * and Select popovers inside the panel are never clipped; header and footer stay pinned.
+ * Enter: @starting-style; exit: data-state="closing" (faster than the enter).
+ */
+.modal-root {
+  --modal-ease: var(--yh-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  --modal-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  padding: 32px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgb(11 61 42 / 0.36);
+  transition: background-color 200ms ease;
+
+  @starting-style {
+    background: rgb(11 61 42 / 0);
+  }
+}
+.modal-root[data-state='closing'] {
+  background: rgb(11 61 42 / 0);
+  transition-duration: 150ms;
+  pointer-events: none;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  margin: auto; /* centres; unlike align-items, never pushes a tall panel off the top */
+  border-radius: var(--yh-radius-card);
+  background: var(--yh-bg);
+  color: var(--yh-ink);
+  box-shadow:
+    0 24px 64px rgb(11 61 42 / 0.2),
+    0 2px 8px rgb(11 61 42 / 0.08);
+  outline: none;
+  transform-origin: center;
+  /* open state is `none`, not scale(1): a transform would trap position:fixed children (Select sheet) */
+  transform: none;
+  opacity: 1;
+  transition:
+    opacity 200ms var(--modal-ease),
+    transform 200ms var(--modal-ease);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+.modal-lg {
+  width: min(760px, 100%);
+}
+.modal-root[data-state='closing'] .modal {
+  opacity: 0;
+  transform: scale(0.97);
+  transition-duration: 150ms;
+}
+
+.modal-head {
+  position: sticky;
+  top: -32px; /* = the root's top padding: pins to the viewport edge while a tall form scrolls */
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--yh-space-12);
+  padding: 20px 20px 12px 24px;
+  border-radius: var(--yh-radius-card) var(--yh-radius-card) 0 0;
+  background: var(--yh-bg);
+}
+.modal-titles {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding-top: 6px;
+}
+.modal-title {
+  margin: 0;
+  font: var(--yh-h3);
+  text-wrap: balance;
+}
+.modal-desc {
+  margin: 0;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+.modal-x {
+  margin: 0 -4px 0 0;
+}
+
+.modal-form {
+  display: contents;
+}
+.modal-body {
+  display: grid;
+  gap: var(--yh-space-12);
+  align-content: start;
+  padding: 4px 24px 20px;
+}
+.modal-body > .row {
+  align-items: end;
+}
+.modal-error {
+  margin-top: var(--yh-space-4);
+}
+
+.modal-foot {
+  position: sticky;
+  bottom: -32px; /* = the root's bottom padding */
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--yh-space-8);
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--yh-line);
+  border-radius: 0 0 var(--yh-radius-card) var(--yh-radius-card);
+  background: var(--yh-bg);
+}
+.modal-foot > :first-child {
+  margin-right: auto; /* «Bekor qilish» on the left, the action on the right */
+}
+.modal-foot button {
+  min-height: 44px;
+}
+
+/* ---- Bottom sheet ---- */
+@media (max-width: 640px) {
+  .modal-root {
+    padding: 48px 0 0;
+  }
+  .modal,
+  .modal-lg {
+    width: 100%;
+    margin: auto 0 0; /* bottom-aligned; a tall sheet scrolls up from the bottom edge */
+    border-radius: var(--yh-radius-card) var(--yh-radius-card) 0 0;
+    transition:
+      opacity 280ms var(--modal-drawer),
+      transform 280ms var(--modal-drawer);
+
+    @starting-style {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+  }
+  .modal-root[data-state='closing'] .modal {
+    opacity: 1;
+    transform: translateY(100%);
+    transition-duration: 200ms;
+  }
+  .modal-head {
+    top: -48px;
+    padding: 16px 12px 8px 20px;
+  }
+  .modal-head::before {
+    /* grabber, as the Select sheet */
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--yh-line);
+  }
+  .modal-body {
+    padding: 4px 20px 16px;
+  }
+  .modal-body .row > .field,
+  .modal-body .row > .yh-select {
+    flex-basis: 100%;
+  }
+  .modal-body .field input.short {
+    width: 100%;
+  }
+  .modal-foot {
+    bottom: 0;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    border-radius: 0;
+  }
+  .modal-foot button {
+    flex: 1 1 auto;
+    min-height: var(--yh-button-h-secondary);
+  }
+  .modal-foot > :first-child {
+    margin-right: 0;
+  }
+}
+
+/* Reduced motion: fade only, no scale or slide. */
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal-lg {
+    transition: opacity 160ms ease;
+
+    @starting-style {
+      opacity: 0;
+      transform: none;
+    }
+  }
+  .modal-root[data-state='closing'] .modal {
+    opacity: 0;
+    transform: none;
+  }
+}
