@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { adminApi, ApiError } from './api';
 import { Select } from '@yh/ui/select';
+import { adminApi, ApiError } from './api';
+import { qachon } from './format';
+import { Icon } from './icons';
+import { RasmYuklash } from './RasmYuklash';
+import './rassilka.css';
 
 /** Mirrors the server's /admin/api/rassilka responses (apps/server/src/rassilka/rassilka.ts). */
 type Audience = 'all' | 'ru' | 'uz' | 'toshkent' | 'navoiy';
@@ -34,20 +38,34 @@ const STATUS_LABEL: Record<Rassilka['status'], string> = {
   cancelled: 'Bekor qilindi',
 };
 
+/** Mini App screens a button can open (startapp; '' = home). */
+const EKRANLAR = [
+  { value: '', label: 'Bosh sahifa' },
+  { value: 'booking', label: "Ko'rishga yozilish" },
+  { value: 'ariza', label: 'Ariza qoldirish' },
+  { value: 'kalkulyator', label: "To'lov kalkulyatori" },
+];
+/** Telegram's limits: a caption under media is much shorter than a plain message. */
+const MATN_MAX = 4096;
+const IZOH_MAX = 1024;
+
 /** Rassilka screen: compose → «N ta qabul qiluvchiga yuborilsinmi?» → confirm; list with the report. */
 export function RassilkaScreen() {
   const [counts, setCounts] = useState<Record<Audience, number> | null>(null);
   const [items, setItems] = useState<Rassilka[]>([]);
   const [error, setError] = useState('');
   const [draft, setDraft] = useState<Rassilka | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const [audience, setAudience] = useState<Audience>('all');
   const [text, setText] = useState('');
   const [mediaKind, setMediaKind] = useState<'' | 'photo' | 'video'>('');
+  const [photo, setPhoto] = useState<string | null>(null);
   const [mediaRef, setMediaRef] = useState('');
   const [buttonKind, setButtonKind] = useState<'' | 'url' | 'app'>('');
   const [buttonText, setButtonText] = useState('');
-  const [buttonTarget, setButtonTarget] = useState('');
+  const [buttonUrl, setButtonUrl] = useState('');
+  const [buttonScreen, setButtonScreen] = useState('');
 
   const refresh = useCallback(async () => {
     try {
@@ -65,191 +83,337 @@ export function RassilkaScreen() {
     return () => clearInterval(timer);
   }, [refresh]);
 
+  // What the form would send now: the preview follows typing, the confirm step shows the saved draft.
+  // An uploaded photo goes out as an absolute URL: Telegram fetches it from this host.
+  const mediaFileId = mediaKind === 'photo' ? (photo ? new URL(photo, window.location.origin).href : '') : mediaRef.trim();
+  const live: Content = { text };
+  if (mediaKind) live.media = { kind: mediaKind, fileId: mediaFileId };
+  if (buttonKind === 'url') live.button = { text: buttonText, url: buttonUrl.trim() };
+  if (buttonKind === 'app') live.button = { text: buttonText, startapp: buttonScreen };
+
+  const max = mediaKind ? IZOH_MAX : MATN_MAX;
+  const tooLong = text.length > max;
+  const missing = !text.trim()
+    ? 'Matn yozing'
+    : tooLong
+      ? `Matn ${max} belgidan oshmasin`
+      : mediaKind && !mediaFileId
+        ? mediaKind === 'photo' ? 'Rasmni yuklang' : 'Video havolasi yoki file_id kiriting'
+        : buttonKind && !buttonText.trim()
+          ? 'Tugma matnini yozing'
+          : buttonKind === 'url' && !/^https:\/\/\S+$/.test(buttonUrl.trim())
+            ? 'Tugma havolasi https:// bilan boshlansin'
+            : counts && counts[audience] === 0
+              ? "Bu auditoriyada hech kim yo'q"
+              : null;
+
   async function createDraft() {
-    const content: Content = { text };
-    if (mediaKind && mediaRef) content.media = { kind: mediaKind, fileId: mediaRef };
-    if (buttonKind === 'url') content.button = { text: buttonText, url: buttonTarget };
-    if (buttonKind === 'app') content.button = { text: buttonText, startapp: buttonTarget };
+    if (missing) return;
+    setBusy(true);
     try {
-      setDraft(await adminApi<Rassilka>('POST', '/rassilka', { audience, content }));
+      setDraft(await adminApi<Rassilka>('POST', '/rassilka', { audience, content: live }));
       setError('');
     } catch (e) {
       setError(describe(e));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function act(action: 'confirm' | 'cancel') {
     if (!draft) return;
+    setBusy(true);
     try {
       await adminApi('POST', `/rassilka/${draft.id}/${action}`);
       setDraft(null);
-      if (action === 'confirm') setText('');
+      if (action === 'confirm') {
+        setText('');
+        setMediaKind('');
+        setPhoto(null);
+        setMediaRef('');
+        setButtonKind('');
+        setButtonText('');
+        setButtonUrl('');
+      }
       await refresh();
     } catch (e) {
       setError(describe(e));
+    } finally {
+      setBusy(false);
     }
   }
 
-  // What the form would send now: the preview follows typing, the confirm step shows the saved draft.
-  const live: Content = { text };
-  if (mediaKind) live.media = { kind: mediaKind, fileId: mediaRef };
-  if (buttonKind === 'url') live.button = { text: buttonText, url: buttonTarget };
-  if (buttonKind === 'app') live.button = { text: buttonText, startapp: buttonTarget };
-
   return (
-    <section className="stack">
+    <section className="stack bc-page">
       <header>
         <h1 className="h2">Rassilka</h1>
-        <p className="muted">Bot obunachilariga xabar: avval ko'rib chiqasiz, keyin tasdiqlaysiz</p>
+        <p className="muted">Bot obunachilariga xabar. Avval ko'rib chiqasiz, keyin tasdiqlaysiz.</p>
       </header>
       {error && <p className="error">{error}</p>}
 
-      <div className="rassilka-grid">
+      <div className="bc-grid">
         {!draft ? (
-          <div className="card stack">
-            <div className="field">
-              <span>Auditoriya</span>
-              <div className="audience" role="group" aria-label="Auditoriya">
+          <form
+            className="card bc-composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void createDraft();
+            }}
+          >
+            <fieldset className="bc-step">
+              <legend>Kimga</legend>
+              <div className="bc-audience" role="group" aria-label="Auditoriya">
                 {(Object.keys(AUDIENCE_LABEL) as Audience[]).map((a) => (
                   <button key={a} type="button" aria-pressed={a === audience} onClick={() => setAudience(a)}>
                     {AUDIENCE_LABEL[a]}
-                    {counts && <span className="count">{counts[a]}</span>}
+                    {counts && <span className="bc-count">{counts[a]}</span>}
                   </button>
                 ))}
               </div>
-            </div>
-            <label className="field">
-              <span>Matn (media bilan — izoh, 1024 belgigacha)</span>
-              <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} />
-            </label>
-            <div className="row">
-              <Select<typeof mediaKind>
+            </fieldset>
+
+            <fieldset className="bc-step">
+              <legend>Xabar</legend>
+              <label className="field">
+                <span className="visually-hidden">Xabar matni</span>
+                <textarea
+                  rows={7}
+                  value={text}
+                  placeholder="Assalomu alaykum! Yangi Hayot'da…"
+                  aria-invalid={tooLong || undefined}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              </label>
+              <p className={tooLong ? 'bc-counter over' : 'bc-counter'}>
+                {text.length} / {max}
+                {mediaKind && ' · media bilan izoh qisqaroq bo\u2019ladi'}
+              </p>
+            </fieldset>
+
+            <fieldset className="bc-step">
+              <legend>Rasm yoki video</legend>
+              <Tabs
                 label="Media"
                 value={mediaKind}
                 options={[
-                  { value: '', label: "Yo'q" },
-                  { value: 'photo', label: 'Foto' },
-                  { value: 'video', label: 'Video' },
+                  ['', "Yo'q"],
+                  ['photo', 'Foto'],
+                  ['video', 'Video'],
                 ]}
                 onChange={setMediaKind}
               />
-              {mediaKind && (
-                <label className="field grow">
-                  <span>https havola yoki Telegram file_id</span>
-                  <input value={mediaRef} onChange={(e) => setMediaRef(e.target.value)} />
+              {mediaKind === 'photo' && (
+                <RasmYuklash
+                  label="Foto"
+                  hint="JPG ga aylantirib yuklanadi — Telegram uni shu manzildan oladi."
+                  value={photo}
+                  onChange={setPhoto}
+                  format="image/jpeg"
+                />
+              )}
+              {mediaKind === 'video' && (
+                <label className="field">
+                  <span>Video: https havola yoki Telegram file_id</span>
+                  <input value={mediaRef} onChange={(e) => setMediaRef(e.target.value)} placeholder="https://…/video.mp4" />
                 </label>
               )}
-            </div>
-            <div className="row">
-              <Select<typeof buttonKind>
+            </fieldset>
+
+            <fieldset className="bc-step">
+              <legend>Tugma</legend>
+              <Tabs
                 label="Tugma"
                 value={buttonKind}
                 options={[
-                  { value: '', label: 'Tugmasiz' },
-                  { value: 'url', label: 'Havola' },
-                  { value: 'app', label: 'Mini App ekrani' },
+                  ['', 'Tugmasiz'],
+                  ['app', 'Mini App'],
+                  ['url', 'Havola'],
                 ]}
                 onChange={setButtonKind}
               />
               {buttonKind && (
-                <>
+                <div className="row">
                   <label className="field grow">
                     <span>Tugma matni</span>
-                    <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} />
+                    <input
+                      value={buttonText}
+                      maxLength={64}
+                      placeholder={buttonKind === 'app' ? 'Planirovkalarni ko‘rish' : 'Batafsil'}
+                      onChange={(e) => setButtonText(e.target.value)}
+                    />
                   </label>
-                  <label className="field grow">
-                    <span>{buttonKind === 'url' ? 'https://…' : "Ekran (bo'sh = bosh sahifa; booking, ariza)"}</span>
-                    <input value={buttonTarget} onChange={(e) => setButtonTarget(e.target.value)} />
-                  </label>
-                </>
+                  {buttonKind === 'url' ? (
+                    <label className="field grow">
+                      <span>Havola</span>
+                      <input value={buttonUrl} placeholder="https://…" onChange={(e) => setButtonUrl(e.target.value)} />
+                    </label>
+                  ) : (
+                    <div className="grow">
+                      <Select<string> label="Qaysi ekran" value={buttonScreen} options={EKRANLAR} onChange={setButtonScreen} />
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-            <div>
-              <button className="primary" disabled={!text.trim()} onClick={() => void createDraft()}>
-                Ko'rib chiqish
+            </fieldset>
+
+            <footer className="bc-submit">
+              <button className="primary" disabled={Boolean(missing) || busy}>
+                {busy ? 'Tayyorlanmoqda…' : "Ko'rib chiqish"}
               </button>
-            </div>
-          </div>
+              <span className="muted small">
+                {missing ?? `${counts ? counts[audience] : '…'} ta qabul qiluvchi · yuborishdan oldin yana tasdiqlaysiz`}
+              </span>
+            </footer>
+          </form>
         ) : (
-          <div className="confirm-panel">
-            <p className="title">{draft.recipients} ta qabul qiluvchiga yuborilsinmi?</p>
-            <p className="muted">
-              Auditoriya: {AUDIENCE_LABEL[draft.audience]}. Yuborilgandan keyin to'xtatib bo'lmaydi.
+          <div className="card bc-confirm">
+            <p className="bc-confirm-n">
+              <b>{draft.recipients}</b> ta qabul qiluvchiga yuborilsinmi?
             </p>
+            <dl className="bc-confirm-meta">
+              <div>
+                <dt>Auditoriya</dt>
+                <dd>{AUDIENCE_LABEL[draft.audience]}</dd>
+              </div>
+              <div>
+                <dt>Media</dt>
+                <dd>{draft.content.media ? (draft.content.media.kind === 'photo' ? 'Foto' : 'Video') : "Yo'q"}</dd>
+              </div>
+              <div>
+                <dt>Tugma</dt>
+                <dd>{draft.content.button?.text ?? "Yo'q"}</dd>
+              </div>
+            </dl>
+            <p className="bc-warn">Yuborilgandan keyin to'xtatib bo'lmaydi. O'ngdagi ko'rinishni yana bir bor tekshiring.</p>
             <div className="row">
-              <button className="primary" onClick={() => void act('confirm')}>
-                Yuborish
+              <button className="primary" disabled={busy} onClick={() => void act('confirm')}>
+                <Icon name="send" size={18} />
+                {busy ? 'Yuborilmoqda…' : 'Yuborish'}
               </button>
-              <button onClick={() => void act('cancel')}>Bekor qilish</button>
+              <button disabled={busy} onClick={() => void act('cancel')}>
+                Ortga, tahrirlash
+              </button>
             </div>
           </div>
         )}
 
-        <aside className="tg-preview">
-          <p className="title">{draft ? "Qabul qiluvchilar shuni ko'radi" : "Telegram'da shunday ko'rinadi"}</p>
+        <aside className="bc-preview" aria-label="Telegram'dagi ko'rinishi">
+          <p className="bc-preview-title">{draft ? "Qabul qiluvchilar shuni ko'radi" : "Telegram'da shunday ko'rinadi"}</p>
           <Preview content={draft ? draft.content : live} />
         </aside>
       </div>
 
       <section className="card flush">
         <h2 className="title pad">Yuborilganlar</h2>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Matn</th>
-              <th>Auditoriya</th>
-              <th>Holat</th>
-              <th className="num">Yetkazildi</th>
-              <th className="num">Botni bloklagan</th>
-              <th className="num">Xato</th>
-              <th className="num">Navbatda</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td className="clip">{r.content.text}</td>
-                <td>{AUDIENCE_LABEL[r.audience]}</td>
-                <td>
-                  <span className={`status-badge ${r.status}`}>{STATUS_LABEL[r.status]}</span>
-                </td>
-                <td className="num">{r.stats.delivered}</td>
-                <td className="num">{r.stats.blocked}</td>
-                <td className="num">{r.stats.error}</td>
-                <td className="num">{r.stats.pending}</td>
-              </tr>
-            ))}
-            {items.length === 0 && (
+        <div className="bc-table-wrap">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={8} className="muted">
-                  Hali rassilka yuborilmagan
-                </td>
+                <th>Sana</th>
+                <th>Matn</th>
+                <th>Auditoriya</th>
+                <th>Holat</th>
+                <th className="num">Yetkazildi</th>
+                <th className="num">Bloklagan</th>
+                <th className="num">Xato</th>
+                <th className="num">Navbatda</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((r) => (
+                <tr key={r.id}>
+                  <td className="bc-date">{qachon(r.createdAt)}</td>
+                  <td className="clip">{r.content.text}</td>
+                  <td>{AUDIENCE_LABEL[r.audience]}</td>
+                  <td>
+                    <span className={`status-badge ${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                    {r.status === 'sending' && r.stats.total > 0 && (
+                      <span className="bc-progress" aria-hidden>
+                        <span style={{ width: `${((r.stats.total - r.stats.pending) / r.stats.total) * 100}%` }} />
+                      </span>
+                    )}
+                  </td>
+                  <td className="num">{r.stats.delivered}</td>
+                  <td className="num">{r.stats.blocked}</td>
+                  <td className="num">{r.stats.error}</td>
+                  <td className="num">{r.stats.pending}</td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="muted">
+                    Hali rassilka yuborilmagan
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </section>
   );
 }
 
-function Preview({ content }: { content: Content }) {
+function Tabs<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: [T, string][];
+  onChange: (v: T) => void;
+}) {
   return (
-    <div className="tg-chat">
-      <div className="tg-bubble">
-        {content.media && (
-          <div className="tg-media">
-            {content.media.kind === 'photo' ? 'Foto' : 'Video'}
-            {content.media.fileId ? ` · ${content.media.fileId.slice(0, 32)}` : ''}
-          </div>
-        )}
-        <p className={content.text.trim() ? 'tg-text' : 'tg-text placeholder'}>
-          {content.text.trim() || 'Xabar matni shu yerda ko‘rinadi'}
-        </p>
+    <div className="tabs bc-tabs" role="radiogroup" aria-label={label}>
+      {options.map(([v, l]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={v === value}
+          className={v === value ? 'tab active' : 'tab'}
+          onClick={() => onChange(v)}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A Telegram-like chat: the bot's message with its media, text, time and inline button. */
+function Preview({ content }: { content: Content }) {
+  const src = content.media?.kind === 'photo' && /^(https?:\/\/|\/)/.test(content.media.fileId) ? content.media.fileId : null;
+  return (
+    <div className="bc-phone">
+      <div className="bc-phone-bar">
+        <img src="/logo.png" alt="" width={32} height={32} />
+        <span>
+          <b>Yangi Hayot</b>
+          <small>bot</small>
+        </span>
       </div>
-      {content.button && <span className="tg-button">{content.button.text || 'Tugma'}</span>}
+      <div className="bc-chat">
+        <div className="bc-msg">
+          <div className="bc-bubble">
+            {content.media &&
+              (src ? (
+                <img className="bc-media" src={src} alt="" />
+              ) : (
+                <div className="bc-media bc-media-empty">
+                  {content.media.kind === 'photo' ? 'Foto shu yerda chiqadi' : <Icon name="play" size={28} />}
+                </div>
+              ))}
+            <p className={content.text.trim() ? 'bc-text' : 'bc-text placeholder'}>
+              {content.text.trim() || 'Xabar matni shu yerda ko\u2018rinadi'}
+              <time>12:00</time>
+            </p>
+          </div>
+          {content.button && <span className="bc-inline">{content.button.text || 'Tugma'}</span>}
+        </div>
+      </div>
     </div>
   );
 }
