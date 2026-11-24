@@ -70,7 +70,13 @@ async function onCommand(ctx: Ctx, name: string): Promise<BotAction[]> {
 }
 
 async function onMessage(ctx: Ctx, message: BotIncomingMessage): Promise<BotAction[]> {
-  if (message.kind === 'text' && RESTART_LABELS.includes(message.text ?? '')) return restart(ctx);
+  if (message.kind === 'text') {
+    const label = message.text ?? '';
+    // Old persistent keyboards still carry «Qayta ishga tushirish»; restart installs the new one.
+    if (RESTART_LABELS.includes(label)) return restart(ctx);
+    if (MENU_LABELS.includes(label)) return [openApp(ctx, 'menuOpen', 'btnMenu', '')];
+    if (ARIZA_LABELS.includes(label)) return [openApp(ctx, 'arizaOpen', 'btnAriza', 'ariza')];
+  }
   if (ctx.mijoz.botStep === WELCOME_STEP_RU || ctx.mijoz.botStep === WELCOME_STEP_UZ) {
     return continueWelcomeEdit(ctx, message);
   }
@@ -81,6 +87,17 @@ async function onMessage(ctx: Ctx, message: BotIncomingMessage): Promise<BotActi
 }
 
 const RESTART_LABELS = LANGS.map((l) => texts(l).btnRestart);
+const MENU_LABELS = LANGS.map((l) => texts(l).btnMenu);
+const ARIZA_LABELS = LANGS.map((l) => texts(l).btnAriza);
+
+/**
+ * A bottom-keyboard tap answers with an inline button that opens the Mini App:
+ * only inline (and menu) launches carry the signed initData the app logs in with.
+ */
+function openApp(ctx: Ctx, text: 'menuOpen' | 'arizaOpen', button: 'btnMenu' | 'btnAriza', startapp: string): BotAction {
+  const t = texts(ctx.mijoz.lang);
+  return { type: 'send', chatId: ctx.mijoz.telegramId, text: t[text], buttons: [[{ text: t[button], startapp }]] };
+}
 
 /** /restart: forget unfinished steps (and, later, the AI dialog); keep contact, language, Manba, Arizalar. */
 async function restart(ctx: Ctx): Promise<BotAction[]> {
@@ -88,20 +105,15 @@ async function restart(ctx: Ctx): Promise<BotAction[]> {
   if (!ctx.mijoz.langChosen) return [askLang(ctx.mijoz)];
   const lang = ctx.mijoz.lang;
   return [
-    { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).restarted, keyboard: restartKeyboard(lang) },
+    { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).restarted, keyboard: mainKeyboard(lang) },
     ...(await welcome(ctx, lang)),
   ];
 }
 
-/** Reply to a message the bot cannot answer yet (until the AI manager, 9-b.). */
+/** Reply to a message the bot cannot answer yet (until the AI manager, 9-b.); points at the bottom keyboard. */
 function fallbackReply(ctx: Ctx): BotAction {
-  const t = texts(ctx.mijoz.lang);
-  return {
-    type: 'send',
-    chatId: ctx.mijoz.telegramId,
-    text: t.fallback,
-    buttons: [[{ text: t.btnMenu, startapp: '' }], [{ text: t.btnAriza, startapp: 'ariza' }]],
-  };
+  const lang = ctx.mijoz.lang;
+  return { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).fallback, keyboard: mainKeyboard(lang) };
 }
 
 /** Header with who wrote + a copy of the message, to the managers group (if configured). */
@@ -169,7 +181,7 @@ async function onCallback(ctx: Ctx, data: string): Promise<BotAction[]> {
   if (lang && LANGS.includes(lang)) {
     await chooseLang(ctx.deps.db, ctx.mijoz.telegramId, lang, ctx.now);
     return [
-      { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).langSaved, keyboard: restartKeyboard(lang) },
+      { type: 'send', chatId: ctx.mijoz.telegramId, text: texts(lang).langSaved, keyboard: mainKeyboard(lang) },
       ...(await welcome(ctx, lang)),
     ];
   }
@@ -190,8 +202,10 @@ function askLang(mijoz: MijozRecord): BotAction {
   };
 }
 
-function restartKeyboard(lang: Lang): string[][] {
-  return [[texts(lang).btnRestart]];
+/** The persistent bottom keyboard: «Menyuni ochish» and «Ariza qoldirish». */
+function mainKeyboard(lang: Lang): string[][] {
+  const t = texts(lang);
+  return [[t.btnMenu, t.btnAriza]];
 }
 
 /** The welcome message (salomlashish) in `lang`, as set with /welcome. */

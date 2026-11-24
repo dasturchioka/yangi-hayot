@@ -61,8 +61,8 @@ describe('/start', () => {
       [{ text: '📱 Menyuni ochish', startapp: '' }],
       [{ text: "📅 Ko'rishga yozilish", startapp: 'booking' }],
     ]);
-    // the permanent restart button is installed in the same reply
-    expect(actions.some((a) => a.keyboard?.flat().includes('🔄 Qayta ishga tushirish'))).toBe(true);
+    // the bottom keyboard is installed in the same reply
+    expect(actions.find((a) => a.keyboard)?.keyboard).toEqual([['📱 Menyuni ochish', '📝 Ariza qoldirish']]);
   });
 
   it('greets a returning Mijoz in the saved language without asking again', async () => {
@@ -247,7 +247,7 @@ describe('/restart and the permanent restart button', () => {
     await botEvent(t, admin, text('this must not become the welcome'));
 
     expect(labels(actions.at(-1)!.buttons)).toEqual(['📱 Открыть меню', '📅 Записаться на просмотр']);
-    expect(actions.some((a) => a.keyboard?.flat().includes('🔄 Перезапустить'))).toBe(true);
+    expect(actions.find((a) => a.keyboard)?.keyboard).toEqual([['📱 Открыть меню', '📝 Оставить заявку']]);
     expect((await welcomeSeenBy(olga, 'ru')).text).not.toContain('must not');
   });
 
@@ -263,7 +263,7 @@ describe('/restart and the permanent restart button', () => {
   });
 
   it.each([['🔄 Перезапустить'], ['🔄 Qayta ishga tushirish']])(
-    'treats the «%s» button like /restart',
+    'treats the old «%s» button like /restart',
     async (label) => {
       await botEvent(t, admin, { type: 'start' });
       await botEvent(t, admin, { type: 'callback', data: 'lang:ru' });
@@ -293,14 +293,23 @@ describe('text and voice messages (until the AI manager is connected)', () => {
     await botEvent(t, aziz, { type: 'callback', data: 'lang:uz' });
   });
 
-  it('answers with «Menyuni ochish» and «Ariza qoldirish» in the Mijoz language', async () => {
+  it('answers with the «Menyuni ochish» / «Ariza qoldirish» bottom keyboard in the Mijoz language', async () => {
     const actions = await botEvent(t, aziz, text('Narxlar qancha?', 11));
 
     const reply = sends(actions).find((a) => a.chatId === String(aziz.id))!;
-    expect(reply.buttons).toEqual([
-      [{ text: '📱 Menyuni ochish', startapp: '' }],
-      [{ text: '📝 Ariza qoldirish', startapp: 'ariza' }],
-    ]);
+    expect(reply.buttons).toBeUndefined();
+    expect(reply.keyboard).toEqual([['📱 Menyuni ochish', '📝 Ariza qoldirish']]);
+  });
+
+  it.each([
+    ['📱 Menyuni ochish', ''],
+    ['📝 Ariza qoldirish', 'ariza'],
+  ])('answers the «%s» keyboard tap with an inline button into the Mini App', async (label, startapp) => {
+    const actions = await botEvent(t, aziz, text(label, 12));
+
+    expect(actions.filter((a) => a.chatId === GROUP)).toHaveLength(0);
+    const [reply] = sends(actions);
+    expect(reply!.buttons).toEqual([[{ text: label, startapp }]]);
   });
 
   it('sends the message to the managers group with who wrote it', async () => {
