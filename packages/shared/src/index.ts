@@ -11,6 +11,7 @@ export * from './skoring';
 import type { Daraja } from './skoring';
 export * from './dojim';
 export * from './shaxmatka';
+export * from './rasm';
 import type { StartDto } from './start';
 
 export const LANGS = ['ru', 'uz'] as const;

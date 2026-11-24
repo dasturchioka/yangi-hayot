@@ -1,0 +1,193 @@
+/* ---- Rasm yuklash: one image or an ordered strip of photos ---- */
+.rasm-field > span {
+  font: var(--yh-label);
+  color: var(--yh-ink-2);
+}
+.rasm-one {
+  display: flex;
+  align-items: center;
+  gap: var(--yh-space-12);
+  padding: var(--yh-space-8);
+  border: 1px dashed transparent;
+  border-radius: var(--yh-radius-card);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.rasm-one.over,
+.rasm-grid.over {
+  border-color: var(--yh-primary);
+  background: var(--yh-status-free-bg);
+}
+.rasm-tile {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 99px;
+  padding: 0;
+  overflow: hidden;
+  border: 1.5px dashed #c9d8cf;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-primary);
+  transition: transform 160ms var(--yh-ease-out), border-color 160ms ease;
+}
+.rasm-tile.filled {
+  border-style: solid;
+  border-color: var(--yh-line);
+}
+.rasm-tile img,
+.rasm-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rasm-tile:active:not(:disabled) {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rasm-tile:hover:not(:disabled) {
+    border-color: var(--yh-primary);
+  }
+}
+.rasm-busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.72);
+}
+.rasm-side {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.rasm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--yh-space-8);
+}
+.rasm-actions button.small {
+  min-height: 36px;
+  padding: 0 14px;
+}
+.rasm-remove {
+  color: var(--yh-status-error-fg);
+}
+.rasm-hint {
+  margin: 0;
+  font: var(--yh-caption);
+  color: var(--yh-muted);
+}
+.rasm-error {
+  margin: 0;
+  font: var(--yh-caption);
+  color: var(--yh-status-error-fg);
+}
+
+.rasm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--yh-space-8);
+  margin: 0;
+  padding: var(--yh-space-8);
+  list-style: none;
+  border: 1px dashed transparent;
+  border-radius: var(--yh-radius-card);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.rasm-item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--yh-line);
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+}
+.rasm-item.pending {
+  display: grid;
+  place-items: center;
+  color: var(--yh-primary);
+}
+.rasm-cover {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  border-radius: var(--yh-radius-pill);
+  background: rgb(11 61 42 / 0.78);
+  color: var(--yh-on-primary);
+  font: var(--yh-label);
+}
+.rasm-tools {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 4px;
+}
+.rasm-tools button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 1px 3px rgb(11 61 42 / 0.18);
+  color: var(--yh-ink);
+}
+.rasm-tools button:disabled {
+  opacity: 0.35;
+}
+.rasm-add {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 0;
+  padding: 0;
+  border: 1.5px dashed #c9d8cf;
+  border-radius: var(--yh-radius-control);
+  background: var(--yh-surface);
+  color: var(--yh-primary);
+  transition: transform 160ms var(--yh-ease-out), border-color 160ms ease;
+}
+.rasm-add span {
+  color: var(--yh-ink-2);
+}
+.rasm-add:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .rasm-add:hover {
+    border-color: var(--yh-primary);
+  }
+}
+.rasm-field :focus-visible {
+  outline: 2px solid var(--yh-primary);
+  outline-offset: 2px;
+}
+
+.spin {
+  animation: rasm-spin 0.8s linear infinite;
+}
+@keyframes rasm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation-duration: 2.4s;
+  }
+  .rasm-tile,
+  .rasm-add {
+    transition: none;
+  }
+}

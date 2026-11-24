@@ -15,6 +15,7 @@ import { m0014_t17_dojim } from './0014_t17_dojim';
 import { m0016_t22_xonadon } from './0016_t22_xonadon';
 import { m0017_t23_xonadon_korildi } from './0017_t23_xonadon_korildi';
 import { m0018_t25_xonadon_darajasi } from './0018_t25_xonadon_darajasi';
+import { m0019_rasm } from './0019_rasm';
 
 export interface Migration {
   /** Unique, sortable: `NNNN_short_name`. */
@@ -41,4 +42,5 @@ export const migrations: Migration[] = [
   m0016_t22_xonadon,
   m0017_t23_xonadon_korildi,
   m0018_t25_xonadon_darajasi,
+  m0019_rasm,
 ];

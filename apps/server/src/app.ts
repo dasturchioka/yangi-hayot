@@ -20,6 +20,7 @@ import { adminKatalogRoutes } from './routes/admin-katalog';
 import { adminHisobotRoutes } from './routes/admin-hisobot';
 import { adminKvizRoutes } from './routes/admin-kviz';
 import { adminRassilkaRoutes } from './routes/admin-rassilka';
+import { adminRasmRoutes, rasmRoutes } from './routes/rasm';
 import { adminTaklifRoutes } from './routes/admin-taklif';
 import { arizaRoutes } from './routes/ariza';
 import { botInternalRoutes } from './routes/bot-internal';
@@ -101,6 +102,15 @@ export function buildApp(deps: AppDeps, opts: { logger?: boolean } = {}) {
   const taklif = createTaklif({ db: deps.db, miniAppLink: deps.config.miniAppLink, crmBaseUrl: deps.config.crmBaseUrl });
 
   app.get('/health', async () => ({ ok: true }));
+  app.register((scope) => rasmRoutes(scope, deps), { prefix: '/api' });
+  app.register(
+    async (scope) => {
+      requireAdmin(scope, deps);
+      scope.addHook('preHandler', onlyRol('administrator'));
+      await adminRasmRoutes(scope, deps);
+    },
+    { prefix: '/admin/api' },
+  );
   app.register((scope) => miniAppRoutes(scope, { ...deps, ulashish, taklif, skoring }), { prefix: '/api' });
   app.register((scope) => botInternalRoutes(scope, { ...deps, skoring }), { prefix: '/internal/bot' });
   app.register((scope) => adminAuthRoutes(scope, deps), { prefix: '/admin/api' });

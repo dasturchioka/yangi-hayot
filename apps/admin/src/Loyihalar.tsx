@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { adminApi, errorText } from './api';
 import { parseNumber, PLANIROVKA_HOLATI_LABEL, soum } from './format';
 import { Select } from '@yh/ui/select';
+import { RasmlarYuklash, RasmYuklash } from './RasmYuklash';
 
 /**
  * «Loyihalar» (Administrator): create and edit Loyiha (holati Sotuvda /
@@ -174,7 +175,7 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
   const [manzil, setManzil] = useState<LokalDto>(loyiha?.manzil ?? emptyLokal);
   const [qisqa, setQisqa] = useState<LokalDto>(loyiha?.qisqaTavsif ?? emptyLokal);
   const [tavsif, setTavsif] = useState<LokalDto>(loyiha?.tavsif ?? emptyLokal);
-  const [fotolar, setFotolar] = useState((loyiha?.fotolar ?? []).join('\n'));
+  const [fotolar, setFotolar] = useState<string[]>(loyiha?.fotolar ?? []);
   const [video, setVideo] = useState(loyiha?.video ?? '');
   const [qavatlar, setQavatlar] = useState(loyiha?.qavatlarSoni?.toString() ?? '');
   const [xarita, setXarita] = useState(loyiha?.xarita ? `${loyiha.xarita.lat}, ${loyiha.xarita.lng}` : '');
@@ -196,10 +197,7 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
       manzil: { ru: manzil.ru.trim(), uz: manzil.uz.trim() },
       qisqaTavsif: lokalOrNull(qisqa),
       tavsif: lokalOrNull(tavsif),
-      fotolar: fotolar
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean),
+      fotolar,
       video: video.trim() || null,
       qavatlarSoni: qavatlar.trim() ? Number(qavatlar) : null,
       xarita: coords ? { lat: coords[0]!, lng: coords[1]! } : null,
@@ -274,10 +272,7 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
         <span>amoCRM'dagi Loyiha mas'uli (foydalanuvchi ID). Yangi Bitim va «Uchrashuv» vazifasi shunga tushadi</span>
         <input inputMode="numeric" value={masul} onChange={(e) => setMasul(e.target.value)} placeholder="Masalan, 8123456" />
       </label>
-      <label className="field">
-        <span>Fotolar (har qatorda bitta havola yoki /media/... yo'l)</span>
-        <textarea rows={3} value={fotolar} onChange={(e) => setFotolar(e.target.value)} />
-      </label>
+      <RasmlarYuklash label="Fotolar" value={fotolar} onChange={setFotolar} />
       {error && <p className="error">{error}</p>}
       <div className="row">
         <button className="primary">{loyiha ? 'Saqlash' : 'Yaratish'}</button>
@@ -416,7 +411,7 @@ function PlanirovkaForm({
   const [xonalar, setXonalar] = useState(String(p?.xonalar ?? 1));
   const [maydon, setMaydon] = useState(String(p?.maydon ?? ''));
   const [nomi, setNomi] = useState<LokalDto>(p?.nomi ?? emptyLokal);
-  const [chizma, setChizma] = useState(p?.chizma ?? '');
+  const [chizma, setChizma] = useState<string | null>(p?.chizma ?? null);
   const [video, setVideo] = useState(p?.video ?? '');
   const [narx, setNarx] = useState(p?.qoldaNarx?.toString() ?? '');
   const [error, setError] = useState('');
@@ -430,7 +425,7 @@ function PlanirovkaForm({
       xonalar: Number(xonalar),
       maydon: m,
       nomi: lokalOrNull(nomi),
-      chizma: chizma.trim() || null,
+      chizma,
       video: video.trim() || null,
       qoldaNarx: n === null ? null : Math.round(n),
     };
@@ -460,11 +455,8 @@ function PlanirovkaForm({
         </label>
       </div>
       <LokalField label="Nomi (ixtiyoriy, masalan «Burchak»)" value={nomi} onChange={setNomi} />
+      <RasmYuklash label="Chizma" value={chizma} onChange={setChizma} />
       <div className="row">
-        <label className="field grow">
-          <span>Chizma (havola yoki /media/... yo'l)</span>
-          <input value={chizma} onChange={(e) => setChizma(e.target.value)} />
-        </label>
         <label className="field grow">
           <span>Video (t.me yoki YouTube)</span>
           <input value={video} onChange={(e) => setVideo(e.target.value)} />

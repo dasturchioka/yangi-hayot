@@ -13,6 +13,7 @@ import { KalkulyatorForm } from './Kalkulyator';
 import { SkoringForm } from './Skoring';
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from './icons';
 import './matnlar.css';
+import { RasmYuklash } from './RasmYuklash';
 import { YozilishSozlamalariForm } from './Yozilishlar';
 
 /**
@@ -383,15 +384,12 @@ function BizHaqimizdaForm({ initial, onSaved }: { initial: BizHaqimizdaKontent; 
       <Section title="Asosiy">
         <MatnField label="Sarlavha (rasm ustida)" value={v.sarlavha} onChange={(x) => upd('sarlavha', x)} />
         <MatnField label="Kompaniya haqida" multiline value={v.matn} onChange={(x) => upd('matn', x)} />
-        <label className="field">
-          <span>Rasm (https havola yoki /media/... yo'li; bo'sh — rasmsiz)</span>
-          <input
-            value={v.foto ?? ''}
-            pattern="(https://|/)\S+"
-            placeholder="/media/loyiha/jozibali-maskan/1.webp"
-            onChange={(e) => upd('foto', e.target.value)}
-          />
-        </label>
+        <RasmYuklash
+          label="Rasm (sarlavha ostida)"
+          hint="Bo'sh qolsa — rasmsiz. JPG, PNG yoki WebP; shu yerga tashlab qo'yish ham mumkin."
+          value={v.foto}
+          onChange={(x) => upd('foto', x)}
+        />
       </Section>
       <Section title="Kompaniya raqamlari" hint="Masalan: «12» — «loyiha». Mijozga to'g'ri raqamlar ko'rinishi muhim">
         <ListEditor

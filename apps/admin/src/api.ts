@@ -38,11 +38,11 @@ export async function adminApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DE
  * Sends a file as the raw request body (the import endpoints read the bytes,
  * whatever the file name says). Same error handling as `adminApi`.
  */
-export async function adminUpload<T>(path: string, file: Blob): Promise<T> {
+export async function adminUpload<T>(path: string, file: Blob, contentType = 'application/octet-stream'): Promise<T> {
   const res = await fetch(`/admin/api${path}`, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { 'content-type': 'application/octet-stream' },
+    headers: { 'content-type': contentType },
     body: file,
   });
   const json = await res.json().catch(() => null);

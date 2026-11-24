@@ -15,11 +15,15 @@ import {
   CalendarDays,
   Circle,
   History,
+  ImagePlus,
+  Link2,
+  LoaderCircle,
   LayoutGrid,
   LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Play,
   Send,
   Settings,
   Upload,
@@ -76,6 +80,11 @@ const ICONS = {
   pencil: Pencil,
   trash: Trash2,
   x: X,
+  imagePlus: ImagePlus,
+  link: Link2,
+  loader: LoaderCircle,
+  send: Send,
+  play: Play,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
