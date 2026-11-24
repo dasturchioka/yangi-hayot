@@ -20,10 +20,15 @@ export function I18nProvider({ lang, children }: { lang: Lang; children: ReactNo
   return <LangContext.Provider value={lang}>{children}</LangContext.Provider>;
 }
 
+/** One function per language, so `t` is stable across renders and safe in effect deps. */
+const translators: Record<Lang, Translate> = {
+  ru: (key, params) => translate('ru', key, params),
+  uz: (key, params) => translate('uz', key, params),
+};
+
 /** `const t = useT(); t('greeting.hello', { name })` */
 export function useT(): Translate {
-  const lang = useContext(LangContext);
-  return (key, params) => translate(lang, key, params);
+  return translators[useContext(LangContext)];
 }
 
 export function useLang(): Lang {
