@@ -318,6 +318,10 @@ button.small {
   color: var(--yh-status-reserved-fg);
 }
 
+.stat-label.sold {
+  color: var(--yh-status-sold-fg);
+}
+
 .stat-value {
   font: var(--yh-h2);
   font-variant-numeric: tabular-nums;
@@ -502,11 +506,6 @@ input.short {
   font: var(--yh-title);
   color: var(--yh-primary);
   font-variant-numeric: tabular-nums;
-}
-
-.pform {
-  grid-column: 1 / -1;
-  background: var(--yh-surface);
 }
 
 /* ---- #6: Excel / CSV import ---- */

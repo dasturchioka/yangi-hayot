@@ -11,7 +11,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { adminApi, errorText } from './api';
 import { parseNumber, qachon, soum, XONADON_HOLATI_LABEL } from './format';
+import { Checkbox } from './controls';
 import { Icon } from './icons';
+import { Modal, ModalForm } from './Modal';
 import { Select, type SelectOption } from '@yh/ui/select';
 import '@yh/ui/select.css';
 import './xonadonlar.css';
@@ -325,13 +327,10 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
                   <thead>
                     <tr>
                       <th className="check">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           aria-label="Hammasini tanlash"
                           checked={rows.length > 0 && ticked.length === rows.length}
-                          ref={(el) => {
-                            if (el) el.indeterminate = ticked.length > 0 && ticked.length < rows.length;
-                          }}
+                          indeterminate={ticked.length > 0 && ticked.length < rows.length}
                           onChange={toggleAll}
                           disabled={rows.length === 0}
                         />
@@ -347,29 +346,6 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
                     </tr>
                   </thead>
                   <tbody>
-                    {qoshish && (
-                      <XonadonForm
-                        blokId={blokId!}
-                        blokNomi={blokNomi}
-                        planirovkalar={planirovkalar}
-                        initial={{
-                          qavat: qavat ?? 1,
-                          raqam: Math.max(0, ...all.map((x) => x.raqam)) + 1,
-                          planirovkaId: planirovkalar[0]!.id,
-                          narx: null,
-                          holat: 'bosh',
-                        }}
-                        onDone={async (x, keyingisi) => {
-                          if (!keyingisi) setQoshish(false);
-                          setQavat(x.qavat);
-                          setQidiruv('');
-                          setFiltr('');
-                          await applied([x]);
-                        }}
-                        onCancel={() => setQoshish(false)}
-                        onError={setError}
-                      />
-                    )}
                     {rows.map((x) => (
                       <XonadonRow
                         key={x.id}
@@ -402,7 +378,7 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
                     ))}
                   </tbody>
                 </table>
-                {rows.length === 0 && !qoshish && (
+                {rows.length === 0 && (
                   <Empty>
                     {izlash
                       ? "Bunday xonadon topilmadi. Qidiruv yoki status filtrini o'zgartiring."
@@ -452,6 +428,30 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
           </div>
         )}
       </section>
+
+      {isAdmin && blokId != null && planirovkalar.length > 0 && (
+        <Modal open={qoshish} onClose={() => setQoshish(false)} title="Yangi Xonadon" description={`${blokNomi} blok`}>
+          <XonadonQoshish
+            blokId={blokId}
+            blokNomi={blokNomi}
+            planirovkalar={planirovkalar}
+            initial={{
+              qavat: qavat ?? 1,
+              raqam: Math.max(0, ...all.map((x) => x.raqam)) + 1,
+              planirovkaId: planirovkalar[0]!.id,
+              narx: null,
+              holat: 'bosh',
+            }}
+            onDone={async (x, keyingisi) => {
+              if (!keyingisi) setQoshish(false);
+              setQavat(x.qavat);
+              setQidiruv('');
+              setFiltr('');
+              await applied([x]);
+            }}
+          />
+        </Modal>
+      )}
 
       <div className="toast-slot" role="status" aria-live="polite">
         {oxirgi && (
@@ -591,12 +591,7 @@ function XonadonRow({
   return (
     <tr className={[x.holat === 'sotilgan' ? 'dim' : '', ticked ? 'ticked' : ''].join(' ').trim() || undefined}>
       <td className="check">
-        <input
-          type="checkbox"
-          aria-label={`${blokNomi}-${x.raqam} ni tanlash`}
-          checked={ticked}
-          onChange={(e) => onTick(e.target.checked)}
-        />
+        <Checkbox aria-label={`${blokNomi}-${x.raqam} ni tanlash`} checked={ticked} onChange={(e) => onTick(e.target.checked)} />
       </td>
       <td className="xon-no">
         {blokNomi}-{x.raqam}
@@ -653,24 +648,22 @@ function XonadonRow({
   );
 }
 
-/** Add (no id) or edit a Xonadon inline, as a table row (kit: the edited row is tinted, «Saqlash» in place). */
-function XonadonForm({
+type XonadonFields = Pick<AdminXonadonDto, 'qavat' | 'raqam' | 'planirovkaId' | 'narx' | 'holat'>;
+
+/** Field state and save for a Xonadon form: the inline row (edit) and the modal (add) share it. */
+function useXonadonForm({
   id,
   blokId,
-  blokNomi,
   planirovkalar,
   initial,
   onDone,
-  onCancel,
   onError,
 }: {
   id?: number;
   blokId: number;
-  blokNomi: string;
   planirovkalar: AdminPlanirovkaDto[];
-  initial: Pick<AdminXonadonDto, 'qavat' | 'raqam' | 'planirovkaId' | 'narx' | 'holat'>;
+  initial: XonadonFields;
   onDone: (x: AdminXonadonDto, keyingisi: boolean) => Promise<void>;
-  onCancel: () => void;
   onError: (e: string) => void;
 }) {
   const [qavat, setQavat] = useState(String(initial.qavat));
@@ -681,10 +674,6 @@ function XonadonForm({
   const [busy, setBusy] = useState(false);
   const first = useRef<HTMLInputElement>(null);
   const p = planirovkalar.find((x) => x.id === planirovkaId);
-
-  useEffect(() => {
-    first.current?.focus();
-  }, []);
 
   async function submit(e?: FormEvent, keyingisi = false) {
     e?.preventDefault();
@@ -711,6 +700,118 @@ function XonadonForm({
       setBusy(false);
     }
   }
+
+  const narxPlaceholder = p?.qoldaNarx != null ? `Planirovka: ${soum(p.qoldaNarx)}` : "So'rov bo'yicha";
+  return { qavat, setQavat, raqam, setRaqam, planirovkaId, setPlanirovkaId, narx, setNarx, holat, setHolat, busy, first, narxPlaceholder, submit };
+}
+
+/** New Xonadon, inside a <Modal>: «+ keyingisi» adds and keeps the modal open with the next raqam. */
+function XonadonQoshish({
+  blokId,
+  blokNomi,
+  planirovkalar,
+  initial,
+  onDone,
+}: {
+  blokId: number;
+  blokNomi: string;
+  planirovkalar: AdminPlanirovkaDto[];
+  initial: XonadonFields;
+  onDone: (x: AdminXonadonDto, keyingisi: boolean) => Promise<void>;
+}) {
+  const [error, setError] = useState('');
+  const f = useXonadonForm({
+    blokId,
+    planirovkalar,
+    initial,
+    onDone: async (x, keyingisi) => {
+      setError('');
+      await onDone(x, keyingisi);
+    },
+    onError: setError,
+  });
+
+  return (
+    <ModalForm
+      onSubmit={(e) => void f.submit(e)}
+      busy={f.busy}
+      error={error || undefined}
+      submitLabel="Qo'shish"
+      extraActions={
+        <button
+          type="button"
+          className="with-icon"
+          disabled={f.busy}
+          title="Qo'shadi va keyingi raqam bilan yana ochadi"
+          onClick={() => void f.submit(undefined, true)}
+        >
+          <Icon name="plus" size={16} />
+          keyingisi
+        </button>
+      }
+    >
+      <div className="row xon-modal-row">
+        <label className="field">
+          <span>Raqam</span>
+          <span className="prefixed xon-modal-prefixed">
+            <span aria-hidden="true">{blokNomi}-</span>
+            <input inputMode="numeric" className="tabular" value={f.raqam} onChange={(e) => f.setRaqam(e.target.value)} required />
+          </span>
+        </label>
+        <label className="field">
+          <span>Qavat</span>
+          <input
+            ref={f.first}
+            data-autofocus
+            className="tabular"
+            inputMode="numeric"
+            value={f.qavat}
+            onChange={(e) => f.setQavat(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <Select
+        label="Planirovka"
+        value={f.planirovkaId}
+        options={planirovkalar.map((x) => ({ value: x.id, label: planirovkaText(x) }))}
+        onChange={f.setPlanirovkaId}
+      />
+      <label className="field">
+        <span>Narx, so'm</span>
+        <input className="tabular" inputMode="numeric" placeholder={f.narxPlaceholder} value={f.narx} onChange={(e) => f.setNarx(e.target.value)} />
+      </label>
+      <Select label="Status" value={f.holat} options={holatOptions} onChange={f.setHolat} />
+    </ModalForm>
+  );
+}
+
+/** Edit a Xonadon inline, as a table row (kit: the edited row is tinted, «Saqlash» in place). */
+function XonadonForm({
+  id,
+  blokId,
+  blokNomi,
+  planirovkalar,
+  initial,
+  onDone,
+  onCancel,
+  onError,
+}: {
+  id: number;
+  blokId: number;
+  blokNomi: string;
+  planirovkalar: AdminPlanirovkaDto[];
+  initial: XonadonFields;
+  onDone: (x: AdminXonadonDto, keyingisi: boolean) => Promise<void>;
+  onCancel: () => void;
+  onError: (e: string) => void;
+}) {
+  const { qavat, setQavat, raqam, setRaqam, planirovkaId, setPlanirovkaId, narx, setNarx, holat, setHolat, busy, first, narxPlaceholder, submit } =
+    useXonadonForm({ id, blokId, planirovkalar, initial, onDone, onError });
+
+  useEffect(() => {
+    first.current?.focus();
+  }, [first]);
 
   const keys = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') void submit();
@@ -751,7 +852,7 @@ function XonadonForm({
           className="cell-input"
           inputMode="numeric"
           aria-label="Narx, so'm"
-          placeholder={p?.qoldaNarx != null ? `Planirovka: ${soum(p.qoldaNarx)}` : "So'rov bo'yicha"}
+          placeholder={narxPlaceholder}
           value={narx}
           onChange={(e) => setNarx(e.target.value)}
         />
@@ -768,19 +869,8 @@ function XonadonForm({
       </td>
       <td colSpan={2} className="actions">
         <button type="button" className="link-btn strong" disabled={busy} onClick={() => submit()}>
-          {busy ? 'Saqlanmoqda…' : id ? 'Saqlash' : "Qo'shish"}
+          {busy ? 'Saqlanmoqda…' : 'Saqlash'}
         </button>
-        {!id && (
-          <button
-            type="button"
-            className="link-btn"
-            disabled={busy}
-            title="Qo'shadi va keyingi raqam bilan yana ochadi"
-            onClick={() => submit(undefined, true)}
-          >
-            + keyingisi
-          </button>
-        )}
         <button type="button" className="link-btn" onClick={onCancel}>
           Bekor
         </button>

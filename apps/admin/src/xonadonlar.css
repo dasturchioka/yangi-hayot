@@ -274,15 +274,16 @@
   table-layout: fixed;
 }
 
-/* fixed columns: the inline editor and bulk ticks never shift the grid */
-.c-check { width: 56px; }
-.c-no { width: 88px; }
-.c-qavat { width: 72px; }
-.c-xonalar { width: 92px; }
-.c-maydon { width: 104px; }
-.c-narx { width: 168px; }
-.c-holat { width: 148px; }
-.c-amal { width: 96px; }
+/* fixed columns: the inline editor and bulk ticks never shift the grid.
+   Scoped to <col>: Import's table uses the same c-* names on its cells. */
+.xon-table col.c-check { width: 56px; }
+.xon-table col.c-no { width: 88px; }
+.xon-table col.c-qavat { width: 72px; }
+.xon-table col.c-xonalar { width: 92px; }
+.xon-table col.c-maydon { width: 104px; }
+.xon-table col.c-narx { width: 168px; }
+.xon-table col.c-holat { width: 148px; }
+.xon-table col.c-amal { width: 96px; }
 
 .xon-table td.muted {
   overflow: hidden;
@@ -322,11 +323,8 @@
   width: 1%;
 }
 
-.xon-table input[type='checkbox'] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--yh-primary);
-  cursor: pointer;
+.xon-table .checkbox {
+  vertical-align: middle;
 }
 
 .xon-no {
@@ -533,10 +531,6 @@
   margin-inline: auto;
 }
 
-.stat-label.sold {
-  color: var(--yh-status-sold-fg);
-}
-
 @media (max-width: 860px) {
   .xon-body {
     grid-template-columns: minmax(0, 1fr);
@@ -692,7 +686,7 @@
     min-height: 44px;
   }
 
-  .xon-table input[type='checkbox'] {
+  .xon-table .checkbox-input {
     width: 24px;
     height: 24px;
   }
@@ -824,4 +818,39 @@
   display: inline-flex;
   gap: var(--yh-space-8);
   align-items: baseline;
+}
+
+/* «Yangi Xonadon» modal: Raqam with the Blok prefix reads as an ordinary field */
+.xon-modal-row > .field {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.xon-modal-row input {
+  width: 100%;
+}
+.prefixed.xon-modal-prefixed {
+  display: flex;
+  min-height: 44px;
+  padding-left: 14px;
+  border: 1px solid var(--yh-line);
+  border-radius: 12px;
+  font: 600 14px/20px var(--yh-font);
+  color: var(--yh-muted);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.prefixed.xon-modal-prefixed:focus-within {
+  border-color: var(--yh-primary);
+  box-shadow: 0 0 0 3px var(--yh-status-free-bg);
+}
+.field .xon-modal-prefixed input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 14px 10px 1px;
+  border: 0;
+  border-radius: 0 12px 12px 0;
+  box-shadow: none;
 }
