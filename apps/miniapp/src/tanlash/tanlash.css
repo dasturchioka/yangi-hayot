@@ -195,6 +195,10 @@
     opacity: 0;
   }
 }
+/* A closing sheet never catches taps, even if Back is slow to unmount it */
+.sheet-layer[data-closing] {
+  pointer-events: none;
+}
 .sheet-layer[data-closing] .sheet {
   transform: translateY(100%);
   transition-duration: 180ms;

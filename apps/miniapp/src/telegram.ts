@@ -6,6 +6,8 @@ interface TelegramWebApp {
   initDataUnsafe: { user?: { language_code?: string }; start_param?: string };
   ready(): void;
   expand(): void;
+  /** Bot API 7.7+; older clients only log a warning. */
+  disableVerticalSwipes?(): void;
   openLink?(url: string): void;
   openTelegramLink?(url: string): void;
   showAlert?(message: string): void;
@@ -43,6 +45,10 @@ export function guessLang(): Lang {
 export function signalReady(): void {
   webApp()?.ready();
   webApp()?.expand();
+  // On iOS Telegram's swipe-to-minimize takes every vertical drag that starts at the
+  // top of the page (or on a screen with no scroll): taps get swallowed and carousels
+  // stop moving. The app is closed with Telegram's own button instead.
+  webApp()?.disableVerticalSwipes?.();
 }
 
 /** t.me links open inside Telegram (channel post), anything else in the in-app browser. */
