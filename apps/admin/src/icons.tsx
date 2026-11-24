@@ -1,5 +1,11 @@
 import {
   ArrowDown,
+  ArrowUpRight,
+  BatteryFull,
+  Mic,
+  Paperclip,
+  Signal,
+  Wifi,
   ArrowRight,
   ArrowUp,
   BarChart3,
@@ -85,6 +91,12 @@ const ICONS = {
   loader: LoaderCircle,
   send: Send,
   play: Play,
+  arrowUpRight: ArrowUpRight,
+  battery: BatteryFull,
+  mic: Mic,
+  paperclip: Paperclip,
+  signal: Signal,
+  wifi: Wifi,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

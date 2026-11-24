@@ -166,7 +166,7 @@
   font-size: 15px;
 }
 
-/* Preview: a phone-width Telegram chat with the bot */
+/* Preview: the bot chat as Telegram shows it (TelegramPreview.tsx) */
 .bc-preview {
   position: sticky;
   top: 28px;
@@ -178,97 +178,6 @@
   font: var(--yh-label);
   color: var(--yh-ink-2);
 }
-.bc-phone {
-  overflow: hidden;
-  border: 1px solid var(--yh-line);
-  border-radius: 28px;
-  background: var(--yh-bg);
-  box-shadow: 0 12px 32px rgb(11 61 42 / 0.1);
-}
-.bc-phone-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--yh-line);
-}
-.bc-phone-bar img {
-  border-radius: 50%;
-}
-.bc-phone-bar span {
-  display: grid;
-  line-height: 18px;
-}
-.bc-phone-bar b {
-  font: var(--yh-title);
-}
-.bc-phone-bar small {
-  font: var(--yh-caption);
-  color: var(--yh-muted);
-}
-.bc-chat {
-  display: flex;
-  align-items: flex-end;
-  min-height: 360px;
-  padding: 16px 12px 18px;
-  background-color: var(--yh-telegram-chat-bg);
-  background-image: radial-gradient(rgb(11 61 42 / 0.07) 1px, transparent 1.2px);
-  background-size: 14px 14px;
-}
-.bc-msg {
-  display: grid;
-  gap: 4px;
-  width: 86%;
-}
-.bc-bubble {
-  overflow: hidden;
-  border-radius: 16px 16px 16px 4px;
-  background: var(--yh-bg);
-  box-shadow: 0 1px 2px rgb(11 61 42 / 0.14);
-}
-.bc-media {
-  display: block;
-  width: 100%;
-  max-height: 260px;
-  object-fit: cover;
-}
-.bc-media-empty {
-  display: grid;
-  place-items: center;
-  height: 150px;
-  background: var(--yh-surface);
-  color: var(--yh-muted);
-  font: var(--yh-caption);
-}
-.bc-text {
-  margin: 0;
-  padding: 8px 12px 8px;
-  font: 400 14px/20px var(--yh-font);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.bc-text.placeholder {
-  color: var(--yh-muted);
-}
-.bc-text time {
-  float: right;
-  margin: 6px 0 -4px 10px;
-  font: 400 11px/14px var(--yh-font);
-  color: #8a9a92;
-}
-.bc-inline {
-  display: block;
-  padding: 9px 12px;
-  border-radius: 12px;
-  background: rgb(11 61 42 / 0.62);
-  color: var(--yh-on-primary);
-  font: 600 13px/18px var(--yh-font);
-  text-align: center;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 /* History */
 .bc-table-wrap {
   overflow-x: auto;

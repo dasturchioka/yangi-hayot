@@ -4,6 +4,7 @@ import { adminApi, ApiError } from './api';
 import { qachon } from './format';
 import { Icon } from './icons';
 import { RasmYuklash } from './RasmYuklash';
+import { TelegramPreview } from './TelegramPreview';
 import './rassilka.css';
 
 /** Mirrors the server's /admin/api/rassilka responses (apps/server/src/rassilka/rassilka.ts). */
@@ -299,7 +300,11 @@ export function RassilkaScreen() {
 
         <aside className="bc-preview" aria-label="Telegram'dagi ko'rinishi">
           <p className="bc-preview-title">{draft ? "Qabul qiluvchilar shuni ko'radi" : "Telegram'da shunday ko'rinadi"}</p>
-          <Preview content={draft ? draft.content : live} />
+          <TelegramPreview
+            message={draft ? draft.content : live}
+            arrivalKey={draft?.id}
+            placeholder={'Xabar matni shu yerda ko\u2018rinadi'}
+          />
         </aside>
       </div>
 
@@ -379,41 +384,6 @@ function Tabs<T extends string>({
           {l}
         </button>
       ))}
-    </div>
-  );
-}
-
-/** A Telegram-like chat: the bot's message with its media, text, time and inline button. */
-function Preview({ content }: { content: Content }) {
-  const src = content.media?.kind === 'photo' && /^(https?:\/\/|\/)/.test(content.media.fileId) ? content.media.fileId : null;
-  return (
-    <div className="bc-phone">
-      <div className="bc-phone-bar">
-        <img src="/logo.png" alt="" width={32} height={32} />
-        <span>
-          <b>Yangi Hayot</b>
-          <small>bot</small>
-        </span>
-      </div>
-      <div className="bc-chat">
-        <div className="bc-msg">
-          <div className="bc-bubble">
-            {content.media &&
-              (src ? (
-                <img className="bc-media" src={src} alt="" />
-              ) : (
-                <div className="bc-media bc-media-empty">
-                  {content.media.kind === 'photo' ? 'Foto shu yerda chiqadi' : <Icon name="play" size={28} />}
-                </div>
-              ))}
-            <p className={content.text.trim() ? 'bc-text' : 'bc-text placeholder'}>
-              {content.text.trim() || 'Xabar matni shu yerda ko\u2018rinadi'}
-              <time>12:00</time>
-            </p>
-          </div>
-          {content.button && <span className="bc-inline">{content.button.text || 'Tugma'}</span>}
-        </div>
-      </div>
     </div>
   );
 }
