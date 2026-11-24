@@ -1,6 +1,9 @@
 import type { ByudjetOraligi, KvizByudjetSozlamasi } from '@yh/shared';
 import { useEffect, useState, type FormEvent } from 'react';
 import { adminApi, ApiError, errorText } from './api';
+import { Choice, SaveBar, useDirty, type SaveState } from './controls';
+import { Icon, XIcon } from './icons';
+import './matnlar.css';
 
 const MLN = 1_000_000;
 
@@ -44,8 +47,9 @@ export function KvizSozlamalariScreen() {
   const [data, setData] = useState<KvizByudjetSozlamasi | null>(null);
   const [qolda, setQolda] = useState(false);
   const [qatorlar, setQatorlar] = useState<Qator[]>([]);
-  const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty(data ? { qolda, qatorlar } : null);
 
   function load(d: KvizByudjetSozlamasi) {
     setData(d);
@@ -54,96 +58,114 @@ export function KvizSozlamalariScreen() {
   }
 
   useEffect(() => {
-    adminApi<KvizByudjetSozlamasi>('GET', '/kviz/byudjet').then(load, (e) => setError(errorText(e)));
+    adminApi<KvizByudjetSozlamasi>('GET', '/kviz/byudjet').then(load, (e) => setLoadError(errorText(e)));
   }, []);
+
+  const touch = () => setState((s) => (s.kind === 'saved' || s.kind === 'error' ? { kind: 'idle' } : s));
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    setSaved(false);
+    setState({ kind: 'saving' });
     try {
       const body = { qolda: qolda ? qatorlar.map((q) => ({ dan: parse(q.dan), gacha: parse(q.gacha) })) : null };
       load(await adminApi<KvizByudjetSozlamasi>('PUT', '/kviz/byudjet', body));
-      setError('');
-      setSaved(true);
+      rebase();
+      setState({ kind: 'saved' });
     } catch (err) {
       const code = err instanceof ApiError ? (err.body as { error?: string } | null)?.error : undefined;
-      setError((code && XATO[code]) ?? errorText(err));
+      setState({ kind: 'error', text: (code && XATO[code]) ?? errorText(err) });
     }
   }
 
-  const edit = (i: number, patch: Partial<Qator>) =>
+  const edit = (i: number, patch: Partial<Qator>) => {
+    touch();
     setQatorlar((list) => list.map((q, j) => (j === i ? { ...q, ...patch } : q)));
+  };
 
+  if (!data) return loadError ? <p className="error kviz-sozlama">{loadError}</p> : null;
   return (
-    <div className="stack wide">
-      <header>
-        <h2 className="title">«Xonadon tanlash» kvizi: byudjet oraliqlari</h2>
-        <p className="muted small">«Byudjetingiz qancha?» savoliga javob variantlari</p>
-      </header>
-      {error && <p className="error">{error}</p>}
-      {data && (
-        <form className="card stack" onSubmit={save}>
-          <label className="row">
-            <input type="radio" checked={!qolda} onChange={() => setQolda(false)} />
-            <span>
-              Avtomatik — Boshlang'ich narxlarning minimumidan maksimumigacha 4 ta teng oraliq
-              <br />
-              <span className="muted small">
-                {data.avtomatik.length ? data.avtomatik.map(label).join(' · ') : "Narxi bor planirovka yo'q"}
-              </span>
-            </span>
-          </label>
-          <label className="row">
-            <input
-              type="radio"
-              checked={qolda}
-              onChange={() => {
-                setQolda(true);
-                if (qatorlar.length < 2) setQatorlar(data.avtomatik.map(toQator));
-              }}
-            />
-            <span>O'z oraliqlarim (mln so'm; bo'sh qoldirilgan chet — «… dan» yoki «… gacha»)</span>
-          </label>
-          {qolda && (
-            <div className="stack">
-              {qatorlar.map((q, i) => (
-                <div className="row" key={i}>
-                  <label className="field">
-                    <span>dan</span>
-                    <input inputMode="decimal" value={q.dan} onChange={(e) => edit(i, { dan: e.target.value })} />
-                  </label>
-                  <label className="field">
-                    <span>gacha</span>
-                    <input inputMode="decimal" value={q.gacha} onChange={(e) => edit(i, { gacha: e.target.value })} />
-                  </label>
-                  <button
-                    type="button"
-                    className="link"
-                    disabled={qatorlar.length <= 2}
-                    onClick={() => setQatorlar((list) => list.filter((_, j) => j !== i))}
-                  >
-                    O'chirish
-                  </button>
-                </div>
-              ))}
-              <div>
+    <form className="matn-form kviz-sozlama" onSubmit={save}>
+      <section className="card matn-section" aria-labelledby="kviz-byudjet-title">
+        <header>
+          <h2 className="title" id="kviz-byudjet-title">
+            «Xonadon tanlash» kvizi: byudjet oraliqlari
+          </h2>
+          <p className="muted small">«Byudjetingiz qancha?» savoliga javob variantlari</p>
+        </header>
+        <div className="choice-group" role="radiogroup" aria-labelledby="kviz-byudjet-title">
+          <Choice
+            name="kviz-byudjet"
+            checked={!qolda}
+            onChange={() => {
+              touch();
+              setQolda(false);
+            }}
+            hint={data.avtomatik.length ? data.avtomatik.map(label).join(' · ') : "Narxi bor planirovka yo'q"}
+          >
+            Avtomatik — Boshlang'ich narxlarning minimumidan maksimumigacha 4 ta teng oraliq
+          </Choice>
+          <Choice
+            name="kviz-byudjet"
+            checked={qolda}
+            onChange={() => {
+              touch();
+              setQolda(true);
+              if (qatorlar.length < 2) setQatorlar(data.avtomatik.map(toQator));
+            }}
+            hint="mln so'm; bo'sh qoldirilgan chet — «… dan» yoki «… gacha»"
+          >
+            O'z oraliqlarim
+          </Choice>
+        </div>
+        {qolda && (
+          <div className="kviz-ranges">
+            {qatorlar.map((q, i) => (
+              <div className="kviz-range" key={i}>
+                <span className="list-n" aria-hidden>
+                  {i + 1}
+                </span>
+                <label className="field">
+                  <span>dan</span>
+                  <input className="tabular" inputMode="decimal" value={q.dan} onChange={(e) => edit(i, { dan: e.target.value })} />
+                </label>
+                <label className="field">
+                  <span>gacha</span>
+                  <input className="tabular" inputMode="decimal" value={q.gacha} onChange={(e) => edit(i, { gacha: e.target.value })} />
+                </label>
                 <button
                   type="button"
-                  className="link"
-                  disabled={qatorlar.length >= 6}
-                  onClick={() => setQatorlar((list) => [...list, { dan: '', gacha: '' }])}
+                  className="icon danger"
+                  aria-label="O'chirish"
+                  title="O'chirish"
+                  disabled={qatorlar.length <= 2}
+                  onClick={() => {
+                    touch();
+                    setQatorlar((list) => list.filter((_, j) => j !== i));
+                  }}
                 >
-                  + Oraliq qo'shish
+                  <XIcon />
                 </button>
               </div>
+            ))}
+            <div className="row tight">
+              <button
+                type="button"
+                className="with-icon"
+                disabled={qatorlar.length >= 6}
+                onClick={() => {
+                  touch();
+                  setQatorlar((list) => [...list, { dan: '', gacha: '' }]);
+                }}
+              >
+                <Icon name="plus" size={16} />
+                Oraliq qo'shish
+              </button>
+              <span className="muted small tabular">{qatorlar.length} / 6</span>
             </div>
-          )}
-          <div className="row">
-            <button className="primary">Saqlash</button>
-            {saved && <span className="muted small">Saqlandi. Kvizda bir daqiqa ichida ko'rinadi.</span>}
           </div>
-        </form>
-      )}
-    </div>
+        )}
+      </section>
+      <SaveBar state={state} dirty={dirty} savedText="Saqlandi. Kvizda bir daqiqa ichida ko'rinadi." />
+    </form>
   );
 }

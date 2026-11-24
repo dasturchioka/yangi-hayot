@@ -9,9 +9,9 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { adminApi, errorText } from './api';
 import './dojim.css';
+import { Switch, useDirty, type SaveState } from './controls';
 import { Form } from './Matnlar';
 
-type SaveState = { kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; text: string };
 
 const LANGS: Lang[] = ['uz', 'ru'];
 
@@ -60,6 +60,7 @@ const fill = (s: string, p: Record<string, string>) => s.replace(/\{(\w+)\}/g, (
 export function DojimForm() {
   const [sozlama, setSozlama] = useState<DojimSozlamalari | null>(null);
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty(sozlama);
 
   useEffect(() => {
     adminApi<DojimSozlamalari>('GET', '/dojim').then(setSozlama, (e) => setState({ kind: 'error', text: errorText(e) }));
@@ -77,6 +78,7 @@ export function DojimForm() {
     setState({ kind: 'saving' });
     try {
       setSozlama(await adminApi<DojimSozlamalari>('PUT', '/dojim', sozlama));
+      rebase();
       setState({ kind: 'saved' });
     } catch (e) {
       setState({ kind: 'error', text: `${errorText(e)}. Har matn ikkala tilda to'ldirilgan bo'lsin.` });
@@ -84,7 +86,7 @@ export function DojimForm() {
   }
 
   return (
-    <Form state={state} onSubmit={submit} savedText="Saqlandi — keyingi eslatmalar shu matn bilan boradi">
+    <Form state={state} dirty={dirty} onSubmit={submit} savedText="Saqlandi — keyingi eslatmalar shu matn bilan boradi">
       <p className="dojim-rules muted">
         Bot bitta Mijozga 7 kunda ko'pi bilan bitta eslatma yuboradi, faqat 09:00–21:00 oralig'ida. Har xabar ostida
         «Yubormang» tugmasi bor: bosilsa, Mijozga boshqa eslatma bormaydi.
@@ -131,16 +133,9 @@ function Ssenariy({
           </h2>
           <p className="muted small">{info.qachon}</p>
         </div>
-        <label className="switch">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={value.yoqilgan}
-            onChange={(e) => onChange({ ...value, yoqilgan: e.target.checked })}
-          />
-          <span className="switch-track" aria-hidden="true" />
-          <span className="switch-label">{value.yoqilgan ? 'Yoqilgan' : "O'chirilgan"}</span>
-        </label>
+        <Switch checked={value.yoqilgan} onChange={(e) => onChange({ ...value, yoqilgan: e.target.checked })}>
+          <span className="dojim-switch-label">{value.yoqilgan ? 'Yoqilgan' : "O'chirilgan"}</span>
+        </Switch>
       </header>
 
       <div className="dojim-langs">

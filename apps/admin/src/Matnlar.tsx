@@ -11,7 +11,8 @@ import { adminApi, errorText } from './api';
 import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
 import { SkoringForm } from './Skoring';
-import { ArrowDownIcon, ArrowUpIcon, XIcon } from './icons';
+import { SaveBar, useDirty, type SaveState } from './controls';
+import { ArrowDownIcon, ArrowUpIcon, Icon, XIcon } from './icons';
 import './matnlar.css';
 import { RasmYuklash } from './RasmYuklash';
 import { YozilishSozlamalariForm } from './Yozilishlar';
@@ -115,13 +116,13 @@ export function MatnlarScreen() {
 // ---------------------------------------------------------------- form shell
 
 function useSave<T>(path: string, onSaved: (k: AdminKontentResponse) => void) {
-  const [state, setState] = useState<{ kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; text: string }>({
-    kind: 'idle',
-  });
-  async function save(value: T) {
+  const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  /** `onDone` runs after a successful save (e.g. to take the saved value as the new baseline). */
+  async function save(value: T, onDone?: () => void) {
     setState({ kind: 'saving' });
     try {
       onSaved(await adminApi<AdminKontentResponse>('PUT', `/kontent/${path}`, value));
+      onDone?.();
       setState({ kind: 'saved' });
     } catch (e) {
       setState({ kind: 'error', text: errorText(e) });
@@ -134,11 +135,14 @@ export function Form({
   children,
   onSubmit,
   state,
+  dirty,
   savedText = 'Saqlandi — Mini App’da ko‘rinadi',
 }: {
   children: ReactNode;
   onSubmit: () => void;
-  state: ReturnType<typeof useSave>['state'];
+  state: SaveState;
+  /** «Saqlash» is active only when something changed. */
+  dirty: boolean;
   /** Shown after a successful save. */
   savedText?: string;
 }) {
@@ -149,15 +153,7 @@ export function Form({
   return (
     <form className="matn-form" onSubmit={submit}>
       {children}
-      <div className="save-bar">
-        <span className="save-status" role="status">
-          {state.kind === 'saved' && savedText}
-          {state.kind === 'error' && <span className="save-error">{state.text}</span>}
-        </span>
-        <button className="primary" type="submit" disabled={state.kind === 'saving'}>
-          {state.kind === 'saving' ? 'Saqlanmoqda…' : 'Saqlash'}
-        </button>
-      </div>
+      <SaveBar state={state} dirty={dirty} savedText={savedText} />
     </form>
   );
 }
@@ -281,8 +277,9 @@ export function ListEditor<T>({
         </div>
       ))}
       <div className="row tight">
-        <button type="button" disabled={items.length >= max} onClick={() => onChange([...items, blank()])}>
-          + {addLabel}
+        <button type="button" className="with-icon" disabled={items.length >= max} onClick={() => onChange([...items, blank()])}>
+          <Icon name="plus" size={16} />
+          {addLabel}
         </button>
         <span className="muted small tabular">
           {items.length} / {max}
@@ -299,13 +296,14 @@ const bosh = (): Matn => ({ uz: '', ru: '' });
 function SotibOlishForm({ initial, onSaved }: { initial: SotibOlishKontent; onSaved: (k: AdminKontentResponse) => void }) {
   const [v, setV] = useState(initial);
   const { state, save, touch } = useSave<SotibOlishKontent>('sotib-olish', onSaved);
+  const { dirty, rebase } = useDirty(v);
   const upd = <K extends keyof SotibOlishKontent>(key: K, value: SotibOlishKontent[K]) => {
     touch();
     setV((s) => ({ ...s, [key]: value }));
   };
 
   return (
-    <Form state={state} onSubmit={() => void save(v)}>
+    <Form state={state} dirty={dirty} onSubmit={() => void save(v, rebase)}>
       <Section title="Sarlavha">
         <MatnField label="Sarlavha" value={v.sarlavha} onChange={(x) => upd('sarlavha', x)} />
       </Section>
@@ -374,13 +372,14 @@ function SotibOlishForm({ initial, onSaved }: { initial: SotibOlishKontent; onSa
 function BizHaqimizdaForm({ initial, onSaved }: { initial: BizHaqimizdaKontent; onSaved: (k: AdminKontentResponse) => void }) {
   const [v, setV] = useState(initial);
   const { state, save, touch } = useSave<BizHaqimizdaKontent>('biz-haqimizda', onSaved);
+  const { dirty, rebase } = useDirty(v);
   const upd = <K extends keyof BizHaqimizdaKontent>(key: K, value: BizHaqimizdaKontent[K]) => {
     touch();
     setV((s) => ({ ...s, [key]: value }));
   };
 
   return (
-    <Form state={state} onSubmit={() => void save({ ...v, foto: v.foto?.trim() || null })}>
+    <Form state={state} dirty={dirty} onSubmit={() => void save({ ...v, foto: v.foto?.trim() || null }, rebase)}>
       <Section title="Asosiy">
         <MatnField label="Sarlavha (rasm ustida)" value={v.sarlavha} onChange={(x) => upd('sarlavha', x)} />
         <MatnField label="Kompaniya haqida" multiline value={v.matn} onChange={(x) => upd('matn', x)} />
@@ -425,6 +424,7 @@ function KontaktlarForm({ initial, onSaved }: { initial: KontaktlarKontent; onSa
   const [lat, setLat] = useState(initial.xarita ? String(initial.xarita.lat) : '');
   const [lng, setLng] = useState(initial.xarita ? String(initial.xarita.lng) : '');
   const { state, save, touch } = useSave<KontaktlarKontent>('kontaktlar', onSaved);
+  const { dirty, rebase } = useDirty({ v, lat, lng });
   const upd = <K extends keyof KontaktlarKontent>(key: K, value: KontaktlarKontent[K]) => {
     touch();
     setV((s) => ({ ...s, [key]: value }));
@@ -432,11 +432,11 @@ function KontaktlarForm({ initial, onSaved }: { initial: KontaktlarKontent; onSa
 
   function submit() {
     const xarita = lat.trim() && lng.trim() ? { lat: Number(lat), lng: Number(lng) } : null;
-    void save({ ...v, telegram: v.telegram?.trim() || null, xarita });
+    void save({ ...v, telegram: v.telegram?.trim() || null, xarita }, rebase);
   }
 
   return (
-    <Form state={state} onSubmit={submit}>
+    <Form state={state} dirty={dirty} onSubmit={submit}>
       <Section title="Aloqa" hint="«Biz haqimizda» ekranining pastida; «Qo'ng'iroq qilish» shu raqamni teradi">
         <div className="row">
           <label className="field grow">

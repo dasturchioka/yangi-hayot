@@ -16,8 +16,14 @@
 }
 .yz-periods {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--yh-space-8);
+  min-width: 0;
+  max-width: 100%; /* phones: the period tabs scroll inside, the page does not */
+}
+.yz-periods .tabs {
+  min-width: 0;
 }
 .yz-periods .tab {
   font: var(--yh-label);
@@ -226,6 +232,8 @@
   color: var(--yh-muted);
 }
 .yz-chip button {
+  display: grid;
+  place-items: center;
   min-height: 28px;
   min-width: 28px;
   padding: 0;
@@ -245,6 +253,9 @@
   align-items: center;
 }
 .yz-add button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   min-height: 36px;
   border-style: dashed;
   border-color: var(--yh-primary);

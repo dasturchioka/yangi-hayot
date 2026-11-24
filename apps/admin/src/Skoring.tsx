@@ -11,10 +11,10 @@ import {
 } from '@yh/shared';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { adminApi, errorText } from './api';
+import { useDirty, type SaveState } from './controls';
 import { Form, Section } from './Matnlar';
 import './skoring.css';
 
-type SaveState = { kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; text: string };
 
 const DARAJA_NOMI: Record<Daraja, string> = { issiq: 'Issiq', iliq: 'Iliq', sovuq: 'Sovuq' };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -43,6 +43,7 @@ function maxBall(q: SkoringQoidalari): number {
 export function SkoringForm() {
   const [q, setQ] = useState<SkoringQoidalari | null>(null);
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty(q);
 
   useEffect(() => {
     adminApi<SkoringResponse>('GET', '/skoring').then(
@@ -82,6 +83,7 @@ export function SkoringForm() {
     try {
       const r = await adminApi<SkoringResponse>('PUT', '/skoring', q);
       setQ(r.qoidalar);
+      rebase();
       setState({ kind: 'saved' });
     } catch (e) {
       setState({ kind: 'error', text: `${errorText(e)}. Ball −100 dan 100 gacha butun son bo‘lishi kerak.` });
@@ -93,7 +95,7 @@ export function SkoringForm() {
 
   return (
     <div className="skoring">
-      <Form state={state} onSubmit={submit} savedText="Saqlandi — keyingi ariza yoki harakatdan qo‘llanadi">
+      <Form state={state} dirty={dirty} onSubmit={submit} savedText="Saqlandi — keyingi ariza yoki harakatdan qo‘llanadi">
         <Section
           title="Kviz javoblari"
           hint="Mijozning oxirgi kvizi. Kviz to‘ldirilmagan bo‘lsa, to‘lov usuli va byudjet kalkulyatordagi hisobdan olinadi."

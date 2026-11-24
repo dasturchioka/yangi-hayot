@@ -74,58 +74,9 @@ button.token:active {
   margin-left: auto;
 }
 
-/* Switch: a real checkbox (role=switch) under a drawn track. */
-.switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--yh-space-8);
-  flex: none;
-  cursor: pointer;
-  font: var(--yh-caption);
-  color: var(--yh-ink-2);
-}
-.switch input {
-  position: absolute;
-  inset: 0;
-  width: 44px;
-  height: 26px;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.switch-track {
-  position: relative;
-  width: 44px;
-  height: 26px;
-  border-radius: var(--yh-radius-pill);
-  /* --yh-line alone vanishes on white: the off state must still read as a control */
-  background: color-mix(in srgb, var(--yh-muted) 32%, var(--yh-bg));
-  transition: background-color 160ms ease;
-}
-.switch-track::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--yh-bg);
-  box-shadow: 0 1px 3px rgba(11, 61, 42, 0.2);
-  transition: transform 180ms var(--yh-ease-out);
-}
-.switch input:checked + .switch-track {
-  background: var(--yh-primary);
-}
-.switch input:checked + .switch-track::after {
-  transform: translateX(18px);
-}
-.switch input:focus-visible + .switch-track {
-  outline: 2px solid var(--yh-primary);
-  outline-offset: 2px;
-}
-.switch-label {
+/* fixed width: «Yoqilgan» / «O'chirilgan» do not shift the switch */
+.dojim-switch-label {
+  display: inline-block;
   min-width: 9ch;
 }
 
@@ -173,7 +124,6 @@ button.token:active {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .switch-track::after,
   button.token,
   .dojim.off .dojim-langs {
     transition: none;

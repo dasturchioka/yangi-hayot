@@ -156,6 +156,8 @@ button.nav:disabled {
 .stack {
   max-width: 1200px;
   gap: var(--yh-space-20);
+  /* one column that never grows past the screen: wide children (tabs, tables) scroll inside */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /* Page title (kit: 26–28px, subtitle under it) */
@@ -218,6 +220,11 @@ button.small {
   min-height: 32px;
   padding: 0 12px;
   font-size: 13px;
+}
+button.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 button.danger {
   border-color: var(--yh-status-error-bg);

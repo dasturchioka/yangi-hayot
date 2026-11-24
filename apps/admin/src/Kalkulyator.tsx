@@ -1,9 +1,8 @@
 import type { Bank, KalkulyatorResponse, KalkulyatorSozlamalari } from '@yh/shared';
 import { useEffect, useState } from 'react';
 import { adminApi, errorText } from './api';
+import { Switch, useDirty, type SaveState } from './controls';
 import { Form, ListEditor, Section } from './Matnlar';
-
-type SaveState = { kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; text: string };
 
 /** A bank row as typed: numbers stay text until saving so a half-typed «17,» is not lost. */
 interface BankRow {
@@ -45,6 +44,7 @@ export function KalkulyatorForm() {
   const [muddatli, setMuddatli] = useState<KalkulyatorSozlamalari['muddatli'] | null>(null);
   const [banklar, setBanklar] = useState<BankRow[]>([]);
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty(muddatli ? { muddatli, banklar } : null);
 
   function load(s: KalkulyatorSozlamalari) {
     setMuddatli(s.muddatli);
@@ -87,6 +87,7 @@ export function KalkulyatorForm() {
     try {
       const r = await adminApi<KalkulyatorResponse>('PUT', '/kalkulyator', { muddatli, banklar: out });
       load(r.sozlama);
+      rebase();
       setState({ kind: 'saved' });
     } catch (e) {
       setState({
@@ -97,15 +98,14 @@ export function KalkulyatorForm() {
   }
 
   return (
-    <Form state={state} onSubmit={submit}>
+    <Form state={state} dirty={dirty} onSubmit={submit}>
       <Section
         title="Muddatli to'lov"
         hint="Oylik to'lov = (narx − boshlang'ich to'lov) × (1 + ustama) ÷ oylar. Kalkulyator shu chegaralardan chiqishga yo'l qo'ymaydi."
       >
-        <label className="field inline">
-          <input type="checkbox" checked={muddatli.yoqilgan} onChange={(e) => setM('yoqilgan', e.target.checked)} />
-          <span>Muddatli to'lov bor (o'chirilsa, kalkulyatorda faqat ipoteka qoladi)</span>
-        </label>
+        <Switch checked={muddatli.yoqilgan} onChange={(e) => setM('yoqilgan', e.target.checked)}>
+          Muddatli to'lov bor (o'chirilsa, kalkulyatorda faqat ipoteka qoladi)
+        </Switch>
         <div className="row">
           <NumField
             label="Boshl. to'lov min, %"

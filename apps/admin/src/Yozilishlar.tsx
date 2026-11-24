@@ -8,6 +8,8 @@ import type {
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { DatePicker } from '@yh/ui/date';
 import { adminApi, errorText } from './api';
+import { SaveBar, useDirty, type SaveState } from './controls';
+import { Icon } from './icons';
 import { DarajaChip } from './Skoring';
 import './yozilishlar.css';
 
@@ -239,7 +241,8 @@ export function YozilishSozlamalariForm() {
   const [s, setS] = useState<YozilishSozlamalari | null>(null);
   const [yangiVaqt, setYangiVaqt] = useState('');
   const [yangiBayram, setYangiBayram] = useState('');
-  const [state, setState] = useState<{ kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; text: string }>({ kind: 'idle' });
+  const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty(s);
 
   useEffect(() => {
     adminApi<{ sozlamalar: YozilishSozlamalari }>('GET', '/yozilish-sozlamalari').then(
@@ -261,6 +264,7 @@ export function YozilishSozlamalariForm() {
     setState({ kind: 'saving' });
     try {
       setS((await adminApi<{ sozlamalar: YozilishSozlamalari }>('PUT', '/yozilish-sozlamalari', s)).sozlamalar);
+      rebase();
       setState({ kind: 'saved' });
     } catch (err) {
       setState({ kind: 'error', text: errorText(err) });
@@ -320,14 +324,15 @@ export function YozilishSozlamalariForm() {
               <span key={v} className="yz-chip tabular">
                 {v}
                 <button type="button" aria-label={`${v} ni olib tashlash`} onClick={() => change({ vaqtlar: s.vaqtlar.filter((x) => x !== v) })}>
-                  ×
+                  <Icon name="x" size={16} />
                 </button>
               </span>
             ))}
             <span className="yz-add">
               <input type="time" step={1800} value={yangiVaqt} onChange={(e) => setYangiVaqt(e.target.value)} aria-label="Yangi vaqt" />
               <button type="button" onClick={addVaqt} disabled={!yangiVaqt}>
-                + vaqt
+                <Icon name="plus" size={16} />
+                vaqt
               </button>
             </span>
           </div>
@@ -355,28 +360,21 @@ export function YozilishSozlamalariForm() {
             <span key={b} className={b < today ? 'yz-chip is-past tabular' : 'yz-chip tabular'}>
               {toliq(b)}
               <button type="button" aria-label={`${b} ni olib tashlash`} onClick={() => change({ bayramlar: s.bayramlar.filter((x) => x !== b) })}>
-                ×
+                <Icon name="x" size={16} />
               </button>
             </span>
           ))}
           <span className="yz-add">
             <DatePicker min={today} value={yangiBayram || today} onChange={setYangiBayram} aria-label="Bayram kuni" />
             <button type="button" onClick={addBayram} disabled={!yangiBayram}>
-              + kun
+              <Icon name="plus" size={16} />
+              kun
             </button>
           </span>
         </div>
       </section>
 
-      <div className="save-bar">
-        <span className="save-status" role="status">
-          {state.kind === 'saved' && 'Saqlandi — Mini App kalendari yangilandi'}
-          {state.kind === 'error' && <span className="save-error">{state.text}</span>}
-        </span>
-        <button className="primary" type="submit" disabled={state.kind === 'saving'}>
-          {state.kind === 'saving' ? 'Saqlanmoqda…' : 'Saqlash'}
-        </button>
-      </div>
+      <SaveBar state={state} dirty={dirty} savedText="Saqlandi — Mini App kalendari yangilandi" />
     </form>
   );
 }
