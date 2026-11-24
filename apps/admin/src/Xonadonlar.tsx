@@ -182,7 +182,7 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
       {error && (
         <p className="error xon-error" role="alert">
           {error}
-          <button type="button" className="icon-btn" aria-label="Yopish" onClick={() => setError('')}>
+          <button type="button" className="icon-button sm" aria-label="Yopish" onClick={() => setError('')}>
             <Icon name="x" size={16} />
           </button>
         </p>
@@ -404,7 +404,7 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
                     </span>
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="icon-button sm"
                       aria-label="Pastki qavat"
                       disabled={qavatIndex >= qavatlar.length - 1}
                       onClick={() => setQavat(qavatlar[qavatIndex + 1]!)}
@@ -414,7 +414,7 @@ export function XonadonlarScreen({ admin, onImport }: { admin: AdminDto; onImpor
                     <strong className="pager-now">{qavat}</strong>
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="icon-button sm"
                       aria-label="Yuqori qavat"
                       disabled={qavatIndex <= 0}
                       onClick={() => setQavat(qavatlar[qavatIndex - 1]!)}
@@ -634,10 +634,10 @@ function XonadonRow({
             </span>
           ) : (
             <>
-              <button type="button" className="icon-btn" aria-label={`${blokNomi}-${x.raqam} ni tahrirlash`} onClick={() => setEditing(true)}>
+              <button type="button" className="icon-button sm" aria-label={`${blokNomi}-${x.raqam} ni tahrirlash`} onClick={() => setEditing(true)}>
                 <Icon name="pencil" size={16} />
               </button>
-              <button type="button" className="icon-btn" aria-label={`${blokNomi}-${x.raqam} ni o'chirish`} onClick={() => setConfirm(true)}>
+              <button type="button" className="icon-button sm" aria-label={`${blokNomi}-${x.raqam} ni o'chirish`} onClick={() => setConfirm(true)}>
                 <Icon name="trash" size={16} />
               </button>
             </>

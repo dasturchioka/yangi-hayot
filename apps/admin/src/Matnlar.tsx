@@ -10,6 +10,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { adminApi, errorText } from './api';
 import { DojimForm } from './Dojim';
 import { KalkulyatorForm } from './Kalkulyator';
+import { KvizSozlamalariScreen } from './KvizSozlamalari';
 import { SkoringForm } from './Skoring';
 import { SaveBar, useDirty, type SaveState } from './controls';
 import { ArrowDownIcon, ArrowUpIcon, Icon, XIcon } from './icons';
@@ -59,6 +60,13 @@ const TABS: Tab[] = [
     render: () => <KalkulyatorForm />,
   },
   {
+    id: 'kviz',
+    name: 'Kviz byudjeti',
+    // «Xonadon tanlash» kvizi: budget answers (#10), own settings key (GET/PUT /admin/api/kviz/byudjet).
+    render: () => null,
+    own: () => <KvizSozlamalariScreen />,
+  },
+  {
     id: 'skoring',
     name: 'Ball qoidalari',
     // Lead skoringi (UF-4, #18): own settings key (GET/PUT /admin/api/skoring).
@@ -96,7 +104,10 @@ export function MatnlarScreen() {
             role="tab"
             aria-selected={t.id === tab}
             className={t.id === tab ? 'tab active' : 'tab'}
-            onClick={() => setTab(t.id)}
+            onClick={(e) => {
+              setTab(t.id);
+              e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            }}
           >
             {t.name}
           </button>
@@ -252,12 +263,12 @@ export function ListEditor<T>({
           )}
           <div className="list-body">{children(item, (v) => set(i, v))}</div>
           <div className="list-actions">
-            <button type="button" className="icon" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Yuqoriga">
+            <button type="button" className="icon-button" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Yuqoriga">
               <ArrowUpIcon />
             </button>
             <button
               type="button"
-              className="icon"
+              className="icon-button"
               disabled={i === items.length - 1}
               onClick={() => move(i, 1)}
               aria-label="Pastga"
@@ -266,7 +277,7 @@ export function ListEditor<T>({
             </button>
             <button
               type="button"
-              className="icon danger"
+              className="icon-button danger"
               disabled={items.length <= min}
               onClick={() => onChange(items.filter((_, j) => j !== i))}
               aria-label="O'chirish"

@@ -347,7 +347,6 @@
 }
 
 .xon-table .cell-input:focus,
-.icon-btn:focus-visible,
 .link-btn:focus-visible,
 .mini-row:focus-visible,
 .xon-btn:focus-visible,
@@ -422,24 +421,6 @@
   background: var(--yh-status-sold-fg);
 }
 
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  min-height: 0;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: 10px;
-  background: none;
-  color: var(--yh-muted);
-  transition: background-color 140ms var(--yh-ease-out), color 140ms var(--yh-ease-out);
-}
-
-
-.icon-btn:disabled {
-  opacity: 0.35;
-}
 
 .link-btn {
   min-height: 32px;
@@ -593,11 +574,6 @@
 
   .pill:hover:not(:disabled) {
     filter: brightness(0.97);
-  }
-
-  .icon-btn:hover:not(:disabled) {
-    background: var(--yh-surface);
-    color: var(--yh-ink);
   }
 
   .link-btn:hover {

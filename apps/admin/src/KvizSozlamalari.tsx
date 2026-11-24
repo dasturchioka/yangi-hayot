@@ -82,9 +82,9 @@ export function KvizSozlamalariScreen() {
     setQatorlar((list) => list.map((q, j) => (j === i ? { ...q, ...patch } : q)));
   };
 
-  if (!data) return loadError ? <p className="error kviz-sozlama">{loadError}</p> : null;
+  if (!data) return loadError ? <p className="error">{loadError}</p> : null;
   return (
-    <form className="matn-form kviz-sozlama" onSubmit={save}>
+    <form className="matn-form" onSubmit={save}>
       <section className="card matn-section" aria-labelledby="kviz-byudjet-title">
         <header>
           <h2 className="title" id="kviz-byudjet-title">
@@ -134,7 +134,7 @@ export function KvizSozlamalariScreen() {
                 </label>
                 <button
                   type="button"
-                  className="icon danger"
+                  className="icon-button danger"
                   aria-label="O'chirish"
                   title="O'chirish"
                   disabled={qatorlar.length <= 2}

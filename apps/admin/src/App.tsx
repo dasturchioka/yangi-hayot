@@ -6,7 +6,6 @@ import { CollapseIcon, ExpandIcon, LogoutIcon, MenuIcon, SectionIcon } from './i
 import { FoydalanuvchilarScreen } from './Foydalanuvchilar';
 import { ImportScreen } from './Import';
 import { JurnalScreen } from './Jurnal';
-import { KvizSozlamalariScreen } from './KvizSozlamalari';
 import { LoginScreen } from './Login';
 import { LoyihalarScreen } from './Loyihalar';
 import { MatnlarScreen } from './Matnlar';
@@ -43,12 +42,7 @@ const SECTIONS: Section[] = [
   {
     name: 'Matnlar va sozlamalar',
     rollar: ['administrator'],
-    render: () => (
-      <>
-        <MatnlarScreen />
-        <KvizSozlamalariScreen />
-      </>
-    ),
+    render: () => <MatnlarScreen />,
   },
   { name: 'Foydalanuvchilar', rollar: ['administrator'], render: (a) => <FoydalanuvchilarScreen me={a} /> },
 ];

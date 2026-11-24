@@ -118,9 +118,10 @@ button.nav:disabled {
   background: var(--yh-status-free-bg);
   color: var(--yh-status-free-fg);
 }
+/* The one icon-only button: shell, modals, tables (.sm), list editors. Label it with aria-label. */
 .icon-button {
   flex: none;
-  display: grid;
+  display: inline-grid;
   place-items: center;
   width: 36px;
   min-height: 36px;
@@ -131,9 +132,30 @@ button.nav:disabled {
   background: none;
   color: var(--yh-muted);
 }
-.icon-button:hover {
-  background: var(--yh-surface);
-  color: var(--yh-ink);
+.icon-button.sm {
+  width: 32px;
+  min-height: 32px;
+  height: 32px;
+}
+.icon-button:disabled {
+  opacity: 0.35;
+}
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:not(:disabled):hover {
+    background: var(--yh-surface);
+    color: var(--yh-ink);
+  }
+  .icon-button.danger:not(:disabled):hover {
+    background: var(--yh-status-error-bg);
+    color: var(--yh-status-error-fg);
+  }
+}
+@media (pointer: coarse) {
+  .icon-button.sm {
+    width: 40px;
+    min-height: 40px;
+    height: 40px;
+  }
 }
 
 .content {

@@ -1,6 +1,15 @@
 /* ---- «Matnlar va sozlamalar» (#13) ---- */
 .matnlar .tabs {
   justify-self: start;
+  /* eight tabs: one line that scrolls sideways when the screen is narrower, never two ragged rows */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.matnlar .tab {
+  flex: none;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 .matn-form {
   display: grid;
@@ -75,30 +84,16 @@
   gap: var(--yh-space-4);
   margin-top: 26px; /* 36px buttons centred on the first input (see .list-n) */
 }
-button.icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  min-height: 36px;
-  padding: 0;
-  border-color: transparent;
-  border-radius: 10px;
+/* on the tinted list rows the icon buttons sit on white chips */
+.list-actions .icon-button {
   background: var(--yh-bg);
   color: var(--yh-ink-2);
 }
 @media (hover: hover) and (pointer: fine) {
-  button.icon:not(.danger):not(:disabled):hover {
-    border-color: transparent;
+  .list-actions .icon-button:not(.danger):not(:disabled):hover {
     background: var(--yh-status-free-bg);
     color: var(--yh-primary);
   }
-}
-button.icon:disabled {
-  opacity: 0.35;
-}
-button.icon.danger:not(:disabled):hover {
-  color: var(--yh-status-error-fg);
-  background: var(--yh-status-error-bg);
 }
 .raqam-row {
   display: grid;
@@ -106,11 +101,7 @@ button.icon.danger:not(:disabled):hover {
   gap: var(--yh-space-12);
 }
 
-/* «Xonadon tanlash» kvizi under the tabs: its own block, clearly apart from the form above */
-.kviz-sozlama {
-  max-width: 1200px;
-  margin-top: 40px;
-}
+/* «Xonadon tanlash» kvizi (its own tab) */
 .kviz-ranges {
   display: grid;
   gap: var(--yh-space-8);
@@ -131,7 +122,7 @@ button.icon.danger:not(:disabled):hover {
   margin: 0 0 8px;
   background: var(--yh-surface);
 }
-.kviz-range button.icon {
+.kviz-range .icon-button {
   margin-bottom: 4px;
 }
 
