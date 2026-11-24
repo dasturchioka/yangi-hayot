@@ -13,6 +13,9 @@ import { adminApi, errorText } from './api';
 import { parseNumber, PLANIROVKA_HOLATI_LABEL, soum } from './format';
 import { Select } from '@yh/ui/select';
 import { RasmlarYuklash, RasmYuklash } from './RasmYuklash';
+import { SaveBar, useDirty, type SaveState } from './controls';
+import { Icon } from './icons';
+import { Modal, ModalForm } from './Modal';
 
 /**
  * «Loyihalar» (Administrator): create and edit Loyiha (holati Sotuvda /
@@ -21,7 +24,8 @@ import { RasmlarYuklash, RasmYuklash } from './RasmYuklash';
  */
 export function LoyihalarScreen() {
   const [list, setList] = useState<AdminLoyihaListItem[]>([]);
-  const [selected, setSelected] = useState<number | 'new' | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
   const reloadList = useCallback(async () => {
@@ -43,8 +47,9 @@ export function LoyihalarScreen() {
           <h1 className="h2">Loyihalar</h1>
           <p className="muted">Topshirilgan Loyihalar Mini App katalogida ko'rinmaydi</p>
         </div>
-        <button className="primary" onClick={() => setSelected('new')}>
-          + Loyiha
+        <button className="primary with-icon" onClick={() => setCreating(true)}>
+          <Icon name="plus" size={18} />
+          Loyiha
         </button>
       </header>
       {error && <p className="error">{error}</p>}
@@ -82,15 +87,16 @@ export function LoyihalarScreen() {
         </table>
       </section>
 
-      {selected === 'new' && (
+      <Modal open={creating} onClose={() => setCreating(false)} title="Yangi Loyiha" size="lg">
         <LoyihaForm
           onSaved={(l) => {
             void reloadList();
+            setCreating(false);
             setSelected(l.id);
           }}
         />
-      )}
-      {typeof selected === 'number' && <LoyihaEditor key={selected} id={selected} onChanged={reloadList} />}
+      </Modal>
+      {selected !== null && <LoyihaEditor key={selected} id={selected} onChanged={reloadList} />}
     </div>
   );
 }
@@ -156,7 +162,10 @@ function LoyihaEditor({ id, onChanged }: { id: number; onChanged: () => void }) 
             <span>Yangi Blok</span>
             <input placeholder="masalan, A" value={blokNomi} maxLength={20} onChange={(e) => setBlokNomi(e.target.value)} required />
           </label>
-          <button>+ Blok</button>
+          <button className="with-icon">
+            <Icon name="plus" size={16} />
+            Blok
+          </button>
         </form>
       </section>
     </>
@@ -182,8 +191,9 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
   const [tartib, setTartib] = useState(String(loyiha?.tartib ?? 0));
   const [korsatuv, setKorsatuv] = useState<LokalDto>(loyiha?.korsatuvManzili ?? emptyLokal);
   const [masul, setMasul] = useState(loyiha?.crmMasulId ?? '');
-  const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const { dirty, rebase } = useDirty([nomi, shahar, holat, manzil, qisqa, tavsif, fotolar, video, qavatlar, xarita, tartib, korsatuv, masul]);
+  const setError = (text: string) => setState({ kind: 'error', text });
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -205,22 +215,21 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
       korsatuvManzili: lokalOrNull(korsatuv),
       crmMasulId: masul.trim() || null,
     };
+    setState({ kind: 'saving' });
     try {
       const res = loyiha
         ? await adminApi<{ loyiha: AdminLoyihaDto }>('PATCH', `/katalog/loyihalar/${loyiha.id}`, body)
         : await adminApi<{ loyiha: AdminLoyihaDto }>('POST', '/katalog/loyihalar', body);
-      setError('');
-      setSaved(true);
+      rebase();
+      setState({ kind: 'saved' });
       onSaved(res.loyiha);
     } catch (err) {
       setError(errorText(err));
-      setSaved(false);
     }
   }
 
-  return (
-    <form className="card stack" onSubmit={submit} onChange={() => setSaved(false)}>
-      <h2 className="title">{loyiha ? loyiha.nomi : 'Yangi Loyiha'}</h2>
+  const fields = (
+    <>
       <div className="row">
         <label className="field grow">
           <span>Nomi</span>
@@ -273,11 +282,27 @@ function LoyihaForm({ loyiha, onSaved }: { loyiha?: AdminLoyihaDto; onSaved: (l:
         <input inputMode="numeric" value={masul} onChange={(e) => setMasul(e.target.value)} placeholder="Masalan, 8123456" />
       </label>
       <RasmlarYuklash label="Fotolar" value={fotolar} onChange={setFotolar} />
-      {error && <p className="error">{error}</p>}
-      <div className="row">
-        <button className="primary">{loyiha ? 'Saqlash' : 'Yaratish'}</button>
-        {saved && <span className="muted">Saqlandi</span>}
-      </div>
+    </>
+  );
+
+  // New Loyiha: in a modal. Existing one: the editor card under the list, saved with the common save bar.
+  if (!loyiha) {
+    return (
+      <ModalForm
+        onSubmit={submit}
+        busy={state.kind === 'saving'}
+        error={state.kind === 'error' ? state.text : undefined}
+        submitLabel="Yaratish"
+      >
+        {fields}
+      </ModalForm>
+    );
+  }
+  return (
+    <form className="card stack" onSubmit={submit} onChange={() => setState((s) => (s.kind === 'saved' ? { kind: 'idle' } : s))}>
+      <h2 className="title">{loyiha.nomi}</h2>
+      {fields}
+      <SaveBar state={state} dirty={dirty} />
     </form>
   );
 }
@@ -317,6 +342,10 @@ function LokalField({
 
 function BlokEditor({ blok, onChanged }: { blok: AdminBlokDto; onChanged: () => void }) {
   const [editing, setEditing] = useState<number | 'new' | null>(null);
+  // The modal keeps showing its Planirovka while it closes (editing is already null then).
+  const [shownId, setShownId] = useState<number | 'new' | null>(null);
+  if (editing !== null && editing !== shownId) setShownId(editing);
+  const shown = typeof shownId === 'number' ? blok.planirovkalar.find((p) => p.id === shownId) : undefined;
   const [nomi, setNomi] = useState(blok.nomi);
   const [error, setError] = useState('');
 
@@ -338,37 +367,32 @@ function BlokEditor({ blok, onChanged }: { blok: AdminBlokDto; onChanged: () => 
           <span>Blok</span>
           <input className="short" value={nomi} maxLength={20} onChange={(e) => setNomi(e.target.value)} onBlur={rename} />
         </label>
-        <button onClick={() => setEditing('new')}>+ Planirovka</button>
+        <button className="with-icon" onClick={() => setEditing('new')}>
+          <Icon name="plus" size={16} />
+          Planirovka
+        </button>
       </div>
       {error && <p className="error">{error}</p>}
       <div className="cards">
-        {blok.planirovkalar.map((p) =>
-          editing === p.id ? (
-            <PlanirovkaForm
-              key={p.id}
-              blokId={blok.id}
-              planirovka={p}
-              onDone={() => {
-                setEditing(null);
-                onChanged();
-              }}
-              onCancel={() => setEditing(null)}
-            />
-          ) : (
-            <PlanirovkaCard key={p.id} p={p} onEdit={() => setEditing(p.id)} />
-          ),
-        )}
-        {editing === 'new' && (
-          <PlanirovkaForm
-            blokId={blok.id}
-            onDone={() => {
-              setEditing(null);
-              onChanged();
-            }}
-            onCancel={() => setEditing(null)}
-          />
-        )}
+        {blok.planirovkalar.map((p) => (
+          <PlanirovkaCard key={p.id} p={p} onEdit={() => setEditing(p.id)} />
+        ))}
       </div>
+      <Modal
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title={editing === 'new' || !shown ? 'Yangi Planirovka' : planirovkaTitle(shown)}
+        description={`${blok.nomi} blok`}
+      >
+        <PlanirovkaForm
+          blokId={blok.id}
+          planirovka={shown}
+          onDone={() => {
+            setEditing(null);
+            onChanged();
+          }}
+        />
+      </Modal>
     </div>
   );
 }
@@ -397,16 +421,17 @@ function PlanirovkaCard({ p, onEdit }: { p: AdminPlanirovkaDto; onEdit: () => vo
   );
 }
 
+const planirovkaTitle = (p: AdminPlanirovkaDto) => `${p.xonalar} xona · ${p.maydon} m²${p.nomi ? ` · ${p.nomi.uz}` : ''}`;
+
+/** Add (no planirovka) or edit a Planirovka; rendered inside a <Modal>. */
 function PlanirovkaForm({
   blokId,
   planirovka: p,
   onDone,
-  onCancel,
 }: {
   blokId: number;
   planirovka?: AdminPlanirovkaDto;
   onDone: () => void;
-  onCancel: () => void;
 }) {
   const [xonalar, setXonalar] = useState(String(p?.xonalar ?? 1));
   const [maydon, setMaydon] = useState(String(p?.maydon ?? ''));
@@ -415,9 +440,9 @@ function PlanirovkaForm({
   const [video, setVideo] = useState(p?.video ?? '');
   const [narx, setNarx] = useState(p?.qoldaNarx?.toString() ?? '');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
+  async function submit() {
     const n = parseNumber(narx);
     const m = parseNumber(maydon);
     if (Number.isNaN(n) || m === null || Number.isNaN(m)) return setError("Maydon va narx raqam bo'lishi kerak");
@@ -429,17 +454,20 @@ function PlanirovkaForm({
       video: video.trim() || null,
       qoldaNarx: n === null ? null : Math.round(n),
     };
+    setBusy(true);
     try {
       if (p) await adminApi('PATCH', `/katalog/planirovkalar/${p.id}`, fields);
       else await adminApi('POST', `/katalog/bloklar/${blokId}/planirovkalar`, fields);
+      setBusy(false);
       onDone();
     } catch (err) {
       setError(errorText(err));
+      setBusy(false);
     }
   }
 
   return (
-    <form className="card stack pform" onSubmit={submit}>
+    <ModalForm onSubmit={submit} busy={busy} error={error || undefined} submitLabel={p ? 'Saqlash' : "Qo'shish"}>
       <div className="row">
         <label className="field">
           <span>Xonalar</span>
@@ -465,13 +493,6 @@ function PlanirovkaForm({
       <p className="muted small">
         Bo'sh / bron / sotilgan soni Xonadonlardan hisoblanadi: ularni «Xonadonlar» bo'limida qo'shing va o'zgartiring.
       </p>
-      {error && <p className="error">{error}</p>}
-      <div className="row">
-        <button className="primary">{p ? 'Saqlash' : "Qo'shish"}</button>
-        <button type="button" onClick={onCancel}>
-          Bekor
-        </button>
-      </div>
-    </form>
+    </ModalForm>
   );
 }
